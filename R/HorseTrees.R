@@ -1,6 +1,6 @@
-#' Horseshoe Prior Bayesian Tree Model (HorseTrees)
+#' Horseshoe Regression Trees (HorseTrees)
 #'
-#' Fits a Bayesian Horseshoe Trees model. 
+#' Fits a Bayesian Horseshoe Trees model with a single learner. 
 #' Implements regularization on the step heights using a global-local Horseshoe
 #' prior, controlled via the parameter \code{k}. Supports continuous, binary, 
 #' and right-censored (survival) outcomes.
@@ -18,22 +18,24 @@
 #' n <- 25; p <- 5
 #' X <- matrix(rnorm(n * p), ncol = p)
 #' y <- X[, 1] + rnorm(n)
-#' fit1 <- HorseTrees(y, X, outcome_type = "continuous", number_of_trees = 5,
-#'                    N_post = 75, N_burn = 25, verbose = FALSE)
+#' fit1 <- HorseTrees(y = y, X_train = X, outcome_type = "continuous", 
+#'                    number_of_trees = 5, N_post = 75, N_burn = 25, 
+#'                    verbose = FALSE)
 #'
 #' # Minimal example: binary outcome
 #' X <- matrix(rnorm(n * p), ncol = p)
 #' y <- ifelse(X[, 1] + rnorm(n) > 0, 1, 0)
-#' fit2 <- HorseTrees(y, X, outcome_type = "binary", number_of_trees = 5,
-#'                    N_post = 75, N_burn = 25, verbose = FALSE)
+#' fit2 <- HorseTrees(y = y, X_train = X, outcome_type = "binary", 
+#'                    number_of_trees = 5, N_post = 75, N_burn = 25, 
+#'                    verbose = FALSE)
 #'
 #' # Minimal example: right-censored outcome
 #' X <- matrix(rnorm(n * p), ncol = p)
 #' time <- rexp(n, rate = 0.1)
 #' status <- rbinom(n, 1, 0.7)
-#' fit3 <- HorseTrees(time, X, status = status, outcome_type = "right-censored",
-#'                    number_of_trees = 5, N_post = 75, N_burn = 25,
-#'                    verbose = FALSE)
+#' fit3 <- HorseTrees(y = time, status = status, X_train = X, 
+#'                    outcome_type = "right-censored", number_of_trees = 5, 
+#'                    N_post = 75, N_burn = 25, verbose = FALSE)
 #'
 #' # Larger continuous example (not run automatically)
 #' \dontrun{
@@ -42,14 +44,14 @@
 #' y <- X[, 1] + X[, 2] - X[, 3] + rnorm(100, sd = 0.5)
 #'
 #' fit4 <- HorseTrees(y = y,
-#'                   X_train = X,
-#'                   X_test = X_test,
-#'                   outcome_type = "continuous",
-#'                   number_of_trees = 20,
-#'                   N_post = 2500,
-#'                   N_burn = 2500,
-#'                   store_posterior_sample = TRUE,
-#'                   verbose = TRUE)
+#'                    X_train = X,
+#'                    X_test = X_test,
+#'                    outcome_type = "continuous",
+#'                    number_of_trees = 20,
+#'                    N_post = 2500,
+#'                    N_burn = 2500,
+#'                    store_posterior_sample = TRUE,
+#'                    verbose = TRUE)
 #'
 #' plot(fit4$sigma, type = "l", ylab = expression(sigma),
 #'      xlab = "Iteration", main = "Sigma traceplot")
@@ -61,12 +63,12 @@
 #'                        
 #' @param y Outcome vector. Numeric. Can represent continuous outcomes, binary 
 #' outcomes (0/1), or follow-up times for survival data.
+#' @param status Optional censoring indicator vector (1 = event occurred, 
+#' 0 = censored). Required if `outcome_type = "right-censored"`.
 #' @param X_train Covariate matrix for training. Each row corresponds to an 
 #' observation, and each column to a covariate.
 #' @param X_test Optional covariate matrix for test data. If NULL, defaults to 
 #' the mean of the training covariates.
-#' @param status Optional censoring indicator vector (1 = event occurred, 
-#' 0 = censored). Required if `outcome_type = "right-censored"`.
 #' @param outcome_type Type of outcome. One of `"continuous"`, `"binary"`, or 
 #' `"right-censored"`.
 #' @param timescale Indicates the scale of follow-up times. Options are 
@@ -130,9 +132,9 @@
 #' @export
 
 HorseTrees <- function(y,
+                       status = NULL,
                        X_train,
                        X_test = NULL,
-                       status = NULL,
                        outcome_type = "continuous",
                        timescale = "time",
                        number_of_trees = 200,

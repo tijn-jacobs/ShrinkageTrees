@@ -2,19 +2,19 @@
 
 // [[Rcpp::export]]
 Rcpp::List CausalHorseForest_cpp(
-  SEXP nSEXP, SEXP p_treatSEXP, SEXP p_controlSEXP, SEXP X_treatSEXP,
-  SEXP X_controlSEXP, SEXP ySEXP, SEXP status_indicatorSEXP, SEXP is_survivalSEXP,
+  SEXP nSEXP, SEXP p_treatSEXP, SEXP p_controlSEXP, SEXP X_train_treatSEXP,
+  SEXP X_train_controlSEXP, SEXP ySEXP, SEXP status_indicatorSEXP, SEXP is_survivalSEXP,
   SEXP treatment_indicatorSEXP,
-  SEXP n_testSEXP, SEXP X_control_testSEXP, SEXP X_treat_testSEXP, 
+  SEXP n_testSEXP, SEXP X_test_controlSEXP, SEXP X_test_treatSEXP, 
   SEXP treatment_indicator_testSEXP,
   SEXP no_trees_treatSEXP, SEXP power_treatSEXP, SEXP base_treatSEXP,
   SEXP p_grow_treatSEXP, SEXP p_prune_treatSEXP, SEXP omega_treatSEXP,
   SEXP prior_type_treatSEXP, SEXP param1_treatSEXP, SEXP param2_treatSEXP,
-  SEXP reversible_treatSEXP, SEXP eta_treatSEXP, SEXP no_trees_controlSEXP,
+  SEXP reversible_treatSEXP, SEXP no_trees_controlSEXP,
   SEXP power_controlSEXP, SEXP base_controlSEXP, SEXP p_grow_controlSEXP,
   SEXP p_prune_controlSEXP, SEXP omega_controlSEXP, SEXP prior_type_controlSEXP,
   SEXP param1_controlSEXP, SEXP param2_controlSEXP, SEXP reversible_controlSEXP,
-  SEXP eta_controlSEXP, SEXP sigma_knownSEXP, SEXP sigmaSEXP, SEXP lambdaSEXP,
+  SEXP sigma_knownSEXP, SEXP sigmaSEXP, SEXP lambdaSEXP,
   SEXP nuSEXP, SEXP N_postSEXP, SEXP N_burnSEXP, SEXP delayed_proposalSEXP,
   SEXP store_parametersSEXP, SEXP max_stored_leafsSEXP,
   SEXP store_posterior_sample_controlSEXP, SEXP store_posterior_sample_treatSEXP, SEXP n1SEXP, SEXP n2SEXP, SEXP verboseSEXP
@@ -26,10 +26,10 @@ Rcpp::List CausalHorseForest_cpp(
   size_t n = Rcpp::as<size_t>(nSEXP);
   size_t p_treat = Rcpp::as<size_t>(p_treatSEXP);
   size_t p_control = Rcpp::as<size_t>(p_controlSEXP);
-  Rcpp::NumericVector X_treat_vector(X_treatSEXP);   
-  double* X_treat = &X_treat_vector[0];   
-  Rcpp::NumericVector X_control_vector(X_controlSEXP);   
-  double* X_control = &X_control_vector[0];   
+  Rcpp::NumericVector X_train_treat_vector(X_train_treatSEXP);   
+  double* X_train_treat = &X_train_treat_vector[0];   
+  Rcpp::NumericVector X_train_control_vector(X_train_controlSEXP);   
+  double* X_train_control = &X_train_control_vector[0];   
   Rcpp::NumericVector y_vector(ySEXP);   
   double* y = &y_vector[0];  
   bool is_survival = Rcpp::as<bool>(is_survivalSEXP);
@@ -42,10 +42,10 @@ Rcpp::List CausalHorseForest_cpp(
 
   // Parameters and data for the test phase
   size_t n_test = Rcpp::as<size_t>(n_testSEXP);    
-  Rcpp::NumericVector X_treat_test_vector(X_treat_testSEXP);   
-  double* X_treat_test = &X_treat_test_vector[0];   
-  Rcpp::NumericVector X_control_test_vector(X_control_testSEXP);   
-  double* X_control_test = &X_control_test_vector[0];   
+  Rcpp::NumericVector X_test_treat_vector(X_test_treatSEXP);   
+  double* X_test_treat = &X_test_treat_vector[0];   
+  Rcpp::NumericVector X_test_control_vector(X_test_controlSEXP);   
+  double* X_test_control = &X_test_control_vector[0];   
   Rcpp::IntegerVector treatment_indicator_test_vector(treatment_indicator_testSEXP);
   int* treatment_indicator_test = &treatment_indicator_test_vector[0];
 
@@ -60,7 +60,6 @@ Rcpp::List CausalHorseForest_cpp(
   double param1_treat = Rcpp::as<double>(param1_treatSEXP);
   double param2_treat = Rcpp::as<double>(param2_treatSEXP);
   bool reversible_treat = Rcpp::as<bool>(reversible_treatSEXP);
-  double eta_treat = Rcpp::as<double>(eta_treatSEXP);
 
   // Hyperparameters prognostic model
   size_t no_trees_control = Rcpp::as<size_t>(no_trees_controlSEXP);
@@ -73,7 +72,6 @@ Rcpp::List CausalHorseForest_cpp(
   double param1_control = Rcpp::as<double>(param1_controlSEXP);
   double param2_control = Rcpp::as<double>(param2_controlSEXP);
   bool reversible_control = Rcpp::as<bool>(reversible_controlSEXP);
-  double eta_control = Rcpp::as<double>(eta_controlSEXP);
 
   // Hyperparameters error variance model
   bool sigma_known = Rcpp::as<bool>(sigma_knownSEXP);
@@ -235,8 +233,8 @@ Rcpp::List CausalHorseForest_cpp(
 
   // Build the forest 
   Forest forest_control(no_trees_control);
-  forest_control.SetTreePrior(base_control, power_control, eta_control, p_grow_control, p_prune_control);
-  forest_control.SetUpForest(p_control, n, X_control, augmented_outcome_control, nullptr, omega_control); // Use augmented outcome for y
+  forest_control.SetTreePrior(base_control, power_control, param1_control, p_grow_control, p_prune_control);
+  forest_control.SetUpForest(p_control, n, X_train_control, augmented_outcome_control, nullptr, omega_control); // Use augmented outcome for y
 
   // Setup a vector to access the trees
   std::vector<Tree>* trees_control = forest_control.GetTreesPointer();
@@ -262,8 +260,8 @@ Rcpp::List CausalHorseForest_cpp(
 
   // Build the forest 
   Forest forest_treat(no_trees_treat);
-  forest_treat.SetTreePrior(base_treat, power_treat, eta_treat, p_grow_treat, p_prune_treat);
-  forest_treat.SetUpForest(p_treat, n, X_treat, augmented_outcome_treat, nullptr, omega_treat); // Use augmented outcome for y
+  forest_treat.SetTreePrior(base_treat, power_treat, param1_treat, p_grow_treat, p_prune_treat);
+  forest_treat.SetUpForest(p_treat, n, X_train_treat, augmented_outcome_treat, nullptr, omega_treat); // Use augmented outcome for y
 
   // Setup a vector to access the trees
   std::vector<Tree>* trees_treat = forest_treat.GetTreesPointer();
@@ -509,8 +507,8 @@ Rcpp::List CausalHorseForest_cpp(
     
       // Predict test set outcomes
       if (n_test > 0) {
-        forest_control.Predict(p_control, n_test, X_control_test, testpred_control);
-        forest_treat.Predict(p_treat, n_test, X_treat_test, testpred_treat);
+        forest_control.Predict(p_control, n_test, X_test_control, testpred_control);
+        forest_treat.Predict(p_treat, n_test, X_test_treat, testpred_treat);
       } 
     
       // Store posterior sample of test predictions

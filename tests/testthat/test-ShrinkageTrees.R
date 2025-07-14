@@ -6,9 +6,9 @@ test_that("ShrinkageTrees (horseshoe) works for continuous outcome", {
   y <- X[, 1] + rnorm(50)
   
   # Fit the model
-  fit <- ShrinkageTrees(y, 
-                        X,
-                        X_test,
+  fit <- ShrinkageTrees(y = y, 
+                        X_train = X,
+                        X_test = X_test,
                         outcome_type = "continuous",
                         number_of_trees = 50,
                         prior_type = "horseshoe",
@@ -48,9 +48,9 @@ test_that("ShrinkageTrees (horseshoe) works for continuous outcome", {
   expect_true(sd(fit$test_predictions_sample) > 0)
   
   # Check reproducibility
-  fit2 <- ShrinkageTrees(y, 
-                         X,
-                         X_test,
+  fit2 <- ShrinkageTrees(y = y, 
+                         X_train = X,
+                         X_test = X_test,
                          outcome_type = "continuous",
                          number_of_trees = 50,
                          prior_type = "horseshoe",
@@ -73,9 +73,9 @@ test_that("ShrinkageTrees (horseshoe) works for binary outcome", {
   y <- ifelse(X[, 1] + rnorm(50) > 0, 1, 0)
   
   # Fit the model
-  fit <- ShrinkageTrees(y, 
-                        X,
-                        X_test,
+  fit <- ShrinkageTrees(y = y, 
+                        X_train = X,
+                        X_test = X_test,
                         outcome_type = "binary",
                         number_of_trees = 50,
                         prior_type = "horseshoe",
@@ -118,9 +118,9 @@ test_that("ShrinkageTrees (horseshoe) works for binary outcome", {
   expect_true(sd(fit$test_predictions_sample) > 0)
   
   # Check reproducibility
-  fit2 <- ShrinkageTrees(y, 
-                         X,
-                         X_test,
+  fit2 <- ShrinkageTrees(y = y, 
+                         X_train = X,
+                         X_test = X_test,
                          outcome_type = "binary",
                          number_of_trees = 50,
                          prior_type = "horseshoe",
@@ -222,9 +222,9 @@ test_that("ShrinkageTrees (horseshoe_fw) works for continuous outcome", {
   y <- X[, 1] + rnorm(50)
   
   # Fit the model
-  fit <- ShrinkageTrees(y, 
-                        X,
-                        X_test,
+  fit <- ShrinkageTrees(y = y, 
+                        X_train = X,
+                        X_test = X_test,
                         outcome_type = "continuous",
                         number_of_trees = 50,
                         prior_type = "horseshoe_fw",
@@ -264,9 +264,9 @@ test_that("ShrinkageTrees (horseshoe_fw) works for continuous outcome", {
   expect_true(sd(fit$test_predictions_sample) > 0)
   
   # Check reproducibility
-  fit2 <- ShrinkageTrees(y, 
-                         X,
-                         X_test,
+  fit2 <- ShrinkageTrees(y = y, 
+                         X_train = X,
+                         X_test = X_test,
                          outcome_type = "continuous",
                          number_of_trees = 50,
                          prior_type = "horseshoe_fw",
@@ -289,9 +289,9 @@ test_that("ShrinkageTrees (horseshoe_EB) works for continuous outcome", {
   y <- X[, 1] + rnorm(50)
   
   # Fit the model
-  fit <- ShrinkageTrees(y, 
-                        X,
-                        X_test,
+  fit <- ShrinkageTrees(y = y, 
+                        X_train = X,
+                        X_test = X_test,
                         outcome_type = "continuous",
                         number_of_trees = 50,
                         prior_type = "horseshoe_EB",
@@ -331,9 +331,9 @@ test_that("ShrinkageTrees (horseshoe_EB) works for continuous outcome", {
   expect_true(sd(fit$test_predictions_sample) > 0)
   
   # Check reproducibility
-  fit2 <- ShrinkageTrees(y, 
-                         X,
-                         X_test,
+  fit2 <- ShrinkageTrees(y = y, 
+                         X_train = X,
+                         X_test = X_test,
                          outcome_type = "continuous",
                          number_of_trees = 50,
                          prior_type = "horseshoe_EB",
@@ -356,9 +356,9 @@ test_that("ShrinkageTrees (horseshoe_EB) works for continuous outcome", {
   y <- X[, 1] + rnorm(50)
   
   # Fit the model
-  fit <- ShrinkageTrees(y, 
-                        X,
-                        X_test,
+  fit <- ShrinkageTrees(y = y, 
+                        X_train = X,
+                        X_test = X_test,
                         outcome_type = "continuous",
                         number_of_trees = 50,
                         prior_type = "half-cauchy",
@@ -397,9 +397,9 @@ test_that("ShrinkageTrees (horseshoe_EB) works for continuous outcome", {
   expect_true(sd(fit$test_predictions_sample) > 0)
   
   # Check reproducibility
-  fit2 <- ShrinkageTrees(y, 
-                         X,
-                         X_test,
+  fit2 <- ShrinkageTrees(y = y, 
+                         X_train = X,
+                         X_test = X_test,
                          outcome_type = "continuous",
                          number_of_trees = 50,
                          prior_type = "half-cauchy",

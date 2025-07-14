@@ -1,44 +1,45 @@
+#' General Causal Shrinkage Forests
+#'
+#' DESCRIPTION TBD.
+#' 
 #' @useDynLib ShrinkageTrees, .registration = TRUE
 #' @importFrom stats sd qchisq qnorm runif coef
 #' @importFrom Rcpp evalCpp
 #' @export
 CausalShrinkageForest <- function(y,
-                             X_control_train,
-                             X_treat_train,
-                             treatment_indicator_train,
-                             X_control_test = NULL,
-                             X_treat_test = NULL,
-                             treatment_indicator_test = NULL,
-                             status = NULL,
-                             number_of_trees_control = 200,
-                             number_of_trees_treat = 200,
-                             N_post = 5000,
-                             N_burn = 5000,
-                             delayed_proposal = 5,
-                             power = 2.0,
-                             base = 0.95,
-                             p_grow = 0.4,
-                             p_prune = 0.4,
-                             nu = 3,
-                             q = 0.90,
-                             alpha_local_control,
-                             alpha_local_treat,
-                             alpha_global_control = NULL,
-                             alpha_global_treat = NULL,
-                             tau_control = NULL,
-                             tau_treat = NULL,
-                             forest_wide_shrinkage_control = FALSE,
-                             forest_wide_shrinkage_treat = FALSE,
-                             sigma = NULL,
-                             omega_control = NULL,
-                             omega_treat = NULL,
-                             y_mean = NULL,
-                             store_parameters = FALSE,
-                             store_posterior_sample_control = FALSE,
-                             store_posterior_sample_treat = FALSE,
-                             seed = NULL,
-                             scale = "time",
-                             verbose = TRUE) {
+                                  status = NULL,
+                                  X_control_train,
+                                  X_treat_train,
+                                  treatment_indicator_train,
+                                  X_control_test = NULL,
+                                  X_treat_test = NULL,
+                                  treatment_indicator_test = NULL,
+                                  number_of_trees_control = 200,
+                                  number_of_trees_treat = 200,
+                                  N_post = 5000,
+                                  N_burn = 5000,
+                                  delayed_proposal = 5,
+                                  power = 2.0,
+                                  base = 0.95,
+                                  p_grow = 0.4,
+                                  p_prune = 0.4,
+                                  nu = 3,
+                                  q = 0.90,
+                                  alpha_local_control,
+                                  alpha_local_treat,
+                                  alpha_global_control = NULL,
+                                  alpha_global_treat = NULL,
+                                  tau_control = NULL,
+                                  tau_treat = NULL,
+                                  forest_wide_shrinkage_control = FALSE,
+                                  forest_wide_shrinkage_treat = FALSE,
+                                  sigma = NULL,
+                                  y_mean = NULL,
+                                  store_posterior_sample_control = FALSE,
+                                  store_posterior_sample_treat = FALSE,
+                                  seed = NULL,
+                                  scale = "time",
+                                  verbose = TRUE) {
    
 
   # Check inputs
@@ -101,14 +102,9 @@ CausalShrinkageForest <- function(y,
     }
   }
 
-  # Scale forest with observed variance, note that this is underestimated for survival data
-  if(is.null(omega_control)) {
-    omega_control <- sd(y)
-  }
-  if(is.null(omega_treat)) {
-    omega_treat <- sd(y)
-  }
-
+  omega_control <- 1/2
+  omega_treat <- 1/2
+  
   # Determine prior type and param2 for control
   if (!is.null(tau_control)) {
     prior_type_control <- "fixed"
@@ -139,15 +135,15 @@ CausalShrinkageForest <- function(y,
     nSEXP = n_train,
     p_treatSEXP = p_treat,
     p_controlSEXP = p_control,
-    X_treatSEXP = as.numeric(t(X_treat_train)),
-    X_controlSEXP = as.numeric(t(X_control_train)),
+    X_train_treatSEXP = as.numeric(t(X_treat_train)),
+    X_train_controlSEXP = as.numeric(t(X_control_train)),
     ySEXP = y,
     status_indicatorSEXP = if (survival) status else rep(1, n_train),
     is_survivalSEXP = survival,
     treatment_indicatorSEXP = treatment_indicator_train,
     n_testSEXP = n_test,
-    X_control_testSEXP = X_control_test,
-    X_treat_testSEXP = X_treat_test,
+    X_test_controlSEXP = X_control_test,
+    X_test_treatSEXP = X_treat_test,
     treatment_indicator_testSEXP = treatment_indicator_test,
     no_trees_treatSEXP = number_of_trees_treat,
     power_treatSEXP = power,
@@ -159,7 +155,6 @@ CausalShrinkageForest <- function(y,
     param1_treatSEXP = alpha_local_treat,
     param2_treatSEXP = param2_treat,
     reversible_treatSEXP = TRUE,
-    eta_treatSEXP = 1,
     no_trees_controlSEXP = number_of_trees_control,
     power_controlSEXP = power,
     base_controlSEXP = base,
@@ -170,7 +165,6 @@ CausalShrinkageForest <- function(y,
     param1_controlSEXP = alpha_local_control,
     param2_controlSEXP = param2_control,
     reversible_controlSEXP = TRUE,
-    eta_controlSEXP = 1,
     sigma_knownSEXP = sigma_known,
     sigmaSEXP = sigma,
     lambdaSEXP = lambda,
@@ -178,8 +172,8 @@ CausalShrinkageForest <- function(y,
     N_postSEXP = N_post,
     N_burnSEXP = N_burn,
     delayed_proposalSEXP = delayed_proposal,
-    store_parametersSEXP = store_parameters,
-    max_stored_leafsSEXP = 25,
+    store_parametersSEXP = FALSE,
+    max_stored_leafsSEXP = 0,
     store_posterior_sample_controlSEXP = store_posterior_sample_control,
     store_posterior_sample_treatSEXP = store_posterior_sample_treat,
     n1SEXP = seed,

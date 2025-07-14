@@ -2,13 +2,13 @@
 % Please edit documentation in R/ShrinkageTrees.R
 \name{ShrinkageTrees}
 \alias{ShrinkageTrees}
-\title{General Shrinkage Bayesian Tree Model (ShrinkageTrees)}
+\title{General Shrinkage Regression Trees (ShrinkageTrees)}
 \usage{
 ShrinkageTrees(
   y,
+  status = NULL,
   X_train,
   X_test = NULL,
-  status = NULL,
   outcome_type = "continuous",
   timescale = "time",
   number_of_trees = 200,
@@ -34,14 +34,14 @@ ShrinkageTrees(
 \item{y}{Outcome vector. Numeric. Can represent continuous outcomes, binary
 outcomes (0/1), or follow-up times for survival data.}
 
+\item{status}{Optional censoring indicator vector (1 = event occurred,
+0 = censored). Required if \code{outcome_type = "right-censored"}.}
+
 \item{X_train}{Covariate matrix for training. Each row corresponds to an
 observation, and each column to a covariate.}
 
 \item{X_test}{Optional covariate matrix for test data. If NULL, defaults to
 the mean of the training covariates.}
-
-\item{status}{Optional censoring indicator vector (1 = event occurred,
-0 = censored). Required if \code{outcome_type = "right-censored"}.}
 
 \item{outcome_type}{Type of outcome. One of \code{"continuous"}, \code{"binary"}, or
 \code{"right-censored"}.}
@@ -54,7 +54,7 @@ or \code{"log"} (already log-transformed). Only used when
 \item{number_of_trees}{Number of trees in the ensemble. Default is 200.}
 
 \item{prior_type}{Type of prior on the step heights. Options include
-\code{"horseshoe"}, \code{"horseshoe_FW"}, \code{"horseshoe_EB"}, and \code{"half-cauchy"}.}
+\code{"horseshoe"}, \code{"horseshoe_fw"}, \code{"horseshoe_EB"}, and \code{"half-cauchy"}.}
 
 \item{local_hp}{Local hyperparameter controlling shrinkage on individual
 step heights. Should typically be set smaller than 1 / sqrt(number_of_trees).}
@@ -127,6 +127,7 @@ different global-local shrinkage priors on the step heights.
 This function is a flexible generalization of \code{HorseTrees}.
 Instead of using a single Horseshoe prior, it allows specifying different
 global-local shrinkage configurations for the tree step heights.
+Currently, four priors have been implemented.
 
 The \code{horseshoe} prior is the fully Bayesian global-local shrinkage
 prior, where both the global and local shrinkage parameters are assigned
@@ -134,7 +135,7 @@ half-Cauchy distributions with scale hyperparameters \code{global_hp} and
 \code{local_hp}, respectively. The global shrinkage parameter is defined
 separately for each tree, allowing adaptive regularization per tree.
 
-The \code{horseshoe_FW} prior (forest-wide horseshoe) is similar to
+The \code{horseshoe_fw} prior (forest-wide horseshoe) is similar to
 \code{"horseshoe"}, except that the global shrinkage parameter is shared
 across all trees in the forest simultaneously.
 

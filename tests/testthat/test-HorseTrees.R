@@ -1,4 +1,4 @@
-test_that("HorseTrees works for continuous outcome (extended)", {
+test_that("HorseTrees for continuous outcome", {
   
   # Generate data
   X <- matrix(runif(50 * 3), ncol = 3)
@@ -6,9 +6,9 @@ test_that("HorseTrees works for continuous outcome (extended)", {
   y <- X[, 1] + rnorm(50)
   
   # Fit the model
-  fit <- HorseTrees(y, 
-                    X,
-                    X_test,
+  fit <- HorseTrees(y = y, 
+                    X_train = X,
+                    X_test = X_test,
                     outcome_type = "continuous",
                     number_of_trees = 5,
                     N_post = 10,
@@ -45,14 +45,14 @@ test_that("HorseTrees works for continuous outcome (extended)", {
   expect_true(sd(fit$test_predictions_sample) > 0)
   
   # Check reproducibility
-  fit2 <- HorseTrees(y, X, outcome_type = "continuous", number_of_trees = 5, 
+  fit2 <- HorseTrees(y = y, X_train = X, outcome_type = "continuous", number_of_trees = 5, 
                      N_post = 10, N_burn = 5, store_posterior_sample = TRUE, 
                      verbose = FALSE, seed = 1)
   expect_equal(fit$train_predictions, fit2$train_predictions)
 })
 
 
-test_that("HorseTrees works for binary outcome (extended)", {
+test_that("HorseTrees for binary outcome", {
   
   # Generate data
   X <- matrix(rnorm(50 * 3), ncol = 3)
@@ -60,9 +60,9 @@ test_that("HorseTrees works for binary outcome (extended)", {
   y <- ifelse(X[, 1] + rnorm(50) > 0, 1, 0)
   
   # Fit the model
-  fit <- HorseTrees(y, 
-                    X,
-                    X_test,
+  fit <- HorseTrees(y = y, 
+                    X_train = X,
+                    X_test = X_test,
                     outcome_type = "binary",
                     number_of_trees = 5,
                     N_post = 10,
@@ -102,13 +102,13 @@ test_that("HorseTrees works for binary outcome (extended)", {
   expect_true(sd(fit$test_predictions_sample) > 0)
   
   # Check reproducibility
-  fit2 <- HorseTrees(y, X, outcome_type = "binary", number_of_trees = 5, 
+  fit2 <- HorseTrees(y = y, X_train = X, outcome_type = "binary", number_of_trees = 5, 
                      N_post = 10, N_burn = 5, store_posterior_sample = TRUE, 
                      verbose = FALSE, seed = 1)
   expect_equal(fit$train_predictions, fit2$train_predictions)
 })
 
-test_that("HorseTrees works for right-censored survival outcome (extended)", {
+test_that("HorseTrees for right-censored survival outcome", {
   
   # Generate covariates
   X <- matrix(rnorm(50 * 3), ncol = 3)

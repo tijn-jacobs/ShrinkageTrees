@@ -1,16 +1,18 @@
 ## ShrinkageTrees
-Development area of R package ShrinkageTrees
+This package provides functions for fitting Horseshoe Trees, Causal Horseshoe Forests, and their more general counterparts, Shrinkage Trees and Causal Shrinkage Forests. These models allow for flexible global-local shrinkage priors on the tree step heights.
+
+The functions can be used for (1) high-dimensional prediction and (2) causal inference of heterogeneous treatment effects given high-dimensional covariates. Outcomes can be continuous, binary, or survival times.
 
 ## Installation
 
-You cannot (yet) install the released version of success from
+You cannot install the released version of ShrinkageTrees from yet:
 [CRAN](https://CRAN.R-project.org) with:
 
 ``` r
 # install.packages("ShrinkageTrees")
 ```
 
-And the development version from [GitHub](https://github.com/) with:
+You can install the development version from [GitHub](https://github.com/) with:
 
 ``` r
 # install.packages("devtools")

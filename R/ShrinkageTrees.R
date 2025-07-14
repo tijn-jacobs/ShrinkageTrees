@@ -1,4 +1,4 @@
-#' General Shrinkage Bayesian Tree Model (ShrinkageTrees)
+#' General Shrinkage Regression Trees (ShrinkageTrees)
 #'
 #' Fits a Bayesian Shrinkage Tree model with flexible global-local priors on the
 #' step heights. This function generalizes \code{\link{HorseTrees}} by allowing
@@ -6,12 +6,12 @@
 #'
 #' @param y Outcome vector. Numeric. Can represent continuous outcomes, binary
 #' outcomes (0/1), or follow-up times for survival data.
+#' @param status Optional censoring indicator vector (1 = event occurred,
+#' 0 = censored). Required if `outcome_type = "right-censored"`.
 #' @param X_train Covariate matrix for training. Each row corresponds to an
 #' observation, and each column to a covariate.
 #' @param X_test Optional covariate matrix for test data. If NULL, defaults to
 #' the mean of the training covariates.
-#' @param status Optional censoring indicator vector (1 = event occurred,
-#' 0 = censored). Required if `outcome_type = "right-censored"`.
 #' @param outcome_type Type of outcome. One of `"continuous"`, `"binary"`, or
 #' `"right-censored"`.
 #' @param timescale Indicates the scale of follow-up times. Options are
@@ -72,6 +72,7 @@
 #' This function is a flexible generalization of \code{HorseTrees}.
 #' Instead of using a single Horseshoe prior, it allows specifying different
 #' global-local shrinkage configurations for the tree step heights. 
+#' Currently, four priors have been implemented. 
 #'
 #' The \code{horseshoe} prior is the fully Bayesian global-local shrinkage
 #' prior, where both the global and local shrinkage parameters are assigned
@@ -99,9 +100,9 @@
 #' @export
 
 ShrinkageTrees <- function(y,
+                           status = NULL,
                            X_train,
                            X_test = NULL,
-                           status = NULL,
                            outcome_type = "continuous",
                            timescale = "time",
                            number_of_trees = 200,
