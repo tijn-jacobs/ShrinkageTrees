@@ -1,3 +1,4 @@
+#' @importFrom Rcpp evalCpp
 #' @useDynLib ShrinkageTrees, .registration = TRUE
 #' @importFrom stats sd qchisq qnorm runif coef
 #' @export

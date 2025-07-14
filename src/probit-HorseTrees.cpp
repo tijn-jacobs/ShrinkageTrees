@@ -235,6 +235,7 @@ Rcpp::List probitHorseTrees_cpp(SEXP nSEXP,
   Rcpp::List results;
   results["train_predictions"] = train_predictions_mean;
   results["test_predictions"] = test_predictions_mean;
+  results["acceptance_ratio"] = mean_accept;
   if (store_posterior_sample) {
     results["test_predictions_sample"] = test_predictions_sample;
     results["train_predictions_sample"] = train_predictions_sample;

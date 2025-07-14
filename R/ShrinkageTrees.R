@@ -1,371 +1,406 @@
+#' General Shrinkage Bayesian Tree Model (ShrinkageTrees)
+#'
+#' Fits a Bayesian Shrinkage Tree model with flexible global-local priors on the
+#' step heights. This function generalizes \code{\link{HorseTrees}} by allowing
+#' different global-local shrinkage priors on the step heights.
+#'
+#' @param y Outcome vector. Numeric. Can represent continuous outcomes, binary
+#' outcomes (0/1), or follow-up times for survival data.
+#' @param X_train Covariate matrix for training. Each row corresponds to an
+#' observation, and each column to a covariate.
+#' @param X_test Optional covariate matrix for test data. If NULL, defaults to
+#' the mean of the training covariates.
+#' @param status Optional censoring indicator vector (1 = event occurred,
+#' 0 = censored). Required if `outcome_type = "right-censored"`.
+#' @param outcome_type Type of outcome. One of `"continuous"`, `"binary"`, or
+#' `"right-censored"`.
+#' @param timescale Indicates the scale of follow-up times. Options are
+#' `"time"` (nonnegative follow-up times, will be log-transformed internally)
+#' or `"log"` (already log-transformed). Only used when
+#' `outcome_type = "right-censored"`.
+#' @param number_of_trees Number of trees in the ensemble. Default is 200.
+#' @param prior_type Type of prior on the step heights. Options include
+#' `"horseshoe"`, `"horseshoe_fw"`, `"horseshoe_EB"`, and `"half-cauchy"`.
+#' @param local_hp Local hyperparameter controlling shrinkage on individual
+#' step heights. Should typically be set smaller than 1 / sqrt(number_of_trees).
+#' @param global_hp Global hyperparameter controlling overall shrinkage.
+#' Must be specified for Horseshoe-type priors; ignored for `prior_type = "half-cauchy"`.
+#' @param power Power parameter for the tree structure prior. Default is 2.0.
+#' @param base Base parameter for the tree structure prior. Default is 0.95.
+#' @param p_grow Probability of proposing a grow move. Default is 0.4.
+#' @param p_prune Probability of proposing a prune move. Default is 0.4.
+#' @param nu Degrees of freedom for the error distribution prior. Default is 3.
+#' @param q Quantile hyperparameter for the error variance prior. Default is 0.90.
+#' @param sigma Optional known value for error standard deviation. If NULL,
+#' estimated from data.
+#' @param N_post Number of posterior samples to store. Default is 1000.
+#' @param N_burn Number of burn-in iterations. Default is 1000.
+#' @param delayed_proposal Number of delayed iterations before proposal. Only
+#' for reversible updates. Default is 5.
+#' @param store_posterior_sample Logical; whether to store posterior samples for
+#' each iteration. Default is TRUE.
+#' @param seed Random seed for reproducibility.
+#' @param verbose Logical; whether to print verbose output. Default is TRUE.
+#'
+#' @return A named list with the following elements:
+#' \describe{
+#'   \item{train_predictions}{Vector of posterior mean predictions on the
+#'   training data.}
+#'   \item{test_predictions}{Vector of posterior mean predictions on the test
+#'   data (or on mean covariate vector if `X_test` not provided).}
+#'   \item{sigma}{Vector of posterior samples of the error variance.}
+#'   \item{acceptance_ratio}{Average acceptance ratio across trees during
+#'   sampling.}
+#'   \item{train_predictions_sample}{Matrix of posterior samples of training
+#'   predictions (iterations in rows, observations in columns). Present only if
+#'   `store_posterior_sample = TRUE`.}
+#'   \item{test_predictions_sample}{Matrix of posterior samples of test
+#'   predictions. Present only if `store_posterior_sample = TRUE`.}
+#'   \item{train_probabilities}{Vector of posterior mean probabilities on the
+#'   training data (only for `outcome_type = "binary"`).}
+#'   \item{test_probabilities}{Vector of posterior mean probabilities on the
+#'   test data (only for `outcome_type = "binary"`).}
+#'   \item{train_probabilities_sample}{Matrix of posterior samples of training
+#'   probabilities (only for `outcome_type = "binary"` and if
+#'   `store_posterior_sample = TRUE`).}
+#'   \item{test_probabilities_sample}{Matrix of posterior samples of test
+#'   probabilities (only for `outcome_type = "binary"` and if
+#'   `store_posterior_sample = TRUE`).}
+#' }
+#'
+#' @details
+#' This function is a flexible generalization of \code{HorseTrees}.
+#' Instead of using a single Horseshoe prior, it allows specifying different
+#' global-local shrinkage configurations for the tree step heights. 
+#'
+#' The \code{horseshoe} prior is the fully Bayesian global-local shrinkage
+#' prior, where both the global and local shrinkage parameters are assigned
+#' half-Cauchy distributions with scale hyperparameters \code{global_hp} and
+#' \code{local_hp}, respectively. The global shrinkage parameter is defined
+#' separately for each tree, allowing adaptive regularization per tree.
+#'
+#' The \code{horseshoe_fw} prior (forest-wide horseshoe) is similar to
+#' \code{"horseshoe"}, except that the global shrinkage parameter is shared
+#' across all trees in the forest simultaneously. 
+#'
+#' The \code{horseshoe_EB} prior is an empirical Bayes variant of the
+#' \code{"horseshoe"} prior. Here, the global shrinkage parameter (\eqn{\tau})
+#' is not assigned a prior distribution but instead must be specified directly
+#' using \code{global_hp}, while local shrinkage parameters still follow
+#' half-Cauchy priors.
+#'
+#' The \code{half-cauchy} prior considers only local shrinkage and does not
+#' include a global shrinkage component. It places a half-Cauchy prior on each
+#' local shrinkage parameter with scale hyperparameter \code{local_hp}.
+#'
+#' @importFrom Rcpp evalCpp
 #' @useDynLib ShrinkageTrees, .registration = TRUE
-#' @importFrom stats sd qchisq qnorm runif coef
+#' @importFrom stats sd qchisq qnorm pnorm runif
 #' @export
-ShrinkageTrees <- function(y,
-                      X_train,
-                      X_test,
-                      status = NULL,
-                      number_of_trees = 200,
-                      N_post = 5000,
-                      N_burn = 5000,
-                      delayed_proposal = 5,
-                      power = 2.0,
-                      base = 0.95,
-                      p_grow = 0.4,
-                      p_prune = 0.4,
-                      nu = 3, # hyperparamater for error distribution
-                      q = 0.90, # hyperparamater for error distribution
-                      alpha_local, # hyperparameters for horseshoe
-                      alpha_global, # hyperparameters for horseshoe
-                      tau = NULL,
-                      forest_wide_shrinkage = FALSE,
-                      sigma = NULL,
-                      binary_outcome = FALSE,
-                      omega = 1,
-                      store_parameters = FALSE,
-                      store_posterior_sample = FALSE,
-                      seed = NULL,
-                      scale = "time",
-                      verbose = TRUE
-                      ) { 
-  
-  # Retrieve size information of the training- and test data.
-  n_train <- nrow(X_train)         # number of observations in training data
-  p_features <- ncol(X_train)      # number of features
-  n_test <- nrow(X_train)           # number of test observations
-  
 
-  # Check if X_test is provided, and if it has the correct dimensions
-  if (!is.null(X_test)) {
-    n_test <- nrow(X_test)         # number of test observations
-    
-    # Ensure X_test has the correct number of covariates
-    if (ncol(X_test) != p_features) {
-      stop("The number of covariates in X_test must match the number in
-            X_train.")
+ShrinkageTrees <- function(y,
+                           X_train,
+                           X_test = NULL,
+                           status = NULL,
+                           outcome_type = "continuous",
+                           timescale = "time",
+                           number_of_trees = 200,
+                           prior_type = "horseshoe",
+                           local_hp = NULL,
+                           global_hp = NULL,
+                           power = 2.0,
+                           base = 0.95,
+                           p_grow = 0.4,
+                           p_prune = 0.4,
+                           nu = 3,
+                           q = 0.90,
+                           sigma = NULL,
+                           N_post = 1000, 
+                           N_burn = 1000,
+                           delayed_proposal = 5,
+                           store_posterior_sample = TRUE, 
+                           seed = NULL,
+                           verbose = TRUE) {
+  
+  # Check outcome_type value
+  allowed_types <- c("continuous", "binary", "right-censored")
+  if (!outcome_type %in% allowed_types) {
+    stop("Invalid outcome_type. Please choose 'continuous', 'binary', or 
+         'right-censored'.")
+  }
+  
+  # Check prior_type value
+  allowed_prior <- c("horseshoe", "horseshoe_fw", "horseshoe_EB", "half-cauchy")
+  if (!prior_type %in% allowed_prior) {
+    stop("Invalid prior_type. Choose 'horseshoe', 'horseshoe_fw', 'horseshoe_EB', or 'half-cauchy'.")
+  }
+  
+  # Prior-specific checks
+  if (prior_type %in% c("horseshoe", "horseshoe_fw", "horseshoe_EB")) {
+    if (is.null(local_hp) || is.null(global_hp)) {
+      stop("For prior_type = 'horseshoe', 'horseshoe_fw', or 'horseshoe_EB', you must provide both local_hp and global_hp.")
     }
-    
-    # Flatten the test data (should be contiguous)
+  }
+  
+  if (prior_type == "half-cauchy") {
+    if (is.null(local_hp)) {
+      stop("For prior_type = 'half-cauchy', you must provide local_hp.")
+    }
+    if (!is.null(global_hp)) {
+      warning("global_hp is ignored for 'half-cauchy'. If you want to fix the global parameter, consider using 'horseshoe_EB'.")
+    }
+    global_hp <- 1
+    prior_type <- "halfcauchy"
+  }
+  
+  if (prior_type == "horseshoe_EB") prior_type <- "halfcauchy"
+
+  # Check consistency with status argument
+  if (outcome_type == "right-censored" && is.null(status)) {
+    stop("You specified outcome_type = 'right-censored', but did not provide a 
+         'status' vector.")
+  }
+  
+  if (outcome_type != "right-censored" && !is.null(status)) {
+    warning("You provided a 'status' vector, but outcome_type is not 
+            'right-censored'. The 'status' vector will be ignored.")
+  }
+  
+  # Check binary data consistency
+  if (outcome_type != "binary" && all(y %in% c(0, 1))) {
+    warning("The outcome y contains only 0 and 1, but outcome_type is not set to
+            'binary'. Consider setting outcome_type = 'binary'.")
+  }
+  
+  # Check survival data and timescale
+  if (outcome_type == "right-censored" && timescale == "time" && any(y < 0)) {
+    stop("Outcome contains negative values, but timescale = 'time' for survival 
+         data requires non-negative times.")
+  }
+  
+  # Retrieve dimensions of training data
+  n_train <- nrow(X_train)
+  p_features <- ncol(X_train)
+  
+  # Check if dimensions match with test data
+  if (!is.null(X_test)) {
+    n_test <- nrow(X_test)
+    if (ncol(X_test) != p_features) {
+      stop("The number of covariates in X_test must match X_train.")
+    }
     X_test <- as.numeric(t(X_test))
   } else {
-    
-    # Fill up empty test data by the mean of the training data 
-    n_test <- 1                    
+    n_test <- 1
     X_test <- as.numeric(colMeans(X_train))
   }
-  # Compute empirical prior parameters for error distribution  
-  if(is.null(sigma)) {
-    sigma <- sd(y)
-    sigma_known = FALSE
-  } else {
-    sigma_known = TRUE
-  }
-  qchi = qchisq(1.0 - q, nu)
-  lambda = (sigma*sigma*qchi)/nu # lambda parameter for sigma prior
   
-  # Ensure data is in the correct format for C++
+  # Force data types to be numeric and plain arrays
   N_post <- as.integer(N_post)[1]
   N_burn <- as.integer(N_burn)[1]
   power <- as.numeric(power)[1]
   base <- as.numeric(base)[1]
   p_grow <- as.numeric(p_grow)[1]
   p_prune <- as.numeric(p_prune)[1]
-  
-  
-  # Flatten the training and test data (should be continguous)
   X_train <- as.numeric(t(X_train))
-  X_test <- as.numeric(t(X_test))
   
-  # Set a random seed
-  if(is.null(seed)) seed <- round(runif(1, 0, 100))
-
-  if (!is.null(status)) { # Outcome is survival
-
-    # Log transform the data
+  # Set a random seed if not provided
+  # By taking a random number, we ensure compatibility with set.seed()
+  if (is.null(seed)) seed <- as.integer(runif(1, 1, 1000000))
+  
+  if (outcome_type == "right-censored") {
+    
+    # Convert y to numeric for C++ compatibility
     y <- as.numeric(y)
-    if (scale == "time") y <- log(y)
-    y_mean = mean(y)
-    y <- y - y_mean
-    survival <- TRUE
-
-    if(is.null(tau)) {
-      
-      # No specified tau means a random global shrinkage parameter.
-      # This can be on the tree level or forest wide.
-      if(forest_wide_shrinkage) {
-        fit <- HorseTrees_cpp(nSEXP = n_train,
-                          pSEXP = p_features,
-                          n_testSEXP = n_test,
-                          X_trainSEXP = X_train,  
-                          ySEXP = y,
-                          status_indicatorSEXP = status,
-                          is_survivalSEXP = survival,
-                          X_testSEXP = X_test,  
-                          number_of_treesSEXP = number_of_trees,
-                          N_postSEXP = N_post,
-                          N_burnSEXP = N_burn,
-                          delayed_proposalSEXP = delayed_proposal,
-                          powerSEXP = power,
-                          baseSEXP = base,
-                          p_growSEXP = p_grow,
-                          p_pruneSEXP = p_prune,
-                          nuSEXP = nu,
-                          lambdaSEXP = lambda,
-                          sigmaSEXP = sigma,
-                          sigma_knownSEXP = sigma_known,
-                          omegaSEXP = omega,
-                          param1SEXP = alpha_local,
-                          param2SEXP = alpha_global,
-                          prior_typeSEXP = "horseshoe_fw", # Indicates Horseshoe_fw ScaleMixture
-                          reversibleSEXP = TRUE,
-                          store_parametersSEXP = store_parameters,
-                          store_posterior_sampleSEXP = store_posterior_sample,
-                          n1SEXP = seed, 
-                          n2SEXP = 420,
-                          verboseSEXP = verbose)
-      } else {
-        fit <- HorseTrees_cpp(nSEXP = n_train,
-                          pSEXP = p_features,
-                          n_testSEXP = n_test,
-                          X_trainSEXP = X_train,  
-                          ySEXP = y,
-                          status_indicatorSEXP = status,
-                          is_survivalSEXP = survival,
-                          X_testSEXP = X_test,  
-                          number_of_treesSEXP = number_of_trees,
-                          N_postSEXP = N_post,
-                          N_burnSEXP = N_burn,
-                          delayed_proposalSEXP = delayed_proposal,
-                          powerSEXP = power,
-                          baseSEXP = base,
-                          p_growSEXP = p_grow,
-                          p_pruneSEXP = p_prune,
-                          nuSEXP = nu,
-                          lambdaSEXP = lambda,
-                          sigmaSEXP = sigma,
-                          sigma_knownSEXP = sigma_known,
-                          omegaSEXP = omega,
-                          param1SEXP = alpha_local,
-                          param2SEXP = alpha_global,
-                          prior_typeSEXP = "horseshoe", # Indicates Horseshoe ScaleMixture
-                          reversibleSEXP = TRUE,
-                          store_parametersSEXP = store_parameters,
-                          store_posterior_sampleSEXP = store_posterior_sample,
-                          n1SEXP = seed, 
-                          n2SEXP = 420,
-                          verboseSEXP = verbose)
-      }
-    #} else { 
-      if (scale == "time") {
-
-        # Re-transform the data
-        fit$train_predictions = exp(fit$train_predictions + y_mean)
-        fit$test_predictions = exp(fit$test_predictions + y_mean)
-        fit$train_predictions_sample = exp(fit$train_predictions_sample + y_mean)
-        fit$test_predictions_sample = exp(fit$test_predictions_sample + y_mean)
-      } else {
-        # Re-transform the data
-        fit$train_predictions = fit$train_predictions + y_mean
-        fit$test_predictions = fit$test_predictions + y_mean
-        fit$train_predictions_sample = fit$train_predictions_sample + y_mean
-        fit$test_predictions_sample = fit$test_predictions_sample + y_mean
-      }
-
-
-    } else {
-      
-      # tau is specified; fit a Horseshoe with fixed global shrinkage
-      fit <- HorseTrees_cpp(nSEXP = n_train,
-                        pSEXP = p_features,
-                        n_testSEXP = n_test,
-                        X_trainSEXP = X_train,  
-                        ySEXP = y,
-                        status_indicatorSEXP = status,
-                        is_survivalSEXP = survival,
-                        X_testSEXP = X_test,  
-                        number_of_treesSEXP = number_of_trees,
-                        N_postSEXP = N_post,
-                        N_burnSEXP = N_burn,
-                        delayed_proposalSEXP = delayed_proposal,
-                        powerSEXP = power,
-                        baseSEXP = base,
-                        p_growSEXP = p_grow,
-                        p_pruneSEXP = p_prune,
-                        nuSEXP = nu,
-                        lambdaSEXP = lambda,
-                        sigmaSEXP = sigma,
-                        sigma_knownSEXP = sigma_known,
-                        omegaSEXP = omega,
-                        param1SEXP = alpha_local,
-                        param2SEXP = tau,
-                        prior_typeSEXP = "halfcauchy", # Indicates (or Horseshoe with fixed global shrink. param.)
-                        reversibleSEXP = TRUE,
-                        store_parametersSEXP = store_parameters,
-                        store_posterior_sampleSEXP = store_posterior_sample,
-                        n1SEXP = seed,        
-                        n2SEXP = 420,
-                        verboseSEXP = verbose          
-      )
+    
+    # Log-transform survival times if timescale = "time"
+    if (timescale == "time") {
+      y <- log(y)
     }
-
-  } else { # Outcome is binary or continuous
-
-    status <- rep(1, n_train) # unused
+    
+    # Obtain estimated mean and standard deviation using censored_info()
+    cens_inf <- censored_info(y, status)
+    
+    # Center the data using estimated mean
+    y_mean <- cens_inf$mu
+    y <- y - y_mean
+    
+    # Determine sigma (timescale parameter) and whether it is known
+    if (is.null(sigma)) {
+      sigma_hat <- cens_inf$sd
+      sigma_known <- FALSE
+    } else {
+      sigma_hat <- sigma
+      sigma_known <- TRUE
+    }
+    
+    # Standardize the centered data
+    y <- y / sigma_hat
+    
+    # Set survival flag
+    survival <- TRUE
+    
+    # Compute lambda parameter for error distribution prior
+    qchi <- qchisq(1.0 - q, nu)
+    lambda <- (sigma_hat^2 * qchi) / nu
+    
+    # Fit a HorseTrees model
+    fit <- HorseTrees_cpp(
+      nSEXP = n_train,
+      pSEXP = p_features,
+      n_testSEXP = n_test,
+      X_trainSEXP = X_train,
+      ySEXP = y,
+      status_indicatorSEXP = status,
+      is_survivalSEXP = survival,
+      X_testSEXP = X_test,
+      number_of_treesSEXP = number_of_trees,
+      N_postSEXP = N_post,
+      N_burnSEXP = N_burn,
+      delayed_proposalSEXP = delayed_proposal,
+      powerSEXP = power,
+      baseSEXP = base,
+      p_growSEXP = p_grow,
+      p_pruneSEXP = p_prune,
+      nuSEXP = nu,
+      lambdaSEXP = lambda,
+      sigmaSEXP = sigma_hat,
+      sigma_knownSEXP = sigma_known,
+      omegaSEXP = 1,
+      param1SEXP = local_hp,
+      param2SEXP = global_hp,
+      prior_typeSEXP = prior_type,
+      reversibleSEXP = TRUE,
+      store_parametersSEXP = FALSE,
+      store_posterior_sampleSEXP = store_posterior_sample,
+      n1SEXP = seed,
+      n2SEXP = 420,
+      verboseSEXP = verbose
+    )
+    
+    if (timescale == "time") {
+      fit$train_predictions <- exp(fit$train_predictions * sigma_hat + y_mean)
+      fit$test_predictions <- exp(fit$test_predictions * sigma_hat + y_mean)
+      if (store_posterior_sample) {
+        fit$train_predictions_sample <- exp(fit$train_predictions_sample * sigma_hat + y_mean)
+        fit$test_predictions_sample <- exp(fit$test_predictions_sample * sigma_hat + y_mean)
+      }
+    } else { # If timescale is "log"
+      fit$train_predictions <- fit$train_predictions * sigma_hat + y_mean
+      fit$test_predictions <- fit$test_predictions * sigma_hat + y_mean
+      if (store_posterior_sample) { 
+        fit$train_predictions_sample <- fit$train_predictions_sample * sigma_hat + y_mean
+        fit$test_predictions_sample <- fit$test_predictions_sample * sigma_hat + y_mean
+      }
+    }
+    
+    # If binary
+  } else if (outcome_type == "binary") {
+    y <- as.numeric(y)
+    latent_threshold <- qnorm(mean(y))
+    
+    fit <- probitHorseTrees_cpp(
+      nSEXP = n_train,
+      pSEXP = p_features,
+      n_testSEXP = n_test,
+      X_trainSEXP = X_train,
+      ySEXP = y,
+      X_testSEXP = X_test,
+      number_of_treesSEXP = number_of_trees,
+      N_postSEXP = N_post,
+      N_burnSEXP = N_burn,
+      delayed_proposalSEXP = delayed_proposal,
+      powerSEXP = power,
+      baseSEXP = base,
+      p_growSEXP = p_grow,
+      p_pruneSEXP = p_prune,
+      omegaSEXP = 1,
+      latent_thresholdSEXP = latent_threshold,
+      param1SEXP = local_hp,
+      param2SEXP = global_hp,
+      prior_typeSEXP = prior_type,
+      reversibleSEXP = TRUE,
+      store_posterior_sampleSEXP = store_posterior_sample,
+      n1SEXP = seed,
+      n2SEXP = 420,
+      verboseSEXP = verbose
+    )
+    
+    # Add the pnorm transform
+    fit$train_probabilities <- pnorm(fit$train_predictions)
+    fit$test_probabilities<- pnorm(fit$test_predictions)
+    if (store_posterior_sample) {
+      fit$train_probabilities_sample <- pnorm(fit$train_predictions_sample)
+      fit$test_probabilities_sample <- pnorm(fit$test_predictions_sample)
+    }
+    
+    # Otherwise, continuous
+  } else {
+    
+    # Force outcome to plain numeric vector
+    y <- as.numeric(y)
+    
+    # Create dummy status vector (not used for continuous)
+    status <- rep(1, n_train)
     survival <- FALSE
     
-    if (binary_outcome) {
-          # Only center(!) the outcomes for continuous data
-    y <- as.numeric(y)
-    latent_threshold = qnorm(mean(y))
-
-    fit <- probitHorseTrees_cpp(nSEXP = n_train,
-                        pSEXP = p_features,
-                        n_testSEXP = n_test,
-                        X_trainSEXP = X_train,  
-                        ySEXP = y,
-                        X_testSEXP = X_test,  
-                        number_of_treesSEXP = number_of_trees,
-                        N_postSEXP = N_post,
-                        N_burnSEXP = N_burn,
-                        delayed_proposalSEXP = delayed_proposal,
-                        powerSEXP = power,
-                        baseSEXP = base,
-                        p_growSEXP = p_grow,
-                        p_pruneSEXP = p_prune,
-                        omegaSEXP = omega,
-                        latent_thresholdSEXP = latent_threshold,
-                        param1SEXP = alpha_local,
-                        param2SEXP = alpha_global,
-                        prior_typeSEXP = "horseshoe",
-                        reversibleSEXP = TRUE,
-                        store_posterior_sampleSEXP = store_posterior_sample,
-                        n1SEXP = seed, 
-                        n2SEXP = 420,
-                        verboseSEXP = verbose 
-      )
-
-  } else {
-
-      # Only center(!) the outcomes for continuous data
-      y <- as.numeric(y)
-      y_mean = mean(y)
-      y_sd = sd(y)
-      y <- y - y_mean
-
-    if(is.null(tau)) {
-      
-      # No specified tau means a random global shrinkage parameter.
-      # This can be on the tree level or forest wide.
-      if(forest_wide_shrinkage) {
-        fit <- HorseTrees_cpp(nSEXP = n_train,
-                          pSEXP = p_features,
-                          n_testSEXP = n_test,
-                          X_trainSEXP = X_train,  
-                          ySEXP = y,
-                          status_indicatorSEXP = status,
-                          is_survivalSEXP = survival,
-                          X_testSEXP = X_test,  
-                          number_of_treesSEXP = number_of_trees,
-                          N_postSEXP = N_post,
-                          N_burnSEXP = N_burn,
-                          delayed_proposalSEXP = delayed_proposal,
-                          powerSEXP = power,
-                          baseSEXP = base,
-                          p_growSEXP = p_grow,
-                          p_pruneSEXP = p_prune,
-                          nuSEXP = nu,
-                          lambdaSEXP = lambda,
-                          sigmaSEXP = sigma,
-                          sigma_knownSEXP = sigma_known,
-                          omegaSEXP = omega,
-                          param1SEXP = alpha_local,
-                          param2SEXP = alpha_global,
-                          prior_typeSEXP = "horseshoe_fw", # Indicates Horseshoe_fw ScaleMixture
-                          reversibleSEXP = TRUE,
-                          store_parametersSEXP = store_parameters,
-                          store_posterior_sampleSEXP = store_posterior_sample,
-                          n1SEXP = seed, 
-                          n2SEXP = 420,
-                          verboseSEXP = verbose)
-      } else {
-        fit <- HorseTrees_cpp(nSEXP = n_train,
-                          pSEXP = p_features,
-                          n_testSEXP = n_test,
-                          X_trainSEXP = X_train,  
-                          ySEXP = y,
-                          status_indicatorSEXP = status,
-                          is_survivalSEXP = survival,
-                          X_testSEXP = X_test,  
-                          number_of_treesSEXP = number_of_trees,
-                          N_postSEXP = N_post,
-                          N_burnSEXP = N_burn,
-                          delayed_proposalSEXP = delayed_proposal,
-                          powerSEXP = power,
-                          baseSEXP = base,
-                          p_growSEXP = p_grow,
-                          p_pruneSEXP = p_prune,
-                          nuSEXP = nu,
-                          lambdaSEXP = lambda,
-                          sigmaSEXP = sigma,
-                          sigma_knownSEXP = sigma_known,
-                          omegaSEXP = omega,
-                          param1SEXP = alpha_local,
-                          param2SEXP = alpha_global,
-                          prior_typeSEXP = "horseshoe", # Indicates Horseshoe ScaleMixture
-                          reversibleSEXP = TRUE,
-                          store_parametersSEXP = store_parameters,
-                          store_posterior_sampleSEXP = store_posterior_sample,
-                          n1SEXP = seed, 
-                          n2SEXP = 420,
-                          verboseSEXP = verbose)
-      }
-
-
+    # Determine prior guess of sigma 
+    if (is.null(sigma)) {
+      sigma_hat <- sd(y)      # Estimate sigma from data
+      sigma_known <- FALSE
     } else {
-      
-      # tau is specified; fit a Horseshoe with fixed global shrinkage
-      fit <- HorseTrees_cpp(nSEXP = n_train,
-                        pSEXP = p_features,
-                        n_testSEXP = n_test,
-                        X_trainSEXP = X_train,  
-                        ySEXP = y,
-                        status_indicatorSEXP = status,
-                        is_survivalSEXP = survival,
-                        X_testSEXP = X_test,  
-                        number_of_treesSEXP = number_of_trees,
-                        N_postSEXP = N_post,
-                        N_burnSEXP = N_burn,
-                        delayed_proposalSEXP = delayed_proposal,
-                        powerSEXP = power,
-                        baseSEXP = base,
-                        p_growSEXP = p_grow,
-                        p_pruneSEXP = p_prune,
-                        nuSEXP = nu,
-                        lambdaSEXP = lambda,
-                        sigmaSEXP = sigma,
-                        sigma_knownSEXP = sigma_known,
-                        omegaSEXP = omega,
-                        param1SEXP = alpha_local,
-                        param2SEXP = tau,
-                        prior_typeSEXP = "halfcauchy", # Indicates (or Horseshoe with fixed global shrink. param.)
-                        reversibleSEXP = TRUE,
-                        store_parametersSEXP = store_parameters,
-                        store_posterior_sampleSEXP = store_posterior_sample,
-                        n1SEXP = seed,        
-                        n2SEXP = 420,
-                        verboseSEXP = verbose)
+      sigma_hat <- sigma      # Use provided sigma
+      sigma_known <- TRUE
     }
-
-    # Recenter the data
-    fit$train_predictions = fit$train_predictions + y_mean
-    fit$test_predictions = fit$test_predictions + y_mean
-    fit$train_predictions_sample = fit$train_predictions_sample + y_mean
-    fit$test_predictions_sample = fit$test_predictions_sample + y_mean
-
+    
+    # Compute hyperparameters of error variance prior
+    qchi <- qchisq(1.0 - q, nu)
+    lambda <- (sigma_hat^2 * qchi) / nu
+    
+    # Compute mean and standardize  the outcome
+    y_mean <- mean(y)
+    y <- y - y_mean
+    y <- y / sigma_hat  # Standardize y
+    
+    fit <- HorseTrees_cpp(
+      nSEXP = n_train,
+      pSEXP = p_features,
+      n_testSEXP = n_test,
+      X_trainSEXP = X_train,
+      ySEXP = y,
+      status_indicatorSEXP = status,
+      is_survivalSEXP = survival,
+      X_testSEXP = X_test,
+      number_of_treesSEXP = number_of_trees,
+      N_postSEXP = N_post,
+      N_burnSEXP = N_burn,
+      delayed_proposalSEXP = delayed_proposal,
+      powerSEXP = power,
+      baseSEXP = base,
+      p_growSEXP = p_grow,
+      p_pruneSEXP = p_prune,
+      nuSEXP = nu,
+      lambdaSEXP = lambda,
+      sigmaSEXP = sigma_hat,
+      sigma_knownSEXP = sigma_known,
+      omegaSEXP = 1,
+      param1SEXP = local_hp,
+      param2SEXP = global_hp,
+      prior_typeSEXP = prior_type,
+      reversibleSEXP = TRUE,
+      store_parametersSEXP = FALSE,
+      store_posterior_sampleSEXP = store_posterior_sample,
+      n1SEXP = seed,
+      n2SEXP = 420,
+      verboseSEXP = verbose
+    )
+    
+    fit$train_predictions <- fit$train_predictions * sigma_hat + y_mean
+    fit$test_predictions <- fit$test_predictions * sigma_hat + y_mean
+    if (store_posterior_sample) {
+      fit$train_predictions_sample <- fit$train_predictions_sample * sigma_hat + y_mean
+      fit$test_predictions_sample <- fit$test_predictions_sample * sigma_hat + y_mean
+    }
   }
-  }
-  
-
   
   return(fit)
 }

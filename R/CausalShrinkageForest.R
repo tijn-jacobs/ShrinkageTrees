@@ -1,5 +1,6 @@
 #' @useDynLib ShrinkageTrees, .registration = TRUE
 #' @importFrom stats sd qchisq qnorm runif coef
+#' @importFrom Rcpp evalCpp
 #' @export
 CausalShrinkageForest <- function(y,
                              X_control_train,

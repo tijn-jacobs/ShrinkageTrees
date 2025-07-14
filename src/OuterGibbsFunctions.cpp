@@ -110,9 +110,7 @@ void UpdateSigma(
     residual_temp = y[k] - prediction[k];
     residual_sum2 += residual_temp * residual_temp;
   }
-
-  //  Rcpp::Rcout << "Residual sum of squares: " << residual_sum2 << std::endl;
-
+  
   sigma = std::sqrt((nu * lambda + residual_sum2) / random.chi_square(n + nu));
 
   if (sigma >= 10) sigma = 10;

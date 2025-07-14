@@ -22,7 +22,7 @@
 #include <stdexcept>   // 
 #include <memory>      // For dynamic memory management (e.g., std::shared_ptr)
 
-// Will be replaced by internal R functions / Rcpp Armadillo
+// Random number generation library
 #include "Random.h"
 
 #include "Rcpp.h"

@@ -3,7 +3,7 @@ Development area of R package ShrinkageTrees
 
 ## Installation
 
-You cannor (yet) install the released version of success from
+You cannot (yet) install the released version of success from
 [CRAN](https://CRAN.R-project.org) with:
 
 ``` r
