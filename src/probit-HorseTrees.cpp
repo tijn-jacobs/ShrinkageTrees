@@ -82,7 +82,7 @@ Rcpp::List probitHorseTrees_cpp(SEXP nSEXP,
     test_predictions_sample = Rcpp::NumericMatrix(N_post, n_test);
   }
   
-  // Random number generation
+  // Initialize the C-based random number generator
   arn random(n1, n2);
   
   // Map the input to the corresponding PriorType

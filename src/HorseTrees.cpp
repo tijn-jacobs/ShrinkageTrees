@@ -102,9 +102,9 @@ Rcpp::List HorseTrees_cpp(
   std::vector<size_t> cumulative_inclusion_count(p, 0);
   std::vector<std::vector<double>> variable_inclusion_prob;
   
-  // Random number generation
+  // Initialize the C-based random number generator
   arn random(n1, n2);
-  
+
   // Map the input to the corresponding PriorType
   PriorType prior;
   

@@ -51,7 +51,7 @@
 #'                        verbose = FALSE)
 #'
 #' @useDynLib ShrinkageTrees, .registration = TRUE
-#' @importFrom stats sd qchisq qnorm
+#' @importFrom stats sd qchisq qnorm runif
 #' @export
 
 HorseTrees <- function(y,
@@ -127,7 +127,8 @@ HorseTrees <- function(y,
   X_train <- as.numeric(t(X_train))
   
   # Set a random seed if not provided
-  if (is.null(seed)) seed <- as.integer(Sys.time())
+  # By taking a random number, we ensure compatibility with set.seed()
+  if (is.null(seed)) seed <- as.integer(runif(1, 1, 1000000))
 
   if (outcome_type == "right-censored") {
     

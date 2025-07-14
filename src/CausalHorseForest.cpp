@@ -268,8 +268,7 @@ Rcpp::List CausalHorseForest_cpp(
   // Setup a vector to access the trees
   std::vector<Tree>* trees_treat = forest_treat.GetTreesPointer();
 
-
-  // Initialize the random number generator
+  // Initialize the C-based random number generator
   arn random(n1, n2);
 
   // Start the clock
