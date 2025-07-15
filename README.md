@@ -8,15 +8,15 @@ The functions can be used for:
 
 1) High-dimensional prediction  
 2) High-dimensional causal inference 
-3) Estimaton of heterogeneous treatment effects
+3) Estimaton of heterogeneous (conditional average) treatment effects
 
 Supported outcome types: **continuous**, **binary**, and **right-censored survival times**.
 
 
 ## ✨ Features
 
-- Horseshoe, forest-wide horseshoe, empirical Bayes, and half-Cauchy priors
-- Flexible tree and forest-based non-linear modeling
+- Horseshoe, forest-wide horseshoe, empirical Bayes Horseshpe, and half-Cauchy priors
+- Flexible tree-based non-linear modeling fo the ATE and CATE
 - Separate control and treatment trees for causal effect decomposition
 - Supports survival data with right-censoring (accelerated failure time interpretation)
 - Efficient C++ backend via Rcpp
@@ -43,45 +43,48 @@ devtools::install_github("tijn-jacobs/ShrinkageTrees")
 ```r
 library(ShrinkageTrees)
 
-# Generate data
-n <- 50
-p <- 3
+n <- 100
+p <- 1000
+
+# Generate covariates
 X <- matrix(runif(n * p), ncol = p)
-y <- X[, 1] + rnorm(n)
+X_treat <- X_control <- X
+treatment <- rbinom(n, 1, X[, 1])
+tau <- 1 + X[, 2]/2 - X[, 3]/3 + X[, 4]/4
 
-# Fit a Shrinkage Tree model with standard horseshoe prior
-fit_hs <- ShrinkageTrees(
-  y = y,
-  X_train = X,
-  outcome_type = "continuous",
-  number_of_trees = 10,
-  prior_type = "horseshoe",
-  local_hp = 0.1 / sqrt(10),
-  global_hp = 0.1 / sqrt(10),
-  N_post = 10,
-  N_burn = 5,
-  verbose = FALSE,
+# Generate survival times (on log-scale)
+true_time <- X[, 1] + treatment * tau + rnorm(n)
+censor_time <- log(rexp(n, rate = 0.05))
+follow_up <- pmin(true_time, censor_time)
+status <- as.integer(true_time <= censor_time)
+
+# Fit a standard Causal Horseshoe Forest (without propensity score adjustment)
+fit_horseshoe <- CausalHorseForest(
+  y = follow_up,
+  status = status,
+  X_train_control = X_control,
+  X_train_treat = X_treat,
+  treatment_indicator_train = treatment,
+  outcome_type = "right-censored",
+  timescale = "lof",
+  number_of_trees = 200,
+  k = 0.1,
+  N_post = 5000,
+  N_burn = 5000,
   seed = 1
 )
 
-# Fit with half-Cauchy prior
-fit_hc <- ShrinkageTrees(
-  y = y,
-  X_train = X,
-  outcome_type = "continuous",
-  number_of_trees = 10,
-  prior_type = "half-cauchy",
-  local_hp = 1 / sqrt(10),
-  N_post = 10,
-  N_burn = 5,
-  verbose = FALSE,
-  seed = 1
-)
+# Posterior mean CATEs
+CATE_horseshoe <- colMeans(fit_horseshoe$train_predictions_sample_treat)
 
-# Compare posterior mean predictions
-plot(fit_hs$train_predictions, type = "l", col = "steelblue", ylim = range(c(fit_hs$train_predictions, fit_hc$train_predictions)), ylab = "Prediction", main = "ShrinkageTrees predictions")
-lines(fit_hc$train_predictions, col = "orange3")
-legend("topright", legend = c("Horseshoe", "Half-Cauchy"), col = c("steelblue", "orange3"), lty = 1)
+# Posteriors of the ATE
+post_ATE_horseshoe <- rowMeans(fit_horseshoe$train_predictions_sample_treat)
+
+# Posterior mean ATE
+ATE_horseshoe <- mean(post_ATE_horseshoe)
+
+# Plot the posterior of the ATE
+![Posterior ATE plot](man/figures/posterior_ate_plot.png)
 ```
 
 
@@ -100,7 +103,7 @@ The software is designed to be flexible and modular, allowing for a wide variety
 
 ## 📄 License
 
-This package is licensed under the **MIT License**.
+This package is licensed under the [MIT License](https://cran.r-project.org/web/licenses/MIT).
 
 
 ## 💬 Acknowledgments

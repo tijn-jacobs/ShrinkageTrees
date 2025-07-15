@@ -108,7 +108,7 @@
 #' X_treat <- X_control <- X
 #' treat <- rbinom(n, 1, X[,1])
 #' tau <- 2
-#' y <- X[, 1] + (0.5 - treatment) * tau + rnorm(n)
+#' y <- X[, 1] + (0.5 - treat) * tau + rnorm(n)
 #' 
 #' # Fit a standard Causal Horseshoe Forest
 #' fit_horseshoe <- CausalShrinkageForest(y = y,
@@ -151,12 +151,12 @@
 #' )
 #' 
 #' # Posterior mean CATEs
-#' CATE_horseshoe <- colMeans(fit_halfcauchy$train_predictions_sample_treat)
-#' CATE_halfcauchy <- colMeans(fit_horseshoe$train_predictions_sample_treat)
+#' CATE_horseshoe <- colMeans(fit_horseshoe$train_predictions_sample_treat)
+#' CATE_halfcauchy <- colMeans(fit_halfcauchy$train_predictions_sample_treat)
 #' 
 #' # Posteriors of the ATE
-#' post_ATE_horseshoe <- rowMeans(fit_halfcauchy$train_predictions_sample_treat)
-#' post_ATE_halfcauchy <- rowMeans(fit_horseshoe$train_predictions_sample_treat)
+#' post_ATE_horseshoe <- rowMeans(fit_horseshoe$train_predictions_sample_treat)
+#' post_ATE_halfcauchy <- rowMeans(fit_halfcauchy$train_predictions_sample_treat)
 #' 
 #' # Posterior mean ATE
 #' ATE_horseshoe <- mean(post_ATE_horseshoe)
