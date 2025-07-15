@@ -1,6 +1,6 @@
 # ShrinkageTrees <img src="https://img.shields.io/badge/R%3E%3D-4.2-blue" alt="R >= 4.2"> ![License: MIT](https://img.shields.io/badge/license-MIT-green) ![Lifecycle: experimental](https://img.shields.io/badge/lifecycle-experimental-orange) 
 <p align="right">
-  <img src="sticker/ShrinkageTrees_hex.png" width="150" style="margin-top:-30px;"/>
+  <img src="sticker/ShrinkageTrees_hex.png" width="150" style="margin-top:-10px;"/>
 </p>
 
 
