@@ -6,8 +6,9 @@ These models allow for **flexible global-local shrinkage priors** on tree step h
 
 The functions can be used for:
 
-✅ High-dimensional prediction  
-✅ Causal inference of heterogeneous treatment effects given high-dimensional covariates  
+1) High-dimensional prediction  
+2) High-dimensional causal inference 
+3) Estimaton of heterogeneous treatment effects
 
 Supported outcome types: **continuous**, **binary**, and **right-censored survival times**.
 
@@ -100,10 +101,6 @@ The software is designed to be flexible and modular, allowing for a wide variety
 ## 📄 License
 
 This package is licensed under the **MIT License**.
-
-
-
-
 
 
 ## 💬 Acknowledgments
