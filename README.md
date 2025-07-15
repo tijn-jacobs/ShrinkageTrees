@@ -12,6 +12,8 @@ The functions can be used for:
 
 Supported outcome types: **continuous**, **binary**, and **right-censored survival times**.
 
+The mathematical background and theoretical foundation for these models are described in the manuscript "Horseshoe Forests for High-Dimensional Causal Survival Analysis" by T. Jacobs, W. van Wieringen, and S. van der Pas (2025).
+
 
 ## ✨ Features
 
@@ -43,6 +45,7 @@ devtools::install_github("tijn-jacobs/ShrinkageTrees")
 ```r
 library(ShrinkageTrees)
 
+set.seed(42)
 n <- 100
 p <- 1000
 
@@ -71,7 +74,7 @@ fit_horseshoe <- CausalHorseForest(
   k = 0.1,
   N_post = 5000,
   N_burn = 5000,
-  seed = 1
+  store_posterior_sample = TRUE
 )
 
 # Posterior mean CATEs
