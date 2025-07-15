@@ -1,7 +1,7 @@
 Package: ShrinkageTrees
 Type: Package
 Title: Regression Trees with Shrinkage Priors
-Version: 1.0
+Version: 1.0.0
 Date: 2025-07-12
 Authors@R: c(person("Tijn", "Jacobs", role = c("aut", "cre"), 
                     email = "t.jacobs@vu.nl", 

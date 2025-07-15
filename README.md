@@ -1,37 +1,116 @@
-## ShrinkageTrees
-This package provides functions for fitting Horseshoe Trees, Causal Horseshoe Forests, and their more general counterparts, Shrinkage Trees and Causal Shrinkage Forests. These models allow for flexible global-local shrinkage priors on the tree step heights.
+# ShrinkageTrees <img src="https://img.shields.io/badge/R%3E%3D-4.2-blue" alt="R >= 4.2"> ![License: MIT](https://img.shields.io/badge/license-MIT-green) ![Lifecycle: experimental](https://img.shields.io/badge/lifecycle-experimental-orange)
 
-The functions can be used for (1) high-dimensional prediction and (2) causal inference of heterogeneous treatment effects given high-dimensional covariates. Outcomes can be continuous, binary, or survival times.
+This package provides functions for fitting Horseshoe Trees, Causal Horseshoe Forests, and their more general counterparts: Shrinkage Trees and Causal Shrinkage Forests.  
 
-## Installation
+These models allow for **flexible global-local shrinkage priors** on tree step heights, enabling robust modeling in high-dimensional settings.
 
-You cannot install the released version of ShrinkageTrees from yet:
-[CRAN](https://CRAN.R-project.org) with:
+The functions can be used for:
 
-``` r
+✅ High-dimensional prediction  
+✅ Causal inference of heterogeneous treatment effects given high-dimensional covariates  
+
+Supported outcome types: **continuous**, **binary**, and **right-censored survival times**.
+
+---
+
+## ✨ Features
+
+- Horseshoe, forest-wide horseshoe, empirical Bayes, and half-Cauchy priors
+- Flexible tree and forest-based non-linear modeling
+- Separate control and treatment trees for causal effect decomposition
+- Supports survival data with right-censoring (accelerated failure time interpretation)
+- Efficient C++ backend via Rcpp
+
+---
+
+## 📦 Installation
+
+You cannot install the released version of ShrinkageTrees from [CRAN](https://CRAN.R-project.org) yet:
+
+```r
 # install.packages("ShrinkageTrees")
 ```
 
-You can install the development version from [GitHub](https://github.com/) with:
+You can install the development version from [GitHub](https://github.com/tijn-jacobs/ShrinkageTrees):
 
-``` r
-# install.packages("devtools")
+```r
+# Install devtools if not already installed
+install.packages("devtools")
 devtools::install_github("tijn-jacobs/ShrinkageTrees")
 ```
 
+---
+
+## 🚀 Example
+
+```r
+library(ShrinkageTrees)
+
+# Generate data
+n <- 50
+p <- 3
+X <- matrix(runif(n * p), ncol = p)
+y <- X[, 1] + rnorm(n)
+
+# Fit a Shrinkage Tree model with standard horseshoe prior
+fit_hs <- ShrinkageTrees(
+  y = y,
+  X_train = X,
+  outcome_type = "continuous",
+  number_of_trees = 10,
+  prior_type = "horseshoe",
+  local_hp = 0.1 / sqrt(10),
+  global_hp = 0.1 / sqrt(10),
+  N_post = 10,
+  N_burn = 5,
+  verbose = FALSE,
+  seed = 1
+)
+
+# Fit with half-Cauchy prior
+fit_hc <- ShrinkageTrees(
+  y = y,
+  X_train = X,
+  outcome_type = "continuous",
+  number_of_trees = 10,
+  prior_type = "half-cauchy",
+  local_hp = 1 / sqrt(10),
+  N_post = 10,
+  N_burn = 5,
+  verbose = FALSE,
+  seed = 1
+)
+
+# Compare posterior mean predictions
+plot(fit_hs$train_predictions, type = "l", col = "steelblue", ylim = range(c(fit_hs$train_predictions, fit_hc$train_predictions)), ylab = "Prediction", main = "ShrinkageTrees predictions")
+lines(fit_hc$train_predictions, col = "orange3")
+legend("topright", legend = c("Horseshoe", "Half-Cauchy"), col = c("steelblue", "orange3"), lty = 1)
+```
+
+---
+
+## 📄 Documentation
+
+- In R: `?ShrinkageTrees`, `?HorseTrees`, `?CausalHorseForest`, and `?CausalShrinkageForest` for detailed help.
+- Examples and parameter descriptions can be found in each function’s documentation.
+
+---
+
+## 🤝 Contributing
+
+Contributions are welcome! Feel free to open an [issue](https://github.com/tijn-jacobs/ShrinkageTrees/issues) or submit a pull request. 
 
 
+---
 
-## Note to self
- 
-How to compile the package:
-* step 1: (in R) compileAttributes("/Users/tijnjacobs/Library/CloudStorage/OneDrive-VrijeUniversiteitAmsterdam/Documents/GitHub/ShrinkageTrees")
-* step 2: (in terminal) R CMD build /Users/tijnjacobs/Library/CloudStorage/OneDrive-VrijeUniversiteitAmsterdam/Documents/GitHub/ShrinkageTrees
-* step 3: (in R) install.packages("/Users/tijnjacobs/Library/CloudStorage/OneDrive-VrijeUniversiteitAmsterdam/Documents/GitHub/ShrinkageTrees/ShrinkageTrees_1.0.tar.gz", repos=NULL, type='source')
+## 📄 License
 
+This package is licensed under the **MIT License**.
 
+---
 
+## 💬 Acknowledgments
 
+This package was developed to support flexible, interpretable tree-based modeling with strong shrinkage priors, useful for both prediction and causal inference in high-dimensional settings. Feedback and collaborations are always welcome!
 
-
-This package includes data derived from the pdacR package (MIT license), by Richard A. Moffitt. 
+---
