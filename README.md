@@ -11,7 +11,6 @@ The functions can be used for:
 
 Supported outcome types: **continuous**, **binary**, and **right-censored survival times**.
 
----
 
 ## ✨ Features
 
@@ -20,8 +19,6 @@ Supported outcome types: **continuous**, **binary**, and **right-censored surviv
 - Separate control and treatment trees for causal effect decomposition
 - Supports survival data with right-censoring (accelerated failure time interpretation)
 - Efficient C++ backend via Rcpp
-
----
 
 ## 📦 Installation
 
@@ -39,7 +36,6 @@ install.packages("devtools")
 devtools::install_github("tijn-jacobs/ShrinkageTrees")
 ```
 
----
 
 ## 🚀 Example
 
@@ -87,30 +83,29 @@ lines(fit_hc$train_predictions, col = "orange3")
 legend("topright", legend = c("Horseshoe", "Half-Cauchy"), col = c("steelblue", "orange3"), lty = 1)
 ```
 
----
 
 ## 📄 Documentation
 
 - In R: `?ShrinkageTrees`, `?HorseTrees`, `?CausalHorseForest`, and `?CausalShrinkageForest` for detailed help.
 - Examples and parameter descriptions can be found in each function’s documentation.
 
----
 
 ## 🤝 Contributing
 
 Contributions are welcome! Feel free to open an [issue](https://github.com/tijn-jacobs/ShrinkageTrees/issues) or submit a pull request. 
+The software is designed to be flexible and modular, allowing for a wide variety of global-local shrinkage priors to be easily implemented and extended in future versions.
 
 
----
 
 ## 📄 License
 
 This package is licensed under the **MIT License**.
 
----
+
+
+
+
 
 ## 💬 Acknowledgments
 
-This package was developed to support flexible, interpretable tree-based modeling with strong shrinkage priors, useful for both prediction and causal inference in high-dimensional settings. Feedback and collaborations are always welcome!
-
----
+This project has received funding from the European Research Council (ERC) under the European Union’s Horizon Europe program under Grant agreement No. 101074082. Views and opinions expressed are however those of the author(s) only and do not necessarily reflect those of the European Union or the European Research Council Executive Agency. Neither the European Union nor the granting authority can be held responsible for them
