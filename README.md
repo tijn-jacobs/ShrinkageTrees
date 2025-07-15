@@ -84,8 +84,8 @@ post_ATE_horseshoe <- rowMeans(fit_horseshoe$train_predictions_sample_treat)
 ATE_horseshoe <- mean(post_ATE_horseshoe)
 
 # Plot the posterior of the ATE
-![Posterior ATE plot](man/figures/posterior_ate_plot.png)
 ```
+![Posterior ATE plot](man/figures/posterior_ate_plot.png)
 
 
 ## 📄 Documentation
