@@ -2,7 +2,7 @@
 
 This package provides functions for fitting Horseshoe Trees, Causal Horseshoe Forests, and their more general counterparts: Shrinkage Trees and Causal Shrinkage Forests.  
 
-These models allow for **flexible global-local shrinkage priors** on tree step heights, enabling robust modeling in high-dimensional settings.
+These models allow for global-local shrinkage priors on tree step heights, enabling adaptive modeling in high-dimensional settings.
 
 The functions can be used for:
 
@@ -10,7 +10,7 @@ The functions can be used for:
 2) High-dimensional causal inference 
 3) Estimaton of heterogeneous (conditional average) treatment effects
 
-Supported outcome types: **continuous**, **binary**, and **right-censored survival times**.
+Supported outcome types: continuous, binary, and **right-censored survival times**.
 
 The mathematical background and theoretical foundation for these models are described in the manuscript "Horseshoe Forests for High-Dimensional Causal Survival Analysis" by T. Jacobs, W. van Wieringen, and S. van der Pas (2025).
 
