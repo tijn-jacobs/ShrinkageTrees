@@ -19,11 +19,14 @@
 #' }
 censored_info <- function(y, status) {
   
-  if (requireNamespace("afthd", quietly = TRUE)) {
-    # Placeholder: afthd implementation can be added here later
-    warning("afthd method not yet implemented; falling back to survreg or naive estimate.")
+  # Currently, version of afthd does not work
+  # if (requireNamespace("afthd", quietly = TRUE)) {
+  #   # Placeholder: afthd implementation can be added here later
+  #   warning("afthd method not yet implemented; falling back to survreg or naive estimate.")
     
-  } else if (requireNamespace("survival", quietly = TRUE)) {
+  # } else 
+  
+  if (requireNamespace("survival", quietly = TRUE)) {
     
     fit <- survival::survreg(survival::Surv(y, status) ~ 1, dist = "gaussian")
     mu <- as.numeric(fit$coefficients[1])

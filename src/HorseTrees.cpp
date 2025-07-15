@@ -358,7 +358,7 @@ Rcpp::List HorseTrees_cpp(
     results["local_shrinkage_parameters"] = store_local_parameters;
     results["local_splitting_variables"] = store_local_indices;
   }
-  if (prior_type == "horseshoe_fw" && store_parameters) {
+  if (prior_type == "horseshoe_fw") {
     results["forestwide_shrinkage"] = store_forestwide_shrinkage;
   } 
   

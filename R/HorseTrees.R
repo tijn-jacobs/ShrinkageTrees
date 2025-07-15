@@ -10,7 +10,7 @@
 #' For binary outcomes, the function uses a probit link formulation.
 #' For right-censored outcomes (survival data), the function can handle 
 #' follow-up times either on the original time scale or log-transformed.
-#' Generalized implementation with multiple prior possibilites is given by 
+#' Generalized implementation with multiple prior possibilities is given by 
 #' \code{\link{ShrinkageTrees}}.
 #' 
 #' @examples
@@ -125,6 +125,8 @@
 #'   probabilities (only for `outcome_type = "binary"` and if 
 #'   `store_posterior_sample = TRUE`).}
 #' }
+#' 
+#' @seealso \code{\code{\link{ShrinkageTrees}}, \link{CausalHorseForest}}, \code{\link{CausalShrinkageForest}}
 #' 
 #' @importFrom Rcpp evalCpp
 #' @useDynLib ShrinkageTrees, .registration = TRUE

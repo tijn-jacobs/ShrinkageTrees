@@ -127,7 +127,7 @@ treatment effects (if \code{store_posterior_sample = TRUE}).}
 }
 }
 \description{
-This function fits a Causal Horseshoe Forest.
+This function fits a (Bayesian) Causal Horseshoe Forest.
 It can be used for estimation of conditional average treatments effects of
 survival data given high-dimensional covariates. The outcome is decomposed in
 a prognostic part (control) and a treatment effect part. For both of these,
@@ -307,5 +307,5 @@ abline(v = 0, col = "black", lwd = 2)
 
 }
 \seealso{
-\code{\link{HorseTrees}}, \code{\link{ShrinkageTrees}}
+\code{\link{HorseTrees}}, \code{\link{ShrinkageTrees}}, \code{\link{CausalShrinkageForest}}
 }

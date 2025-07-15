@@ -263,6 +263,11 @@ test_that("ShrinkageTrees (horseshoe_fw) works for continuous outcome", {
   expect_true(sd(fit$test_predictions) > 0)
   expect_true(sd(fit$test_predictions_sample) > 0)
   
+  # Check forestwide shrinkage vectors
+  expect_true(is.numeric(fit$forestwide_shrinkage))
+  expect_length(fit$forestwide_shrinkage, 10)
+  expect_true(all(fit$forestwide_shrinkage >= 0))
+  
   # Check reproducibility
   fit2 <- ShrinkageTrees(y = y, 
                          X_train = X,
@@ -348,7 +353,7 @@ test_that("ShrinkageTrees (horseshoe_EB) works for continuous outcome", {
 })
 
 
-test_that("ShrinkageTrees (horseshoe_EB) works for continuous outcome", {
+test_that("ShrinkageTrees (half-cauchy) works for continuous outcome", {
   
   # Generate data
   X <- matrix(runif(50 * 3), ncol = 3)

@@ -1,6 +1,6 @@
 #' Causal Horseshoe Forests
 #'
-#' This function fits a Causal Horseshoe Forest. 
+#' This function fits a (Bayesian) Causal Horseshoe Forest. 
 #' It can be used for estimation of conditional average treatments effects of 
 #' survival data given high-dimensional covariates. The outcome is decomposed in
 #' a prognostic part (control) and a treatment effect part. For both of these, 
@@ -80,8 +80,6 @@
 #' This approach is designed for robust estimation of heterogeneous treatment 
 #' effects in high-dimensional settings.
 #' It supports continuous and right-censored survival outcomes.
-#' 
-#' @seealso \code{\link{HorseTrees}}, \code{\link{ShrinkageTrees}}
 #' 
 #' @examples
 #' # Example: Continuous outcome and homogenuous treatment effect
@@ -247,6 +245,8 @@
 #' abline(v = 0, col = "black", lwd = 2)
 #' 
 #' }
+#' 
+#' @seealso \code{\link{HorseTrees}}, \code{\link{ShrinkageTrees}}, \code{\link{CausalShrinkageForest}}
 #' 
 #' @importFrom Rcpp evalCpp
 #' @useDynLib ShrinkageTrees, .registration = TRUE

@@ -7,40 +7,234 @@
 CausalShrinkageForest(
   y,
   status = NULL,
-  X_control_train,
-  X_treat_train,
+  X_train_control,
+  X_train_treat,
   treatment_indicator_train,
-  X_control_test = NULL,
-  X_treat_test = NULL,
+  X_test_control = NULL,
+  X_test_treat = NULL,
   treatment_indicator_test = NULL,
+  outcome_type = "continuous",
+  timescale = "time",
   number_of_trees_control = 200,
   number_of_trees_treat = 200,
-  N_post = 5000,
-  N_burn = 5000,
-  delayed_proposal = 5,
+  prior_type_control = "horseshoe",
+  prior_type_treat = "horseshoe",
+  local_hp_control,
+  local_hp_treat,
+  global_hp_control = NULL,
+  global_hp_treat = NULL,
   power = 2,
   base = 0.95,
   p_grow = 0.4,
   p_prune = 0.4,
   nu = 3,
   q = 0.9,
-  alpha_local_control,
-  alpha_local_treat,
-  alpha_global_control = NULL,
-  alpha_global_treat = NULL,
-  tau_control = NULL,
-  tau_treat = NULL,
-  forest_wide_shrinkage_control = FALSE,
-  forest_wide_shrinkage_treat = FALSE,
   sigma = NULL,
-  y_mean = NULL,
-  store_posterior_sample_control = FALSE,
-  store_posterior_sample_treat = FALSE,
+  N_post = 5000,
+  N_burn = 5000,
+  delayed_proposal = 5,
+  store_posterior_sample = FALSE,
   seed = NULL,
-  scale = "time",
   verbose = TRUE
 )
 }
+\arguments{
+\item{y}{Outcome vector. Numeric. Represents continuous outcomes or follow-up times.}
+
+\item{status}{Optional event indicator vector (1 = event occurred, 0 = censored).
+Required when \code{outcome_type = "right-censored"}.}
+
+\item{X_train_control}{Covariate matrix for the control forest. Rows correspond to samples,
+columns to covariates.}
+
+\item{X_train_treat}{Covariate matrix for the treatment forest.}
+
+\item{treatment_indicator_train}{Vector indicating treatment assignment for training samples
+(1 = treated, 0 = control).}
+
+\item{X_test_control}{Optional covariate matrix for control forest test data. Defaults to
+column means of \code{X_train_control} if NULL.}
+
+\item{X_test_treat}{Optional covariate matrix for treatment forest test data. Defaults to
+column means of \code{X_train_treat} if NULL.}
+
+\item{treatment_indicator_test}{Optional vector indicating treatment assignment for test data.}
+
+\item{outcome_type}{Type of outcome: one of \code{"continuous"} or \code{"right-censored"}.
+Default is \code{"continuous"}.}
+
+\item{timescale}{For survival outcomes: either \code{"time"} (original scale, log-transformed
+internally) or \code{"log"} (already log-transformed). Default is \code{"time"}.}
+
+\item{number_of_trees_control}{Number of trees in the control forest. Default is 200.}
+
+\item{number_of_trees_treat}{Number of trees in the treatment forest. Default is 200.}
+
+\item{prior_type_control}{Type of prior on control forest step heights. One of
+\code{"horseshoe"}, \code{"horseshoe_fw"}, \code{"horseshoe_EB"}, or \code{"half-cauchy"}.
+Default is \code{"horseshoe"}.}
+
+\item{prior_type_treat}{Type of prior on treatment forest step heights. Same options as
+\code{prior_type_control}.}
+
+\item{local_hp_control}{Local hyperparameter controlling shrinkage on individual steps
+(control forest). Required for all prior types.}
+
+\item{local_hp_treat}{Local hyperparameter for treatment forest.}
+
+\item{global_hp_control}{Global hyperparameter for control forest. Required for horseshoe-type
+priors; ignored for \code{"half-cauchy"}.}
+
+\item{global_hp_treat}{Global hyperparameter for treatment forest.}
+
+\item{power}{Power parameter for tree structure prior. Default is 2.0.}
+
+\item{base}{Base parameter for tree structure prior. Default is 0.95.}
+
+\item{p_grow}{Probability of proposing a grow move. Default is 0.4.}
+
+\item{p_prune}{Probability of proposing a prune move. Default is 0.4.}
+
+\item{nu}{Degrees of freedom for the error variance prior. Default is 3.}
+
+\item{q}{Quantile parameter for error variance prior. Default is 0.90.}
+
+\item{sigma}{Optional known standard deviation of the outcome. If NULL, estimated from data.}
+
+\item{N_post}{Number of posterior samples to store. Default is 5000.}
+
+\item{N_burn}{Number of burn-in iterations. Default is 5000.}
+
+\item{delayed_proposal}{Number of delayed iterations before proposal updates. Default is 5.}
+
+\item{store_posterior_sample}{Logical; whether to store posterior samples of predictions.
+Default is \code{FALSE}.}
+
+\item{seed}{Random seed for reproducibility. Default is \code{NULL}.}
+
+\item{verbose}{Logical; whether to print verbose output. Default is \code{TRUE}.}
+}
+\value{
+A list containing:
+\describe{
+\item{train_predictions}{Posterior mean predictions on training data (combined forest).}
+\item{test_predictions}{Posterior mean predictions on test data (combined forest).}
+\item{train_predictions_control}{Estimated control outcomes on training data.}
+\item{test_predictions_control}{Estimated control outcomes on test data.}
+\item{train_predictions_treat}{Estimated treatment effects on training data.}
+\item{test_predictions_treat}{Estimated treatment effects on test data.}
+\item{sigma}{Vector of posterior samples for the error standard deviation.}
+\item{acceptance_ratio_control}{Average acceptance ratio in control forest.}
+\item{acceptance_ratio_treat}{Average acceptance ratio in treatment forest.}
+\item{train_predictions_sample_control}{Matrix of posterior samples for control predictions
+(if \code{store_posterior_sample = TRUE}).}
+\item{test_predictions_sample_control}{Matrix of posterior samples for control predictions
+(if \code{store_posterior_sample = TRUE}).}
+\item{train_predictions_sample_treat}{Matrix of posterior samples for treatment effects
+(if \code{store_posterior_sample = TRUE}).}
+\item{test_predictions_sample_treat}{Matrix of posterior samples for treatment effects
+(if \code{store_posterior_sample = TRUE}).}
+}
+}
 \description{
-DESCRIPTION TBD.
+Fits a (Bayesian) Causal Shrinkage Forest model for estimating heterogeneous treatment effects.
+This function generalizes \code{\link{CausalHorseForest}} by allowing flexible
+global-local shrinkage priors on the step heights in both the control and treatment forests.
+It supports continuous and right-censored survival outcomes.
+}
+\details{
+This function is a flexible generalization of \code{CausalHorseForest}.
+The Causal Shrinkage Forest model decomposes the outcome into a prognostic
+(control) and a treatment effect part. Each part is modeled by its own
+shrinkage tree ensemble, with separate flexible global-local shrinkage
+priors. It is particularly useful for estimating heterogeneous treatment
+effects in high-dimensional settings.
+
+The \code{horseshoe} prior is the fully Bayesian global-local shrinkage
+prior, where both the global and local shrinkage parameters are assigned
+half-Cauchy distributions with scale hyperparameters \code{global_hp} and
+\code{local_hp}, respectively. The global shrinkage parameter is defined
+separately for each tree, allowing adaptive regularization per tree.
+
+The \code{horseshoe_fw} prior (forest-wide horseshoe) is similar to
+\code{"horseshoe"}, except that the global shrinkage parameter is shared
+across all trees in the forest simultaneously.
+
+The \code{horseshoe_EB} prior is an empirical Bayes variant of the
+\code{"horseshoe"} prior. Here, the global shrinkage parameter (\eqn{\tau})
+is not assigned a prior distribution but instead must be specified directly
+using \code{global_hp}, while local shrinkage parameters still follow
+half-Cauchy priors.
+
+The \code{half-cauchy} prior considers only local shrinkage and does not
+include a global shrinkage component. It places a half-Cauchy prior on each
+local shrinkage parameter with scale hyperparameter \code{local_hp}.
+}
+\examples{
+# Example: Continuous outcome, homogenuous treatment effect, two priors
+n <- 50
+p <- 3
+X <- matrix(runif(n * p), ncol = p)
+X_treat <- X_control <- X
+treat <- rbinom(n, 1, X[,1])
+tau <- 2
+y <- X[, 1] + (0.5 - treatment) * tau + rnorm(n)
+
+# Fit a standard Causal Horseshoe Forest
+fit_horseshoe <- CausalShrinkageForest(y = y,
+                                       X_train_control = X_control,
+                                       X_train_treat = X_treat,
+                                       treatment_indicator_train = treat,
+                                       outcome_type = "continuous",
+                                       number_of_trees_treat = 5,
+                                       number_of_trees_control = 5,
+                                       prior_type_control = "horseshoe",
+                                       prior_type_treat = "horseshoe",
+                                       local_hp_control = 0.1/sqrt(5),
+                                       local_hp_treat = 0.1/sqrt(5),
+                                       global_hp_control = 0.1/sqrt(5),
+                                       global_hp_treat = 0.1/sqrt(5),
+                                       N_post = 10,
+                                       N_burn = 5,
+                                       store_posterior_sample = TRUE,
+                                       verbose = FALSE,
+                                       seed = 1
+)
+
+# Fit a Causal Shrinkage Forest with half-cauchy prior
+fit_halfcauchy <- CausalShrinkageForest(y = y,
+                                        X_train_control = X_control,
+                                        X_train_treat = X_treat,
+                                        treatment_indicator_train = treat,
+                                        outcome_type = "continuous",
+                                        number_of_trees_treat = 5,
+                                        number_of_trees_control = 5,
+                                        prior_type_control = "half-cauchy",
+                                        prior_type_treat = "half-cauchy",
+                                        local_hp_control = 1/sqrt(5),
+                                        local_hp_treat = 1/sqrt(5),
+                                        N_post = 10,
+                                        N_burn = 5,
+                                        store_posterior_sample = TRUE,
+                                        verbose = FALSE,
+                                        seed = 1
+)
+
+# Posterior mean CATEs
+CATE_horseshoe <- colMeans(fit_halfcauchy$train_predictions_sample_treat)
+CATE_halfcauchy <- colMeans(fit_horseshoe$train_predictions_sample_treat)
+
+# Posteriors of the ATE
+post_ATE_horseshoe <- rowMeans(fit_halfcauchy$train_predictions_sample_treat)
+post_ATE_halfcauchy <- rowMeans(fit_horseshoe$train_predictions_sample_treat)
+
+# Posterior mean ATE
+ATE_horseshoe <- mean(post_ATE_horseshoe)
+ATE_halfcauchy <- mean(post_ATE_halfcauchy)
+
+
+}
+\seealso{
+\code{\link{CausalHorseForest}}, \code{\link{ShrinkageTrees}},
+\code{\link{HorseTrees}}
 }

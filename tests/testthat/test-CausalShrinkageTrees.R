@@ -1,0 +1,278 @@
+test_that("CausalShrinkageForest works for continuous outcome", {
+  
+  n <- 50
+  p <- 3
+  X <- matrix(runif(n * p), ncol = p)
+  X_treat <- X_control <- X
+  treatment <- rbinom(n, 1, X[, 1])
+  tau <- 2
+  y <- X[, 1] + (0.5 - treatment) * tau + rnorm(n)
+  
+  # Fit the model
+  fit <- CausalShrinkageForest(
+    y = y,
+    X_train_control = X_control,
+    X_train_treat = X_treat,
+    treatment_indicator_train = treatment,
+    outcome_type = "continuous",
+    number_of_trees_treat = 5,
+    number_of_trees_control = 5,
+    prior_type_control = "horseshoe",
+    prior_type_treat = "horseshoe",
+    local_hp_control = 0.1 / sqrt(5),
+    local_hp_treat = 0.1 / sqrt(5),
+    global_hp_control = 0.1 / sqrt(5),
+    global_hp_treat = 0.1 / sqrt(5),
+    N_post = 10,
+    N_burn = 5,
+    store_posterior_sample = TRUE,
+    verbose = FALSE,
+    seed = 1
+  )
+  
+  # Basic checks
+  expect_type(fit, "list")
+  expect_true("train_predictions" %in% names(fit))
+  expect_length(fit$train_predictions, n)
+  expect_length(fit$sigma, 15)  # N_post + N_burn = 10 + 5
+  
+  # Numerical checks
+  expect_false(any(is.na(unlist(fit))))
+  expect_true(all(is.finite(unlist(fit))))
+  
+  # Check acceptance ratios
+  expect_length(fit$acceptance_ratio_control, 1)
+  expect_length(fit$acceptance_ratio_treat, 1)
+  expect_true(fit$acceptance_ratio_control >= 0 & fit$acceptance_ratio_control <= 1)
+  expect_true(fit$acceptance_ratio_treat >= 0 & fit$acceptance_ratio_treat <= 1)
+  
+  # Check posterior samples
+  expect_equal(dim(fit$train_predictions_sample_control), c(10, n))
+  expect_equal(dim(fit$train_predictions_sample_treat), c(10, n))
+  
+  # Check predictions are not all constant
+  expect_true(sd(fit$train_predictions) > 0)
+  expect_true(sd(fit$train_predictions_control) > 0)
+  expect_true(sd(fit$train_predictions_treat) > 0)
+  
+  # Check reproducibility
+  fit2 <- CausalShrinkageForest(
+    y = y,
+    X_train_control = X_control,
+    X_train_treat = X_treat,
+    treatment_indicator_train = treatment,
+    outcome_type = "continuous",
+    number_of_trees_treat = 5,
+    number_of_trees_control = 5,
+    prior_type_control = "horseshoe",
+    prior_type_treat = "horseshoe",
+    local_hp_control = 0.1 / sqrt(5),
+    local_hp_treat = 0.1 / sqrt(5),
+    global_hp_control = 0.1 / sqrt(5),
+    global_hp_treat = 0.1 / sqrt(5),
+    N_post = 10,
+    N_burn = 5,
+    store_posterior_sample = TRUE,
+    verbose = FALSE,
+    seed = 1
+  )
+  expect_equal(fit$train_predictions, fit2$train_predictions)
+})
+
+
+test_that("CausalShrinkageForest works for right-censored survival outcome", {
+  
+  n <- 50
+  p <- 3
+  X <- matrix(runif(n * p), ncol = p)
+  X_treat <- X_control <- X
+  treatment <- rbinom(n, 1, 0.5)
+  tau <- -0.5  # protective effect
+  
+  log_T0 <- X[, 1] + rnorm(n)
+  log_T <- log_T0 + treatment * tau
+  true_time <- exp(log_T)
+  
+  censor_time <- rexp(n, rate = 0.1)
+  time_obs <- pmin(true_time, censor_time)
+  status <- as.integer(true_time <= censor_time)
+  
+  # Fit the model
+  fit <- CausalShrinkageForest(
+    y = time_obs,
+    status = status,
+    X_train_control = X_control,
+    X_train_treat = X_treat,
+    treatment_indicator_train = treatment,
+    outcome_type = "right-censored",
+    timescale = "log",
+    number_of_trees_treat = 5,
+    number_of_trees_control = 5,
+    prior_type_control = "horseshoe",
+    prior_type_treat = "horseshoe",
+    local_hp_control = 0.1 / sqrt(5),
+    local_hp_treat = 0.1 / sqrt(5),
+    global_hp_control = 0.1 / sqrt(5),
+    global_hp_treat = 0.1 / sqrt(5),
+    N_post = 10,
+    N_burn = 5,
+    store_posterior_sample = TRUE,
+    verbose = FALSE,
+    seed = 1
+  )
+  
+  # Basic checks
+  expect_type(fit, "list")
+  expect_true("train_predictions" %in% names(fit))
+  expect_length(fit$train_predictions, n)
+  expect_length(fit$sigma, 15)
+  
+  # Numerical checks
+  expect_false(any(is.na(unlist(fit))))
+  expect_true(all(is.finite(unlist(fit))))
+  
+  # Check acceptance ratios
+  expect_length(fit$acceptance_ratio_control, 1)
+  expect_length(fit$acceptance_ratio_treat, 1)
+  expect_true(fit$acceptance_ratio_control >= 0 & fit$acceptance_ratio_control <= 1)
+  expect_true(fit$acceptance_ratio_treat >= 0 & fit$acceptance_ratio_treat <= 1)
+  
+  # Check posterior samples
+  expect_equal(dim(fit$train_predictions_sample_control), c(10, n))
+  expect_equal(dim(fit$train_predictions_sample_treat), c(10, n))
+  
+  # Check predictions are not all constant
+  expect_true(sd(fit$train_predictions) > 0)
+  expect_true(sd(fit$train_predictions_control) > 0)
+  expect_true(sd(fit$train_predictions_treat) > 0)
+  
+  # Check reproducibility
+  fit2 <- CausalShrinkageForest(
+    y = time_obs,
+    status = status,
+    X_train_control = X_control,
+    X_train_treat = X_treat,
+    treatment_indicator_train = treatment,
+    outcome_type = "right-censored",
+    timescale = "log",
+    number_of_trees_treat = 5,
+    number_of_trees_control = 5,
+    prior_type_control = "horseshoe",
+    prior_type_treat = "horseshoe",
+    local_hp_control = 0.1 / sqrt(5),
+    local_hp_treat = 0.1 / sqrt(5),
+    global_hp_control = 0.1 / sqrt(5),
+    global_hp_treat = 0.1 / sqrt(5),
+    N_post = 10,
+    N_burn = 5,
+    store_posterior_sample = TRUE,
+    verbose = FALSE,
+    seed = 1
+  )
+  expect_equal(fit$train_predictions, fit2$train_predictions)
+})
+
+
+test_that("CausalShrinkageForest works for continuous outcome with half-cauchy prior", {
+  
+  n <- 50
+  p <- 3
+  X <- matrix(runif(n * p), ncol = p)
+  X_treat <- X_control <- X
+  treatment <- rbinom(n, 1, X[, 1])
+  tau <- 2
+  y <- X[, 1] + (0.5 - treatment) * tau + rnorm(n)
+  
+  fit <- CausalShrinkageForest(
+    y = y,
+    X_train_control = X_control,
+    X_train_treat = X_treat,
+    treatment_indicator_train = treatment,
+    outcome_type = "continuous",
+    number_of_trees_treat = 5,
+    number_of_trees_control = 5,
+    prior_type_control = "half-cauchy",
+    prior_type_treat = "half-cauchy",
+    local_hp_control = 1 / sqrt(5),
+    local_hp_treat = 1 / sqrt(5),
+    N_post = 10,
+    N_burn = 5,
+    store_posterior_sample = TRUE,
+    verbose = FALSE,
+    seed = 1
+  )
+  
+  expect_type(fit, "list")
+  expect_true("train_predictions" %in% names(fit))
+  expect_length(fit$train_predictions, n)
+  expect_length(fit$sigma, 15)
+  expect_false(any(is.na(unlist(fit))))
+  expect_true(all(is.finite(unlist(fit))))
+  expect_true(sd(fit$train_predictions) > 0)
+  expect_true(sd(fit$train_predictions_control) > 0)
+  expect_true(sd(fit$train_predictions_treat) > 0)
+  expect_equal(dim(fit$train_predictions_sample_control), c(10, n))
+  expect_equal(dim(fit$train_predictions_sample_treat), c(10, n))
+})
+
+test_that("CausalShrinkageForest works for continuous outcome with horseshoe_fw prior", {
+  
+  n <- 50
+  p <- 3
+  X <- matrix(runif(n * p), ncol = p)
+  X_treat <- X_control <- X
+  treatment <- rbinom(n, 1, X[, 1])
+  tau <- 2
+  y <- X[, 1] + (0.5 - treatment) * tau + rnorm(n)
+  
+  fit <- CausalShrinkageForest(
+    y = y,
+    X_train_control = X_control,
+    X_train_treat = X_treat,
+    treatment_indicator_train = treatment,
+    outcome_type = "continuous",
+    number_of_trees_treat = 5,
+    number_of_trees_control = 5,
+    prior_type_control = "horseshoe_fw",
+    prior_type_treat = "horseshoe_fw",
+    local_hp_control = 0.1 / sqrt(5),
+    local_hp_treat = 0.1 / sqrt(5),
+    global_hp_control = 0.1 / sqrt(5),
+    global_hp_treat = 0.1 / sqrt(5),
+    N_post = 10,
+    N_burn = 5,
+    store_posterior_sample = TRUE,
+    verbose = FALSE,
+    seed = 1
+  )
+  
+  expect_type(fit, "list")
+  expect_true("train_predictions" %in% names(fit))
+  expect_true("forestwide_shrinkage_control" %in% names(fit))
+  expect_true("forestwide_shrinkage_treat" %in% names(fit))
+  
+  expect_length(fit$train_predictions, n)
+  expect_length(fit$sigma, 15)
+  
+  # Check forestwide shrinkage vectors
+  expect_true(is.numeric(fit$forestwide_shrinkage_control))
+  expect_true(is.numeric(fit$forestwide_shrinkage_treat))
+  expect_length(fit$forestwide_shrinkage_control, 10)
+  expect_length(fit$forestwide_shrinkage_treat, 10)
+  
+  # Sanity checks on numerical values
+  expect_false(any(is.na(unlist(fit))))
+  expect_true(all(is.finite(unlist(fit))))
+  
+  expect_true(sd(fit$train_predictions) > 0)
+  expect_true(sd(fit$train_predictions_control) > 0)
+  expect_true(sd(fit$train_predictions_treat) > 0)
+  
+  expect_equal(dim(fit$train_predictions_sample_control), c(10, n))
+  expect_equal(dim(fit$train_predictions_sample_treat), c(10, n))
+  
+  # Forestwide shrinkage values should be non-negative
+  expect_true(all(fit$forestwide_shrinkage_control >= 0))
+  expect_true(all(fit$forestwide_shrinkage_treat >= 0))
+})
+

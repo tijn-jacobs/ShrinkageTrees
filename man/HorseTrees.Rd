@@ -179,3 +179,6 @@ hist(fit4$train_predictions_sample[1, ],
 }
                        
 }
+\seealso{
+\code{\code{\link{ShrinkageTrees}}, \link{CausalHorseForest}}, \code{\link{CausalShrinkageForest}}
+}
