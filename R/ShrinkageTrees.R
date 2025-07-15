@@ -143,7 +143,7 @@
 #' mean_pred_horseshoe <- mean(post_mean_horseshoe)
 #' mean_pred_halfcauchy <- mean(post_mean_halfcauchy)
 #'
-#' @seealso \code{\code{\link{HorseTrees}}, \link{CausalHorseForest}}, \code{\link{CausalShrinkageForest}}
+#' @seealso \code{\link{HorseTrees}}, \code{\link{CausalHorseForest}}, \code{\link{CausalShrinkageForest}}
 #'
 #' @importFrom Rcpp evalCpp
 #' @useDynLib ShrinkageTrees, .registration = TRUE

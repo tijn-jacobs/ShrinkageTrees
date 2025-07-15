@@ -127,7 +127,7 @@ outcome using a prior guess of the standard deviation.
 For binary outcomes, the function uses a probit link formulation.
 For right-censored outcomes (survival data), the function can handle
 follow-up times either on the original time scale or log-transformed.
-Generalized implementation with multiple prior possibilites is given by
+Generalized implementation with multiple prior possibilities is given by
 \code{\link{ShrinkageTrees}}.
 }
 \examples{
@@ -180,5 +180,5 @@ hist(fit4$train_predictions_sample[1, ],
                        
 }
 \seealso{
-\code{\code{\link{ShrinkageTrees}}, \link{CausalHorseForest}}, \code{\link{CausalShrinkageForest}}
+\code{\link{ShrinkageTrees}}, \code{\link{CausalHorseForest}}, \code{\link{CausalShrinkageForest}}
 }

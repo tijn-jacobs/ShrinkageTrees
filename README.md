@@ -18,9 +18,8 @@ The mathematical background and theoretical foundation for these models are desc
 ## ✨ Features
 
 - Horseshoe, forest-wide horseshoe, empirical Bayes Horseshpe, and half-Cauchy priors
-- Flexible tree-based non-linear modeling fo the ATE and CATE
-- Separate control and treatment trees for causal effect decomposition
-- Supports survival data with right-censoring (accelerated failure time interpretation)
+- Flexible tree-based non-linear modeling of the ATE and CATE
+- Supports survival data with right-censoring (accelerated failure time model)
 - Efficient C++ backend via Rcpp
 
 ## 📦 Installation

@@ -200,5 +200,5 @@ mean_pred_halfcauchy <- mean(post_mean_halfcauchy)
 
 }
 \seealso{
-\code{\code{\link{HorseTrees}}, \link{CausalHorseForest}}, \code{\link{CausalShrinkageForest}}
+\code{\link{HorseTrees}}, \code{\link{CausalHorseForest}}, \code{\link{CausalShrinkageForest}}
 }

@@ -126,7 +126,7 @@
 #'   `store_posterior_sample = TRUE`).}
 #' }
 #' 
-#' @seealso \code{\code{\link{ShrinkageTrees}}, \link{CausalHorseForest}}, \code{\link{CausalShrinkageForest}}
+#' @seealso \code{\link{ShrinkageTrees}}, \code{\link{CausalHorseForest}}, \code{\link{CausalShrinkageForest}}
 #' 
 #' @importFrom Rcpp evalCpp
 #' @useDynLib ShrinkageTrees, .registration = TRUE
