@@ -19,7 +19,7 @@ The mathematical background and theoretical foundation for these models are desc
 
 ## ✨ Features
 
-- Horseshoe, forest-wide horseshoe, empirical Bayes Horseshpe, and half-Cauchy priors
+- Horseshoe, forest-wide horseshoe, empirical Bayes Horseshoe, and half-Cauchy priors
 - Flexible tree-based non-linear modeling of the ATE and CATE
 - Supports survival data with right-censoring (accelerated failure time model)
 - Efficient C++ backend via Rcpp
