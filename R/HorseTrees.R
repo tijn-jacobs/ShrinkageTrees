@@ -56,8 +56,8 @@
 #' plot(fit4$sigma, type = "l", ylab = expression(sigma),
 #'      xlab = "Iteration", main = "Sigma traceplot")
 #'
-#' hist(fit4$train_predictions_sample[1, ],
-#'      main = "Train predictions (1st posterior sample)",
+#' hist(fit4$train_predictions_sample[, 1],
+#'      main = "Posterior distribution of prediction outcome individual 1",
 #'      xlab = "Prediction", breaks = 20)
 #' }
 #'                        
