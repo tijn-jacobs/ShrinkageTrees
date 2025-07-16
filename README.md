@@ -70,7 +70,7 @@ fit_horseshoe <- CausalHorseForest(
   X_train_treat = X_treat,
   treatment_indicator_train = treatment,
   outcome_type = "right-censored",
-  timescale = "lof",
+  timescale = "log",
   number_of_trees = 200,
   k = 0.1,
   N_post = 5000,

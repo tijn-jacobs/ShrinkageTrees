@@ -18,12 +18,13 @@ font_add("DIN Condensed", "DIN Condensed Bold.ttf")
 font_add("DIN Alternate", "DIN Alternate Bold.ttf")
 font_add("Helvetica Neue", "HelveticaNeue.ttc")
 
+
 sticker(
   
   # title of the package
   package = "ShrinkageTrees",
-  p_size = 25,
-  p_y = 0.5,
+  p_size = 30,
+  p_y = 0.55,
   
   # Border thickness
   h_size = 1.4,
@@ -31,9 +32,9 @@ sticker(
   # Image
   subplot = pine_img,  
   s_x = 1,
-  s_y = 1.15,
-  s_width = 1.4,
-  s_height = 1.4,
+  s_y = 1.2,
+  s_width = 1.35,
+  s_height = 1.35,
   
   # Colouring
   p_color = "#3F7426",
@@ -48,40 +49,6 @@ sticker(
   l_alpha = 0.21,
   
   filename = "ShrinkageTrees_hex.png",
-  dpi = 600,
-  p_family = "DIN Alternate"
-)
-
-sticker(
-  
-  # title of the package
-  package = "ShrinkageTrees",
-  p_size = 30,
-  p_y = 0.6,
-  
-  # Border thickness
-  h_size = 1.4,
-  
-  # Image
-  subplot = pine_img,  
-  s_x = 1,
-  s_y = 1.2,
-  s_width = 1.25,
-  s_height = 1.25,
-  
-  # Colouring
-  p_color = "#3F7426",
-  h_fill = "#B9DA69",  # background color (feel free to change)
-  h_color = "#3F7426", # border color
-  
-  # Spotlight
-  spotlight = TRUE,
-  l_x = 1.35,
-  l_y = 1.55,
-  l_width = 2,
-  l_alpha = 0.21,
-  
-  filename = "ShrinkageTrees_hex_test.png",
   dpi = 600,
   p_family = "DIN Alternate"
 )
