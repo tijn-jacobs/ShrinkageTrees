@@ -105,7 +105,7 @@
 #'   seed = 1
 #' )
 #'
-#' \dontrun{
+#' \donttest{
 #' ## Example: Right-censored survival outcome
 #' # Set data dimensions
 #' n <- 100

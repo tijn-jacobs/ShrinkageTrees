@@ -11,12 +11,6 @@
 #'   \item{mu}{Estimated mean of survival times.}
 #'   \item{sd}{Estimated standard deviation of survival times.}
 #'
-#' @examples
-#' \dontrun{
-#' y <- c(5, 8, 10, 12)
-#' status <- c(1, 1, 0, 1)
-#' censored_info(y, status)
-#' }
 censored_info <- function(y, status) {
   
   # Currently, version of afthd does not work

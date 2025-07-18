@@ -136,14 +136,15 @@ half-Cauchy distributions with scale hyperparameters \code{global_hp} and
 separately for each tree, allowing adaptive regularization per tree.
 
 The \code{horseshoe_fw} prior (forest-wide horseshoe) is similar to
-\code{"horseshoe"}, except that the global shrinkage parameter is shared
+\code{horseshoe}, except that the global shrinkage parameter is shared
 across all trees in the forest simultaneously.
 
 The \code{horseshoe_EB} prior is an empirical Bayes variant of the
-\code{"horseshoe"} prior. Here, the global shrinkage parameter (\eqn{\tau})
+\code{horseshoe} prior. Here, the global shrinkage parameter (\eqn{\tau})
 is not assigned a prior distribution but instead must be specified directly
 using \code{global_hp}, while local shrinkage parameters still follow
-half-Cauchy priors.
+half-Cauchy priors. Note: \eqn{\tau} must be provided by the user; it is
+not estimated by the software.
 
 The \code{half-cauchy} prior considers only local shrinkage and does not
 include a global shrinkage component. It places a half-Cauchy prior on each

@@ -15,7 +15,8 @@
 #' 
 #' @examples
 #' # Minimal example: continuous outcome
-#' n <- 25; p <- 5
+#' n <- 25
+#' p <- 5
 #' X <- matrix(rnorm(n * p), ncol = p)
 #' y <- X[, 1] + rnorm(n)
 #' fit1 <- HorseTrees(y = y, X_train = X, outcome_type = "continuous", 
@@ -38,7 +39,9 @@
 #'                    N_post = 75, N_burn = 25, verbose = FALSE)
 #'
 #' # Larger continuous example (not run automatically)
-#' \dontrun{
+#' \donttest{
+#' n <- 100
+#' p <- 100
 #' X <- matrix(rnorm(100 * p), ncol = p)
 #' X_test <- matrix(rnorm(50 * p), ncol = p)
 #' y <- X[, 1] + X[, 2] - X[, 3] + rnorm(100, sd = 0.5)
@@ -47,7 +50,7 @@
 #'                    X_train = X,
 #'                    X_test = X_test,
 #'                    outcome_type = "continuous",
-#'                    number_of_trees = 20,
+#'                    number_of_trees = 200,
 #'                    N_post = 2500,
 #'                    N_burn = 2500,
 #'                    store_posterior_sample = TRUE,

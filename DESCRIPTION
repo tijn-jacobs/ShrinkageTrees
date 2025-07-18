@@ -10,6 +10,8 @@ Maintainer: Tijn Jacobs <t.jacobs@vu.nl>
 Description: Bayesian regression tree models with shrinkage priors on 
   step heights. Supports continuous, binary, and right-censored (survival) 
   outcomes. Used for high-dimensional prediction and causal inference.
+URL: https://github.com/tijn-jacobs/ShrinkageTrees
+BugReports: https://github.com/tijn-jacobs/ShrinkageTrees/issues
 License: MIT + file LICENSE
 Depends: R (>= 3.5.0)
 Imports: Rcpp

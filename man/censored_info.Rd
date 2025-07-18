@@ -21,10 +21,3 @@ Estimates the mean and standard deviation for right-censored survival data.
 Uses the \code{afthd} package if available (placeholder), else \code{survival}, and
 otherwise falls back to the naive mean among observed events.
 }
-\examples{
-\dontrun{
-y <- c(5, 8, 10, 12)
-status <- c(1, 1, 0, 1)
-censored_info(y, status)
-}
-}

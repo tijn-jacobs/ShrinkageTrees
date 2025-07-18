@@ -14,7 +14,7 @@ The functions can be used for:
 
 Supported outcome types: continuous, binary, and **right-censored survival times**.
 
-The mathematical background and theoretical foundation for these models are described in "Horseshoe Forests for High-Dimensional Causal Survival Analysis" by T. Jacobs, W.N. van Wieringen, and S.L. van der Pas (2025).
+The mathematical background and theoretical foundation for these models will appear in "Horseshoe Forests for High-Dimensional Causal Survival Analysis" by T. Jacobs, W.N. van Wieringen, and S.L. van der Pas (2025).
 
 
 ## ✨ Features
