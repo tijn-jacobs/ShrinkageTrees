@@ -412,5 +412,10 @@ HorseTrees <- function(y,
     }
   }
   
+  # remove burn-in of sigma
+  if (!sigma_known) {
+    fit$sigma <- fit$sigma[-(1:N_burn)]
+  } 
+
   return(fit)
 }
