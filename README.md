@@ -27,7 +27,7 @@ The mathematical background and theoretical foundation for these models will app
 
 ## 📦 Installation
 
-The released version of ShrinkageTrees can be installed from [CRAN](https://CRAN.R-project.org):
+The released version of ShrinkageTrees can be installed from [CRAN](https://cran.r-project.org/package=ShrinkageTrees):
 
 ```r
 install.packages("ShrinkageTrees")
