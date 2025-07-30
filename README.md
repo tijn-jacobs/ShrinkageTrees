@@ -17,6 +17,8 @@ Supported outcome types: continuous, binary, and **right-censored survival times
 
 The mathematical background and theoretical foundation for these models will appear in "Horseshoe Forests for High-Dimensional Causal Survival Analysis" by T. Jacobs, W.N. van Wieringen, and S.L. van der Pas (2025).
 
+The mathematical background and theoretical foundation for these models is described in the preprint *"Horseshoe Forests for High-Dimensional Causal Survival Analysis"* by T. Jacobs, W.N. van Wieringen, and S.L. van der Pas ([arXiv:2507.22004](https://arxiv.org/abs/2507.22004)).
+
 
 ## ✨ Features
 
