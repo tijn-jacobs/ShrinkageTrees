@@ -19,8 +19,8 @@ propensity_fit <- ShrinkageTrees::HorseTrees(
   X_train = covariates,
   outcome_type = "binary",
   k = 0.1,
-  N_post = 1000,
-  N_burn = 1000
+  N_post = 5000,
+  N_burn = 5000
 )
 
 # Retrieve estimated propensity scores
@@ -36,7 +36,7 @@ col_control <- rgb(1, 0.5, 0, 0.5)  # orange
 
 # Plot histograms
 hist(p0,
-     breaks = 10,     
+     breaks = 10,
      xlim = c(0.33, 0.63),
      col = col_control,
      xlab = "Propensity score",
@@ -66,31 +66,26 @@ X_test <- covariates
 # Transform the outcome
 time <- log(time)
 time <- time - mean(time)
-time <- time / sd(time)
 
 # Fit a Causal Horseshoe Forest
-fit <- CausalHorseForest(
+fit <- CausalShrinkageForest(
   y = time,
   status = status,
   X_train_control = extended_covariates,
   X_train_treat = covariates,
-  X_test_control = extended_covariates,
-  X_test_treat = covariates,
   treatment_indicator_train = treatment,
-  treatment_indicator_test = rep(1, nrow(X_test)),
-  store_posterior_sample_control = FALSE,
-  store_posterior_sample_treat = TRUE,
-  scale = "log",
-  verbose = TRUE,
-  alpha_local_control = 0.05 / sqrt(200),
-  alpha_global_control = 0.05 / sqrt(200),
-  alpha_local_treat = 0.05 / sqrt(200),
-  alpha_global_treat = 0.05 / sqrt(200),
-  omega_control = 1 / 2,
-  omega_treat = 1 / 2,
+  outcome_type = "right-censored",
+  prior_type_control = "horseshoe",
+  prior_type_treat = "horseshoe",
+  local_hp_control = 0.05 / sqrt(200),
+  local_hp_treat = 0.05 / sqrt(200),
+  global_hp_control = 0.05 / sqrt(200),
+  global_hp_treat = 0.05 / sqrt(200),
+  store_posterior_sample = TRUE,
+  timescale = "log",
   number_of_trees_treat = 200,
-  N_post = 1000,
-  N_burn = 1000
+  N_post = 5000,
+  N_burn = 5000
 )
 
 # Evaluate C-index if survival package is available
