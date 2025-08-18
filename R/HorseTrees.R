@@ -307,7 +307,7 @@ HorseTrees <- function(y,
   } else if (outcome_type == "binary") {
     y <- as.numeric(y)
     latent_threshold <- qnorm(mean(y))
-    
+    sigma_known <- FALSE
     fit <- probitHorseTrees_cpp(
       nSEXP = n_train,
       pSEXP = p_features,
