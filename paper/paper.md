@@ -1,5 +1,5 @@
 ---
-title: 'ShrinkageTrees: Regression Trees with Shrinkage Priors'
+title: 'ShrinkageTrees: an R package for Bayesian shrinkage trees'
 tags:
   - R
   - high-dimensional data
@@ -23,15 +23,29 @@ bibliography: paper.bib
 
 # Summary
 
-The forces on stars, galaxies, and dark matter under external gravitational
-fields lead to the dynamical evolution of structures in the universe. The orbits
-of these bodies are therefore key to understanding the formation, history, and
-future state of galaxies. The field of "galactic dynamics," which aims to model
-the gravitating components of galaxies to study their structure and evolution,
-is now well-established, commonly taught, and frequently used in astronomy.
-Aside from toy problems and demonstrations, the majority of problems require
-efficient numerical tools, many of which require the same base code (e.g., for
-performing numerical orbit integration).
+`ShrinkageTrees` performs high-dimensional causal inference and prediction using
+Bayesian regression trees with shrinkage priors. The package is specifically
+tailored for survival analysis with censored data in high-dimensional settings,
+where the number of predictors can exceed the sample size ($p>n$).
+
+For prediction, the package fits a single forest model to the outcome, enabling
+accurate prediction of test observations or new data. For causal inference, it
+implements a Bayesian Causal Forest decomposition of the outcome into a
+prognostic component and a treatment-specific component, each modelled by its
+own forest. This structure supports estimation of conditional average treatment
+effects (CATEs) and allows flexible adjustment for confounders. For survival
+outcomes, the package adopts the accelerated failure time (AFT) framework, which
+models log-transformed survival times and naturally accommodates 
+right-censoring.
+
+The underlying methodology is described in Jacobs (2025), where a horseshoe
+prior is placed directly on the tree step heights to achieve adaptive
+global–local shrinkage. This regularisation strategy preserves relevant signals
+while reducing noise, improving performance in high-dimensional and sparse
+settings. `ShrinkageTrees` is easy to use in R [@R], with efficient C++ 
+integration via Rcpp [@Rcpp]. It also includes an illustrative analysis of 
+pancreatic cancer data, which can be run via 
+`demo("pdac_analysis", package = "ShrinkageTrees")`.
 
 # Statement of need
 
@@ -50,7 +64,7 @@ coordinate systems in the `Astropy` package [@astropy] (`astropy.units` and
 students in courses on gravitational dynamics or astronomy. It has already been
 used in a number of scientific publications [@Pearson:2017] and has also been
 used in graduate courses on Galactic dynamics to, e.g., provide interactive
-visualizations of textbook material [@Binney:2008]. The combination of speed,
+visualizations of textbook material. The combination of speed,
 design, and support for Astropy functionality in `Gala` will enable exciting
 scientific explorations of forthcoming data releases from the *Gaia* mission
 [@gaia] by students and experts alike.
@@ -97,7 +111,6 @@ Figure sizes can be customized by adding an optional second parameter:
 
 # Acknowledgements
 
-We acknowledge contributions from Brigitta Sipocz, Syrtis Major, and Semyeong
-Oh, and support from Kathryn Johnston during the genesis of this project.
+Funded by the European Union. Views and opinions expressed are however those of the author(s) only and do not necessarily reflect those of the European Union or the European Research Council Executive Agency. Neither the European Union nor the granting authority can be held responsible for them. This work is supported by ERC grant BayCause, nr. 101074802.
 
 # References
