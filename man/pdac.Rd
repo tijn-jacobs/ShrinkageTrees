@@ -14,9 +14,8 @@ A data frame with rows corresponding to patients and columns as described above.
 pdac
 }
 \description{
-A reduced and cleaned subset of the TCGA pancreatic ductal adenocarcinoma (PAAD)
-dataset, derived from The Cancer Genome Atlas (TCGA) PAAD cohort. This version,
-\code{pdac}, is smaller and simplified for practical analyses and package examples.
+A reduced and cleaned subset of the TCGA pancreatic ductal adenocarcinoma (PADC)
+dataset, derived from The Cancer Genome Atlas (TCGA) PAAD cohort. 
 }
 \details{
 This dataset was originally compiled and curated in the open-source \code{pdacR}

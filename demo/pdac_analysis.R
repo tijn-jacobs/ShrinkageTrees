@@ -1,17 +1,17 @@
-## Demo: Analysis of the TCGA PAAD dataset (pdac_plain)
+## Demo: Analysis of the TCGA PAAD dataset (pdac)
 ## ShrinkageTrees package
 
 # Load package
 library(ShrinkageTrees)
 
 # Load the data
-data("pdac_plain")
+data("pdac")
 
 # Retrieve the data
-time <- pdac_plain$time
-status <- pdac_plain$status
-treatment <- pdac_plain$treatment
-covariates <- pdac_plain[, !(colnames(pdac_plain) %in% c("time", "status", "treatment"))]
+time <- pdac$time
+status <- pdac$status
+treatment <- pdac$treatment
+covariates <- pdac[, !(colnames(pdac) %in% c("time", "status", "treatment"))]
 
 # Estimate the propensity scores
 propensity_fit <- ShrinkageTrees::HorseTrees(
