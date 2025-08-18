@@ -23,94 +23,98 @@ bibliography: paper.bib
 
 # Summary
 
-`ShrinkageTrees` performs high-dimensional causal inference and prediction using
-Bayesian regression trees with shrinkage priors. The package is specifically
-tailored for survival analysis with censored data in high-dimensional settings,
-where the number of predictors can exceed the sample size ($p>n$).
+`ShrinkageTrees` provides Bayesian regression tree models with shrinkage priors
+for high-dimensional prediction and causal inference. The package is especially
+suited for survival analysis with censored outcomes in settings where the number
+of predictors may exceed the sample size ($p>n$). It is designed to estimate
+heterogeneous, non-linear treatment effects and covariate interactions while
+retaining relevant confounders.
+
+Estimating treatment effects in high-dimensional data is challenging, especially
+when outcomes are censored survival times. Many fields—such as genomics,
+epidemiology, and health economics—collect data where the number of potential
+covariates exceeds the number of observations. Standard approaches often impose
+sparsity by removing variables, which risks omitting important confounders and
+biasing causal estimates.
+
+For example, in a genetic study of cancer patients, thousands of gene expression
+measurements may influence both treatment choice and survival time. `ShrinkageTrees`
+estimate the effect of atreatment, such as radiation therapy, on patient 
+survival. An illustrative analysis of pancreatic cancer data is included and can be run using:
+```r
+demo("pdac_analysis", package = "ShrinkageTrees")
+```
+
+
+# Statement of need
 
 For prediction, the package fits a single forest model to the outcome, enabling
 accurate prediction of test observations or new data. For causal inference, it
-implements a Bayesian Causal Forest decomposition of the outcome into a
+implements a Bayesian Causal Forest [@bcf] decomposition of the outcome into a
 prognostic component and a treatment-specific component, each modelled by its
 own forest. This structure supports estimation of conditional average treatment
 effects (CATEs) and allows flexible adjustment for confounders. For survival
-outcomes, the package adopts the accelerated failure time (AFT) framework, which
-models log-transformed survival times and naturally accommodates 
+outcomes, the package adopts the accelerated failure time (AFT) [@aft] framework, 
+which models log-transformed survival times and naturally accommodates 
 right-censoring.
 
-The underlying methodology is described in Jacobs (2025), where a horseshoe
+The underlying methodology is described in [@Jacobs2025], where a horseshoe
 prior is placed directly on the tree step heights to achieve adaptive
 global–local shrinkage. This regularisation strategy preserves relevant signals
 while reducing noise, improving performance in high-dimensional and sparse
 settings. `ShrinkageTrees` is easy to use in R [@R], with efficient C++ 
-integration via Rcpp [@Rcpp]. It also includes an illustrative analysis of 
-pancreatic cancer data, which can be run via 
-`demo("pdac_analysis", package = "ShrinkageTrees")`.
+integration via Rcpp [@Rcpp]. 
 
 # Statement of need
 
-`Gala` is an Astropy-affiliated Python package for galactic dynamics. Python
-enables wrapping low-level languages (e.g., C) for speed without losing
-flexibility or ease-of-use in the user-interface. The API for `Gala` was
-designed to provide a class-based and user-friendly interface to fast (C or
-Cython-optimized) implementations of common operations such as gravitational
-potential and force evaluation, orbit integration, dynamical transformations,
-and chaos indicators for nonlinear dynamics. `Gala` also relies heavily on and
-interfaces well with the implementations of physical units and astronomical
-coordinate systems in the `Astropy` package [@astropy] (`astropy.units` and
-`astropy.coordinates`).
+Tree-based methods, in particular Bayesian Additive Regression Trees (BART)
+[@BART], are widely used because they flexibly capture non-linear effects and
+interactions. Regularisation in these models is imposed through the tree
+structure, for example in Bayesian Causal Forests [@bcf], Dirichlet priors on
+splitting proportions [@dir], or sparse extensions [@sparsebcf]. In contrast,
+`ShrinkageTrees` imposes shrinkage directly on the step heights through a
+global–local prior. This provides adaptive regularisation while retaining all
+covariates, offering better protection against violations of the unconfoundedness
+assumption in causal inference. The package currently implements the horseshoe
+prior [@horseshoe], with a general framework for scale mixture of normals priors.
 
-`Gala` was designed to be used by both astronomical researchers and by
-students in courses on gravitational dynamics or astronomy. It has already been
-used in a number of scientific publications [@Pearson:2017] and has also been
-used in graduate courses on Galactic dynamics to, e.g., provide interactive
-visualizations of textbook material. The combination of speed,
-design, and support for Astropy functionality in `Gala` will enable exciting
-scientific explorations of forthcoming data releases from the *Gaia* mission
-[@gaia] by students and experts alike.
+For posterior computation, `ShrinkageTrees` uses an efficient reversible jump
+Markov chain Monte Carlo sampler [@rjmcmc] with pseudo Gibbs proposals. To our
+knowledge, there is no other general implementation in R that allows different
+priors on step heights in BART-style models.
 
-# Mathematics
+The package addresses prediction and causal inference with survival outcomes,
+a setting where existing approaches are limited. For prediction, regularised Cox
+models or survival SVMs focus on risk scores rather than flexible high-dimensional
+non-linear effects. For causal inference, causal survival forests estimate
+survival probabilities but are not adapted to high-dimensional settings. In
+`ShrinkageTrees`, prediction is achieved by fitting a single forest model to the
+outcome, while causal inference is based on a Bayesian Causal Forest decomposition
+[@bcf] into prognostic and treatment-specific components. For survival data, the
+package adopts the accelerated failure time (AFT) framework [@aft], which
+log-transforms survival times and naturally accommodates right-censoring.
 
-Single dollars ($) are required for inline mathematics e.g. $f(x) = e^{\pi/x}$
+The underlying methodology is described in [@Jacobs2025]. `ShrinkageTrees` is
+intended for applied researchers in fields such as genomics, epidemiology, and
+biostatistics, where datasets often include thousands of covariates and possibly censored outcomes. The package is easy to use in R [@R], with efficient C++
+integration via Rcpp [@Rcpp], and is available on CRAN.
 
-Double dollars make self-standing equations:
 
-$$\Theta(x) = \left\{\begin{array}{l}
-0\textrm{ if } x < 0\cr
-1\textrm{ else}
-\end{array}\right.$$
+# Contributions
 
-You can also use plain \LaTeX for equations
-\begin{equation}\label{eq:fourier}
-\hat f(\omega) = \int_{-\infty}^{\infty} f(x) e^{i\omega x} dx
-\end{equation}
-and refer to \autoref{eq:fourier} from text.
-
-# Citations
-
-Citations to entries in paper.bib should be in
-[rMarkdown](http://rmarkdown.rstudio.com/authoring_bibliographies_and_citations.html)
-format.
-
-If you want to cite a software repository URL (e.g. something on GitHub without a preferred
-citation) then you can do it with the example BibTeX entry below for @fidgit.
-
-For a quick reference, the following citation commands can be used:
-- `@author:2001`  ->  "Author et al. (2001)"
-- `[@author:2001]` -> "(Author et al., 2001)"
-- `[@author1:2001; @author2:2001]` -> "(Author1 et al., 2001; Author2 et al., 2002)"
-
-# Figures
-
-Figures can be included like this:
-![Caption for example figure.\label{fig:example}](figure.png)
-and referenced from text using \autoref{fig:example}.
-
-Figure sizes can be customized by adding an optional second parameter:
-![Caption for example figure.](figure.png){ width=20% }
+The C++ backend of `ShrinkageTrees` is designed to be modular, making it easy to
+extend the package with other global–local shrinkage priors beyond the current
+horseshoe implementations. Contributions are welcome: feel free to open an issue
+to suggest new features or report bugs. If you wish to contribute code, you can
+fork the repository, implement changes, and submit a pull request. Please ensure
+that all tests pass, for example using `devtools::check()`, before submitting.
 
 # Acknowledgements
 
-Funded by the European Union. Views and opinions expressed are however those of the author(s) only and do not necessarily reflect those of the European Union or the European Research Council Executive Agency. Neither the European Union nor the granting authority can be held responsible for them. This work is supported by ERC grant BayCause, nr. 101074802.
+Funded by the European Union. Views and opinions expressed are however those of 
+the author(s) only and do not necessarily reflect those of the European Union or
+the European Research Council Executive Agency. Neither the European Union nor
+the granting authority can be held responsible for them. This work is supported 
+by ERC grant BayCause, nr. 101074802.
 
 # References
