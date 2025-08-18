@@ -10,7 +10,6 @@ tags:
 authors:
   - name: Tijn Jacobs
     orcid: 0009-0003-6188-9296
-    equal-contrib: true
     affiliation: 1
 affiliations:
  - name: Department of Mathematics, Vrije Universiteit Amsterdam, The Netherlands
@@ -45,6 +44,8 @@ survival. An illustrative analysis of pancreatic cancer data is included and can
 demo("pdac_analysis", package = "ShrinkageTrees")
 ```
 
+# Background
+
 
 # Statement of need
 
@@ -65,13 +66,16 @@ while reducing noise, improving performance in high-dimensional and sparse
 settings. `ShrinkageTrees` is easy to use in R [@R], with efficient C++ 
 integration via Rcpp [@Rcpp]. 
 
-# Statement of need
+In causal inference, valid estimation requires the unconfoundedness assumption:
+all covariates affecting both treatment assignment and the outcome must be
+adjusted for. Methods that exclude covariates risk omitting important
+confounders, which can bias treatment effect estimates. By retaining all
+covariates and shrinking irrelevant ones toward zero, `ShrinkageTrees` protects
+against such violations while still reducing noise in high-dimensional data.
 
-Tree-based methods, in particular Bayesian Additive Regression Trees (BART)
-[@BART], are widely used because they flexibly capture non-linear effects and
-interactions. Regularisation in these models is imposed through the tree
-structure, for example in Bayesian Causal Forests [@bcf], Dirichlet priors on
-splitting proportions [@dir], or sparse extensions [@sparsebcf]. In contrast,
+Tree-based methods are widely used because they flexibly capture non-linear 
+effects and interactions. The Bayesian Additive Regression Trees (BART) [@BART] ...
+Regularisation in these models is imposed through the tree structure, for example in Bayesian Causal Forests [@bcf], Dirichlet priors on splitting proportions [@dir], or sparse extensions [@sparsebcf]. In contrast,
 `ShrinkageTrees` imposes shrinkage directly on the step heights through a
 global–local prior. This provides adaptive regularisation while retaining all
 covariates, offering better protection against violations of the unconfoundedness
@@ -94,11 +98,47 @@ outcome, while causal inference is based on a Bayesian Causal Forest decompositi
 package adopts the accelerated failure time (AFT) framework [@aft], which
 log-transforms survival times and naturally accommodates right-censoring.
 
-The underlying methodology is described in [@Jacobs2025]. `ShrinkageTrees` is
-intended for applied researchers in fields such as genomics, epidemiology, and
-biostatistics, where datasets often include thousands of covariates and possibly censored outcomes. The package is easy to use in R [@R], with efficient C++
-integration via Rcpp [@Rcpp], and is available on CRAN.
+The methodology is detailed in [@Jacobs2025]. `ShrinkageTrees` targets applied
+researchers in fields such as genomics, epidemiology, and biostatistics, where
+datasets often contain thousands of predictors and censored outcomes. It is also
+useful for statisticians developing tree-based methods who wish to experiment
+with alternative priors on step heights. The package is easy to use in R [@R], 
+with efficient C++ integration via Rcpp [@Rcpp], and is available on CRAN.
 
+# Statement of need
+
+Estimating treatment effects in high-dimensional data is challenging, especially
+when outcomes are censored survival times. Many fields—such as genomics,
+epidemiology, and biostatistics—routinely collect data with thousands of
+covariates and relatively few observations. Valid causal inference requires the
+unconfoundedness assumption: all covariates that affect both treatment assignment
+and the outcome must be adjusted for. Methods that enforce sparsity by excluding
+covariates risk omitting important confounders and producing biased estimates.
+Existing approaches such as regularised Cox models or survival SVMs are designed
+for prediction but not for high-dimensional causal inference, while causal
+survival forests estimate survival probabilities but do not adapt well to
+$p \gg n$ problems.
+
+`ShrinkageTrees` addresses this gap by combining tree ensembles with global–local
+shrinkage priors. For prediction, the package fits a single forest model to the
+outcome. For causal inference, it implements a Bayesian Causal Forest
+decomposition of the outcome into prognostic and treatment-specific components,
+each modelled by its own forest. For survival data, it adopts the accelerated
+failure time (AFT) framework, which models log-transformed survival times and
+naturally accommodates right-censoring. Shrinkage is imposed directly on the
+tree step heights through a horseshoe prior, reducing noise while retaining all
+covariates to protect against violations of unconfoundedness. Posterior
+inference is performed with an efficient reversible jump MCMC algorithm that
+allows flexible extensions to other priors.
+
+The package is aimed at applied researchers who analyse high-dimensional
+datasets with censored outcomes, for example in genomics or clinical studies. It
+is also useful for statisticians developing tree-based methodology who wish to
+experiment with alternative priors on step heights. `ShrinkageTrees` is easy to
+use in R [@R], integrates efficient C++ code via Rcpp [@Rcpp], and is available
+on CRAN.
+
+# Example
 
 # Contributions
 

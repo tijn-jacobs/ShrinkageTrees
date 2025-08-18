@@ -1,5 +1,6 @@
 ^sticker$
 ^simulations$
-^NEWS.md$
+^NEWS\.md$
 ^paper$
 ^\.github$
+^LICENSE\.md$
