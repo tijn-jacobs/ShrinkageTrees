@@ -46,6 +46,29 @@ demo("pdac_analysis", package = "ShrinkageTrees")
 
 # Background
 
+Let $T$ denote the non-negative survival time and $C$ the censoring time, with
+observed follow-up $Y = \min(T,C)$ and censoring indicator $\delta \in \{0,1\}$.
+Treatment assignment is indicated by $A \in \{0,1\}$, and covariates are denoted
+by $X \in \mathbb{R}^p$. For prediction, `ShrinkageTrees` fits a single forest
+model to capture the regression function $f(x)$ in
+$\log T = f(x) + \varepsilon$, where $\varepsilon \sim \mathcal{N}(0,\sigma^2)$.
+For causal inference, the outcome is decomposed into a prognostic component and
+a treatment effect component,
+$$
+\log T(a) = f(x,\hat e(x)) + a \cdot \tau(x) + \varepsilon,
+$$
+where $\hat e(x)$ is the estimated probability of receiving treatment and 
+$\tau(x)$ represents the
+conditional treatment effect. Under standard assumptions (SUTVA,
+unconfoundedness, positivity, and independent censoring), $\tau(x)$ identifies
+the conditional average treatment effect (CATE),
+$$
+\text{CATE}(x) = \E[\log T(1) - \log T(0) \mid X = x] = \tau(x).
+$$
+For survival outcomes we work in the accelerated failure time (AFT) framework by
+setting $Y = \log(T)$, and censored outcomes are handled through data
+augmentation within the MCMC sampler.
+
 
 # Statement of need
 
