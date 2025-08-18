@@ -63,7 +63,7 @@ conditional treatment effect. Under standard assumptions (SUTVA,
 unconfoundedness, positivity, and independent censoring), $\tau(x)$ identifies
 the conditional average treatment effect (CATE),
 $$
-\text{CATE}(x) = \E[\log T(1) - \log T(0) \mid X = x] = \tau(x).
+\text{CATE}(x) = \mathbf{E}[\log T(1) - \log T(0) \mid X = x] = \tau(x).
 $$
 For survival outcomes we work in the accelerated failure time (AFT) framework by
 setting $Y = \log(T)$, and censored outcomes are handled through data
@@ -161,7 +161,6 @@ experiment with alternative priors on step heights. `ShrinkageTrees` is easy to
 use in R [@R], integrates efficient C++ code via Rcpp [@Rcpp], and is available
 on CRAN.
 
-# Example
 
 # Contributions
 
