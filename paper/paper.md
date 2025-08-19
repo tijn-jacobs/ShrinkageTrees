@@ -30,7 +30,14 @@ predictors exceeds the sample size ($p>n$). By shrinking irrelevant variables
 instead of excluding them, it can estimate heterogeneous, non-linear treatment
 effects while retaining important confounders.
 
-This method is relevant in fields such as genomics, epidemiology, and economics, 
+In causal inference, valid estimation requires the unconfoundedness assumption:
+all covariates affecting both treatment assignment and the outcome must be
+adjusted for. Methods that exclude covariates risk omitting important
+confounders, which can bias treatment effect estimates. By retaining all
+covariates and shrinking irrelevant ones toward zero, `ShrinkageTrees` protects
+against such violations while still reducing noise in high-dimensional data.
+
+`ShrinkageTrees` is relevant in fields such as genomics, epidemiology, and economics, 
 where thousands of covariates may affect both treatment allocation
 and outcomes. For example, in a genetic study of cancer patients, gene 
 expression data can be used to adjust for confounding factors when estimating 
@@ -73,8 +80,6 @@ The step-heights are given a global--local shrinkage prior:
 
 
 
-
-
 # Statement of need
 
 For prediction, the package fits a single forest model to the outcome, enabling
@@ -94,12 +99,7 @@ while reducing noise, improving performance in high-dimensional and sparse
 settings. `ShrinkageTrees` is easy to use in R [@R], with efficient C++ 
 integration via Rcpp [@Rcpp]. 
 
-In causal inference, valid estimation requires the unconfoundedness assumption:
-all covariates affecting both treatment assignment and the outcome must be
-adjusted for. Methods that exclude covariates risk omitting important
-confounders, which can bias treatment effect estimates. By retaining all
-covariates and shrinking irrelevant ones toward zero, `ShrinkageTrees` protects
-against such violations while still reducing noise in high-dimensional data.
+
 
 Tree-based methods are widely used because they flexibly capture non-linear 
 effects and interactions. The Bayesian Additive Regression Trees (BART) [@BART] ...
