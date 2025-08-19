@@ -26,16 +26,16 @@ bibliography: paper.bib
 `ShrinkageTrees` provides Bayesian regression tree models with shrinkage priors
 for high-dimensional prediction and causal inference. The package is tailored
 for survival analysis with censored outcomes in settings where the number of
-predictors exceeds the sample size ($p>n$). By shrinking irrelevant variables
+predictors exceeds the sample size ($p \gg n$). By shrinking irrelevant variables
 instead of excluding them, it can estimate heterogeneous, non-linear treatment
 effects while retaining important confounders.
 
-In causal inference, valid estimation requires the unconfoundedness assumption:
+In causal inference, valid estimation requires the *unconfoundedness*:
 all covariates affecting both treatment assignment and the outcome must be
 adjusted for. Methods that exclude covariates risk omitting important
-confounders, which can bias treatment effect estimates. By retaining all
-covariates and shrinking irrelevant ones toward zero, `ShrinkageTrees` protects
-against such violations while still reducing noise in high-dimensional data.
+confounders, which can bias treatment effect estimates. `ShrinkageTrees` protects
+against such violations while still reducing noise in high-dimensional data by 
+retaining all covariates and shrinking irrelevant ones toward zero.
 
 `ShrinkageTrees` is relevant in fields such as genomics, epidemiology, and economics, 
 where thousands of covariates may affect both treatment allocation
@@ -47,6 +47,16 @@ analysis of pancreatic cancer data is included and can be run using:
 ```r
 demo("pdac_analysis", package = "ShrinkageTrees")
 ```
+
+
+(DOUBLE:)
+The package is aimed at applied researchers who analyse high-dimensional
+datasets with censored outcomes, for example in genomics or clinical studies. It
+is also useful for statisticians developing tree-based methodology who wish to
+experiment with alternative priors on step heights. `ShrinkageTrees` is easy to
+use in R [@R], integrates efficient C++ code via Rcpp [@Rcpp], and is available
+on CRAN.
+
 
 # Background
 
@@ -66,9 +76,8 @@ $\tau(x)$ represents the
 conditional treatment effect. Under standard assumptions (SUTVA,
 unconfoundedness, positivity, and independent censoring), $\tau(x)$ identifies
 the conditional average treatment effect (CATE),
-$$
-\text{CATE}(x) = \mathbf{E}[\log T(1) - \log T(0) \mid X = x] = \tau(x).
-$$
+
+
 For survival outcomes we work in the accelerated failure time (AFT) framework by
 setting $Y = \log(T)$, and censored outcomes are handled through data
 augmentation within the MCMC sampler.
@@ -159,12 +168,7 @@ covariates to protect against violations of unconfoundedness. Posterior
 inference is performed with an efficient reversible jump MCMC algorithm that
 allows flexible extensions to other priors.
 
-The package is aimed at applied researchers who analyse high-dimensional
-datasets with censored outcomes, for example in genomics or clinical studies. It
-is also useful for statisticians developing tree-based methodology who wish to
-experiment with alternative priors on step heights. `ShrinkageTrees` is easy to
-use in R [@R], integrates efficient C++ code via Rcpp [@Rcpp], and is available
-on CRAN.
+
 
 
 # Contributions
