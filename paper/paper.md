@@ -2,6 +2,7 @@
 title: 'ShrinkageTrees: an R package for Bayesian shrinkage trees'
 tags:
   - R
+  - C++
   - high-dimensional data
   - shrinkage priors
   - tree ensembles
@@ -23,23 +24,19 @@ bibliography: paper.bib
 # Summary
 
 `ShrinkageTrees` provides Bayesian regression tree models with shrinkage priors
-for high-dimensional prediction and causal inference. The package is especially
-suited for survival analysis with censored outcomes in settings where the number
-of predictors may exceed the sample size ($p>n$). It is designed to estimate
-heterogeneous, non-linear treatment effects and covariate interactions while
-retaining relevant confounders.
+for high-dimensional prediction and causal inference. The package is tailored
+for survival analysis with censored outcomes in settings where the number of
+predictors exceeds the sample size ($p>n$). By shrinking irrelevant variables
+instead of excluding them, it can estimate heterogeneous, non-linear treatment
+effects while retaining important confounders.
 
-Estimating treatment effects in high-dimensional data is challenging, especially
-when outcomes are censored survival times. Many fields—such as genomics,
-epidemiology, and health economics—collect data where the number of potential
-covariates exceeds the number of observations. Standard approaches often impose
-sparsity by removing variables, which risks omitting important confounders and
-biasing causal estimates.
+This method is relevant in fields such as genomics, epidemiology, and economics, 
+where thousands of covariates may affect both treatment allocation
+and outcomes. For example, in a genetic study of cancer patients, gene 
+expression data can be used to adjust for confounding factors when estimating 
+the effect of treatments such as radiation therapy on survival. An illustrative 
+analysis of pancreatic cancer data is included and can be run using:
 
-For example, in a genetic study of cancer patients, thousands of gene expression
-measurements may influence both treatment choice and survival time. `ShrinkageTrees`
-estimate the effect of atreatment, such as radiation therapy, on patient 
-survival. An illustrative analysis of pancreatic cancer data is included and can be run using:
 ```r
 demo("pdac_analysis", package = "ShrinkageTrees")
 ```
@@ -68,6 +65,14 @@ $$
 For survival outcomes we work in the accelerated failure time (AFT) framework by
 setting $Y = \log(T)$, and censored outcomes are handled through data
 augmentation within the MCMC sampler.
+
+The function $f$ is modelled by a Bayesian regression forest.
+Each tree partitions the covariate space in, say $L$, subspaces.
+to each partition, a step height is $h_\ell$ is assigned.
+The step-heights are given a global--local shrinkage prior:
+
+
+
 
 
 # Statement of need
