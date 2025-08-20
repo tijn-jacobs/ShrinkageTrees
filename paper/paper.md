@@ -1,5 +1,5 @@
 ---
-title: 'ShrinkageTrees: an R package for Bayesian shrinkage trees'
+title: 'ShrinkageTrees: an R package for causal inference and prediction with Bayesian shrinkage trees in high-dimensions'
 tags:
   - R
   - C++
