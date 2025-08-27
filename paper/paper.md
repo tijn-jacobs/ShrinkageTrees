@@ -148,6 +148,7 @@ to suggest new features or report bugs. If you wish to contribute code, you can
 fork the repository, implement changes, and submit a pull request. Please ensure
 that all tests pass, for example using `devtools::check()`, before submitting.
 
+
 # Acknowledgements
 
 Funded by the European Union. Views and opinions expressed are however those of 
