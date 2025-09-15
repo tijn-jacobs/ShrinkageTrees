@@ -51,4 +51,18 @@ void AugmentCensoredObservations(
   Random& random
 );
 
+// Second AugmentCensoredObservations with interval censoring
+void AugmentCensoredObservations(
+  bool is_survival,
+  double* event_time,
+  const double* observed_left_time,
+  const double* status_indicator,
+  const double* observed_right_time,s
+  const double* interval_censoring_indicator,
+  const double* predicted_time,
+  const double& sigma,
+  const size_t& n,
+  Random& random
+);
+
 #endif // OUTERGIBBSFUNCTIONS_H

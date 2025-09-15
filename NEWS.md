@@ -20,3 +20,9 @@ The `...Trees` functions use a single learner to estimate the outcome model dire
 - Fixed bugs in the demo script  
 - Added a `CONTRIBUTING.md` file with guidelines for contributors  
 - Corrected minor typos in the source code (non-functional changes)  
+
+# ShrinkageTrees 1.0.2
+
+- Improved handling of censored survival outcomes in the back-end 
+  (preparatory changes for interval censoring support).  
+- Minor internal refactoring; no changes to the user-facing API.
