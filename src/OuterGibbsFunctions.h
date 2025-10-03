@@ -57,7 +57,7 @@ void AugmentCensoredObservations(
   double* event_time,
   const double* observed_left_time,
   const double* status_indicator,
-  const double* observed_right_time,s
+  const double* observed_right_time,
   const double* interval_censoring_indicator,
   const double* predicted_time,
   const double& sigma,
