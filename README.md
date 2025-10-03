@@ -96,8 +96,7 @@ ATE_horseshoe <- mean(post_ATE_horseshoe)
 
 ## 🩺 Pancreatic Cancer Analysis Demo
 
-The package includes a **demo analysis** based on the TCGA PAAD (pancreatic cancer) dataset to showcase how ShrinkageTrees can be used in practice.  
-This demo replicates the main case study from the preprint *"Horseshoe Forests for High-Dimensional Causal Survival Analysis"* (arXiv:2507.22004).
+The package includes a **demo analysis** based on the TCGA PAAD (pancreatic cancer) dataset to showcase how ShrinkageTrees can be used in practice. This demo replicates the main case study from the preprint *"Horseshoe Forests for High-Dimensional Causal Survival Analysis"* (arXiv:2507.22004).
 
 It:
 - Estimates **propensity scores** for treatment assignment  
@@ -105,8 +104,8 @@ It:
 - Computes the **posterior mean ATE** and **CATEs** with 95% credible intervals  
 - Produces diagnostic plots (propensity score overlap, posterior ATE, CATE estimates, sigma trace)
 
-You can run it directly from R after installing the package:
 
+You can run it directly from R after installing the package:
 ```r
 demo("pdac_analysis", package = "ShrinkageTrees")
 ```
