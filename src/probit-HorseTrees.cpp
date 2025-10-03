@@ -65,8 +65,6 @@ Rcpp::List probitHorseTrees_cpp(SEXP nSEXP,
   unsigned int n1 = Rcpp::as<unsigned int>(n1SEXP);   
   unsigned int n2 = Rcpp::as<unsigned int>(n2SEXP);  
   bool print_progress = Rcpp::as<bool>(verboseSEXP);
-  
-   // Declare sigma storage based on whether sigma is known
   double sigma = 1;
 
   // Declare what has to be returned

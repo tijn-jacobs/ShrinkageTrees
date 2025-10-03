@@ -350,6 +350,7 @@ ShrinkageTrees <- function(y,
   } else if (outcome_type == "binary") {
     y <- as.numeric(y)
     latent_threshold <- qnorm(mean(y))
+    sigma_known <- TRUE
     
     fit <- probitHorseTrees_cpp(
       nSEXP = n_train,

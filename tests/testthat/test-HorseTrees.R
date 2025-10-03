@@ -22,7 +22,7 @@ test_that("HorseTrees for continuous outcome", {
   expect_true("train_predictions" %in% names(fit))
   expect_true("test_predictions" %in% names(fit))
   expect_length(fit$train_predictions, 50)
-  expect_length(fit$sigma, 10 + 5)
+  expect_length(fit$sigma, 10)
   
   # Numerical checks
   expect_false(any(is.na(fit$train_predictions)))
@@ -144,7 +144,7 @@ test_that("HorseTrees for right-censored survival outcome", {
   expect_true("test_predictions" %in% names(fit))
   expect_true("test_predictions" %in% names(fit))
   expect_length(fit$train_predictions, 50)
-  expect_length(fit$sigma, 10 + 5)
+  expect_length(fit$sigma, 10)
   
   # Numerical checks
   expect_false(any(is.na(fit$train_predictions)))

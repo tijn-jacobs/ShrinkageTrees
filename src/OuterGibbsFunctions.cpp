@@ -104,7 +104,7 @@ void AugmentCensoredObservations(
   if (!is_survival) return;
 
   // Declare variables
-  double prediction, x_i, temporary, U;                     
+  double prediction, temporary, U;                     
   
   // Loop over all observations 
   for (size_t i = 0; i < n; i++) {

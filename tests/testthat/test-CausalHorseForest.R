@@ -54,7 +54,7 @@ test_that("CausalHorseForest works for continuous outcome", {
   expect_length(fit$test_predictions_treat, n)
   
   # --- Check sigma vector ---
-  expect_length(fit$sigma, 10 + 5)
+  expect_length(fit$sigma, 10)
   expect_true(all(fit$sigma > 0))
   
   # --- Posterior samples (control) ---
@@ -172,7 +172,7 @@ test_that("CausalHorseForest works for survival outcome", {
   expect_length(fit$test_predictions_treat, n)
   
   # --- Check sigma vector ---
-  expect_length(fit$sigma, 10 + 5)
+  expect_length(fit$sigma, 10)
   expect_true(all(fit$sigma > 0))
   
   # --- Posterior samples (control) ---

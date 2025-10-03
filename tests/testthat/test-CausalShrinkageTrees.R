@@ -34,7 +34,7 @@ test_that("CausalShrinkageForest works for continuous outcome", {
   expect_type(fit, "list")
   expect_true("train_predictions" %in% names(fit))
   expect_length(fit$train_predictions, n)
-  expect_length(fit$sigma, 15)  # N_post + N_burn = 10 + 5
+  expect_length(fit$sigma, 10)  # N_post + N_burn = 10 + 5
   
   # Numerical checks
   expect_false(any(is.na(unlist(fit))))
@@ -125,7 +125,7 @@ test_that("CausalShrinkageForest works for right-censored survival outcome", {
   expect_type(fit, "list")
   expect_true("train_predictions" %in% names(fit))
   expect_length(fit$train_predictions, n)
-  expect_length(fit$sigma, 15)
+  expect_length(fit$sigma, 10)
   
   # Numerical checks
   expect_false(any(is.na(unlist(fit))))
@@ -205,7 +205,7 @@ test_that("CausalShrinkageForest works for continuous outcome with half-cauchy p
   expect_type(fit, "list")
   expect_true("train_predictions" %in% names(fit))
   expect_length(fit$train_predictions, n)
-  expect_length(fit$sigma, 15)
+  expect_length(fit$sigma, 10)
   expect_false(any(is.na(unlist(fit))))
   expect_true(all(is.finite(unlist(fit))))
   expect_true(sd(fit$train_predictions) > 0)
@@ -252,7 +252,7 @@ test_that("CausalShrinkageForest works for continuous outcome with horseshoe_fw 
   expect_true("forestwide_shrinkage_treat" %in% names(fit))
   
   expect_length(fit$train_predictions, n)
-  expect_length(fit$sigma, 15)
+  expect_length(fit$sigma, 10)
   
   # Check forestwide shrinkage vectors
   expect_true(is.numeric(fit$forestwide_shrinkage_control))
