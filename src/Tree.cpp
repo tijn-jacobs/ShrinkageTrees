@@ -201,9 +201,9 @@ size_t Tree::NumberOfNogs() const {
   } 
 } 
 
-// Function to count the number of leafs nodes in the subtree, i.e. the number
+// Function to count the number of leaf nodes in the subtree, i.e. the number
 // of terminal nodes.
-size_t Tree::NumberOfLeafs() const {
+size_t Tree::NumberOfLeaves() const {
   
   // If the node is a leaf (no left child), return 1.
   if (left == nullptr) {
@@ -211,21 +211,21 @@ size_t Tree::NumberOfLeafs() const {
   }
   
   // Recursively count the bottom nodes in the left and right subtrees.
-  return left->NumberOfLeafs() + right->NumberOfLeafs();
+  return left->NumberOfLeaves() + right->NumberOfLeaves();
   
 }
 
 
 // Function retrieves the addresses (i.e. pointers to) of  leaf nodes in the 
 // tree.
-void Tree::CollectLeafs(std::vector<Tree*>& leaf_vector) {
+void Tree::CollectLeaves(std::vector<Tree*>& leaf_vector) {
   
   // If the node has children, recursively retrieve the leaf addresses from 
   // both children.
   if (left != nullptr) {
     
-    left->CollectLeafs(leaf_vector);
-    right->CollectLeafs(leaf_vector);
+    left->CollectLeaves(leaf_vector);
+    right->CollectLeaves(leaf_vector);
     
   } else {
     

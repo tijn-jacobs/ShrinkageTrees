@@ -149,8 +149,8 @@ Rcpp::List HorseTrees_cpp(
   double sum_accept = 0;
   double acceptance_ratio;
 
-  int max_stored_leafs = 1;
-  if(store_parameters)  max_stored_leafs = 20;
+  int max_stored_leaves = 1;
+  if(store_parameters)  max_stored_leaves = 20;
   std::vector<Tree>* all_trees = forest.GetTreesPointer();
 
   Rcpp::NumericMatrix store_global_parameters;
@@ -159,8 +159,8 @@ Rcpp::List HorseTrees_cpp(
 
   if (store_parameters) {
     store_global_parameters = Rcpp::NumericMatrix(N_post, number_of_trees);
-    store_local_parameters = Rcpp::NumericMatrix(N_post, max_stored_leafs * number_of_trees);
-    store_local_indices = Rcpp::IntegerMatrix(N_post, max_stored_leafs * number_of_trees);
+    store_local_parameters = Rcpp::NumericMatrix(N_post, max_stored_leaves * number_of_trees);
+    store_local_indices = Rcpp::IntegerMatrix(N_post, max_stored_leaves * number_of_trees);
     
     // Initialize with -2 for debugging (optional)
     store_global_parameters.fill(-2);
@@ -240,7 +240,7 @@ Rcpp::List HorseTrees_cpp(
       for (Tree& tree : *all_trees) {
         // Collect all leaf nodes
         std::vector<Tree*> leaf_vector;
-        tree.CollectLeafs(leaf_vector);
+        tree.CollectLeaves(leaf_vector);
 
         // Iterate through the collected leaf nodes
         for (size_t leaf_index = 0; leaf_index < leaf_vector.size(); ++leaf_index) {
@@ -255,7 +255,7 @@ Rcpp::List HorseTrees_cpp(
           } 
 
           // Compute the column index for this leaf
-          size_t col_index = tree_counter * max_stored_leafs + leaf_index;
+          size_t col_index = tree_counter * max_stored_leaves + leaf_index;
 
           // Ensure col_index does not exceed matrix bounds
           if (col_index < static_cast<size_t>(store_local_parameters.ncol())) {

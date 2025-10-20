@@ -130,7 +130,7 @@ public:
   size_t NumberOfNogs() const;
 
   // Count the number of leaf nodes (terminal nodes) in the tree.
-  size_t NumberOfLeafs() const;
+  size_t NumberOfLeaves() const;
 
   // Add children to a terminal node.
   void GrowChildren(Tree* leaf, size_t _split_var, size_t _cut_val, 
@@ -147,7 +147,7 @@ public:
   void KillChildren(Tree* nog_node);
 
   // Collect pointers to all leaf nodes in the tree.
-  void CollectLeafs(std::vector<Tree*>& leaf_vector);
+  void CollectLeaves(std::vector<Tree*>& leaf_vector);
 
   // Collect pointers to all "nog" nodes in the tree.
   void CollectNogs(std::vector<Tree*>& nog_vector);

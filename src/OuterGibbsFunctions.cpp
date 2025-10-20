@@ -18,23 +18,23 @@ void UpdateForestwideShrinkage(
 
   // Compute sum of shrinkage contributions over all leaf nodes
   double sum_fw_shrink = 0.0;
-  size_t n_leafs = 0;
+  size_t n_leaves = 0;
 
   for (Tree& tree : *trees) {
     std::vector<Tree*> leaf_vector;
-    tree.CollectLeafs(leaf_vector);
+    tree.CollectLeaves(leaf_vector);
 
     for (Tree* leaf : leaf_vector) {
       double h = leaf->GetParameters(0);
       double lambda = leaf->GetParameters(1);
       sum_fw_shrink += (h * h) / lambda;
-      n_leafs++;
+      n_leaves++;
     }
   }
 
   // Draw new forest-wide shrinkage parameter
   forestwide_shrinkage = random.inv_gamma(
-    0.5 * (n_leafs + 1),
+    0.5 * (n_leaves + 1),
     0.5 * sum_fw_shrink + 1.0 / forestwide_auxiliary
   );
 
@@ -208,7 +208,7 @@ void UpdateForestwideShrinkage(
   if (prior_type != "horseshoe_fw") return;
 
   double sum_fw_shrink = 0.0;
-  size_t n_leafs = 0;
+  size_t n_leaves = 0;
 
   forestwide_auxiliary = random.inv_gamma(
     1.0,
@@ -217,18 +217,18 @@ void UpdateForestwideShrinkage(
 
   for (Tree& tree : *all_trees) {
     std::vector<Tree*> leaf_vector;
-    tree.CollectLeafs(leaf_vector);
+    tree.CollectLeaves(leaf_vector);
 
     for (Tree* leaf : leaf_vector) {
       double h = leaf->GetParameters(0);
       double lambda = leaf->GetParameters(1);
       sum_fw_shrink += (h * h) / lambda;
-      n_leafs++;
+      n_leaves++;
     }
   }
 
   forestwide_shrinkage = random.inv_gamma(
-    0.5 * (n_leafs + 1),
+    0.5 * (n_leaves + 1),
     0.5 * sum_fw_shrink + 1.0 / forestwide_auxiliary
   );
 

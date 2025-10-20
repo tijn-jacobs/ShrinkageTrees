@@ -21,7 +21,7 @@
     SEXP param1_controlSEXP, SEXP param2_controlSEXP, SEXP reversible_controlSEXP,
     SEXP sigma_knownSEXP, SEXP sigmaSEXP, SEXP lambdaSEXP,
     SEXP nuSEXP, SEXP N_postSEXP, SEXP N_burnSEXP, SEXP delayed_proposalSEXP,
-    SEXP store_parametersSEXP, SEXP max_stored_leafsSEXP,
+    SEXP store_parametersSEXP, SEXP max_stored_leavesSEXP,
     SEXP store_posterior_sampleSEXP, SEXP n1SEXP, SEXP n2SEXP, SEXP verboseSEXP
   );
  
