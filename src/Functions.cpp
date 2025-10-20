@@ -39,11 +39,11 @@ bool Splittable(Tree& leaf_node, Cutpoints& cutpoints) {
 // Function retrieves the addresses (i.e., pointers to) of leaf nodes that can 
 // be split on. It collects all leaf nodes, checks if they are splittable, and 
 // removes those that can't be split.
-void CollectSplittableLeafs(Tree& tree, std::vector<Tree*>& leaf_vector, 
+void CollectSplittableLeaves(Tree& tree, std::vector<Tree*>& leaf_vector, 
                             Cutpoints& cutpoints) {
   
   // Collect all leaf nodes.
-  tree.CollectLeafs(leaf_vector);
+  tree.CollectLeaves(leaf_vector);
 
   // Iterate over the collected leaf nodes
   for (size_t i = 0; i < leaf_vector.size(); i++) {
@@ -106,7 +106,7 @@ double GrowProbability(Tree& tree, Cutpoints& cutpoints, TreePrior& tree_prior,
   // Probability of a birth move; to be returned
   double prob_birth; 
   std::vector<Tree*> leaf_nodes; // All the bottom nodes
-  tree.CollectLeafs(leaf_nodes);
+  tree.CollectLeaves(leaf_nodes);
   
   // Find all splittable bottom nodes
   for (size_t i = 0; i != leaf_nodes.size(); i++) {
@@ -284,7 +284,7 @@ void SufficientStatisticsAllLeaves(Tree& tree, Cutpoints& cutpoints, Data& data,
 
   // Clear the vector of bottom nodes and collect them from the tree
   bottom_nodes.clear();
-  tree.CollectLeafs(bottom_nodes);
+  tree.CollectLeaves(bottom_nodes);
 
   // Resize the observation count and residual sum vectors to match the number of 
   // bottom nodes
@@ -534,9 +534,9 @@ double LogTreeRatio_GROW(size_t depth, const TreePrior& tree_prior) {
 }
 
 // Move ratio for the GROW move. Move ratio for the PRUNE move is the inverse.
-double LogMoveRatio(size_t number_of_nogs, size_t number_of_leafs, 
+double LogMoveRatio(size_t number_of_nogs, size_t number_of_leaves, 
                     double prune_prob, double grow_prob) {
 
   return std::log(prune_prob) - std::log(number_of_nogs) - 
-         (std::log(grow_prob) - std::log(number_of_leafs));
+         (std::log(grow_prob) - std::log(number_of_leaves));
 }

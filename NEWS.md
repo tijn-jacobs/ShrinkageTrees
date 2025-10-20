@@ -1,3 +1,20 @@
+# ShrinkageTrees 1.0.3
+
+- Refactored the non-reversible tree modification routines in the C++ backend for improved clarity and maintainability.
+- Corrected the 'leafs' typo throughout the codebase (now consistently 'leaves').
+
+# ShrinkageTrees 1.0.2
+
+- Improved handling of censored survival outcomes in the back-end 
+  (preparatory changes for interval censoring support).  
+- Minor internal refactoring; no changes to the user-facing API.
+
+# ShrinkageTrees 1.0.1
+
+- Fixed bugs in the demo script  
+- Added a `CONTRIBUTING.md` file with guidelines for contributors  
+- Corrected minor typos in the source code (non-functional changes) 
+
 # ShrinkageTrees 1.0.0
 
 🎉 First CRAN release of **ShrinkageTrees**!
@@ -14,15 +31,3 @@ It includes four core functions:
 - `CausalShrinkageForest()`: fits a flexible causal forest with user-defined shrinkage priors and tuning options.
 
 The `...Trees` functions use a single learner to estimate the outcome model directly. In contrast, the `Causal...Forest` variants fit separate models for the treated and control regression function. This enables estimation of conditional average treatment effects (CATEs).
-
-# ShrinkageTrees 1.0.1
-
-- Fixed bugs in the demo script  
-- Added a `CONTRIBUTING.md` file with guidelines for contributors  
-- Corrected minor typos in the source code (non-functional changes)  
-
-# ShrinkageTrees 1.0.2
-
-- Improved handling of censored survival outcomes in the back-end 
-  (preparatory changes for interval censoring support).  
-- Minor internal refactoring; no changes to the user-facing API.

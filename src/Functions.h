@@ -14,7 +14,7 @@
 bool Splittable(Tree& leaf_node, Cutpoints& cutpoints);
 
 // Collects all leaf nodes that can be split on.
-void CollectSplittableLeafs(Tree& tree, std::vector<Tree*>& leaf_vector, 
+void CollectSplittableLeaves(Tree& tree, std::vector<Tree*>& leaf_vector, 
                             Cutpoints& cutpoints);
 
 // Finds variables that a node can split on and stores their indices in split_var.
@@ -97,7 +97,7 @@ double LogTreeRatio_PRUNE(Tree* node, const TreePrior& tree_prior,
 double LogTreeRatio_GROW(size_t depth, const TreePrior& tree_prior);
 
 // Computes the logarithm of the move ratio for the GROW move.
-double LogMoveRatio(size_t number_of_nogs, size_t number_of_leafs, 
+double LogMoveRatio(size_t number_of_nogs, size_t number_of_leaves, 
                     double prune_prob, double grow_prob);
 
 #endif // GUARD_Functions_H

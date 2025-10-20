@@ -22,15 +22,15 @@ bool Grow(Tree& tree, Cutpoints& cutpoints, Data& data, TreePrior& tree_prior,
           ScaleMixture& scale_mixture, Random& random) {
 
   // Calculate the probability of growing a tree at a good bottom node
-  std::vector<Tree*> leafs;  // Nodes that can potentially be split
-  double PBx = GrowProbability(tree, cutpoints, tree_prior, leafs); // Probability of growing
+  std::vector<Tree*> leaves;  // Nodes that can potentially be split
+  double prob_birth_proposal_cur = GrowProbability(tree, cutpoints, tree_prior, leaves); // Probability of growing
 
   // Select a random bottom node from the list of good bottom nodes
-  size_t g_node_index = floor(random.uniform() * leafs.size());
-  Tree* g_node = leafs[g_node_index]; // The chosen node for the growth operation
+  size_t g_node_index = floor(random.uniform() * leaves.size());
+  Tree* g_node = leaves[g_node_index]; // The chosen node for the growth operation
 
   // Initialize variable for the cutpoint index
-  size_t c = 0;
+  size_t cut_val = 0;
 
   // Retrieve the list of variables that the chosen node can split on
   std::vector<size_t> cut_variables;
@@ -38,54 +38,54 @@ bool Grow(Tree& tree, Cutpoints& cutpoints, Data& data, TreePrior& tree_prior,
 
   // Select a variable to split on using inclusion probabilities
   random.SetInclusionWeights(variable_inclusion_prob); // Update weights based on probabilities
-  size_t v = random.discrete(); // Draw the variable index to split on
+  size_t split_var = random.discrete(); // Draw the variable index to split on
 
   // Determine the range of cutpoints for the selected variable
   int lower_bound_index = 0;
-  int upper_bound_index = cutpoints.values[v].size() - 1;
+  int upper_bound_index = cutpoints.values[split_var].size() - 1;
 
   // Check if the selected variable can actually be split
-  if (!std::binary_search(cut_variables.begin(), cut_variables.end(), v)) {
+  if (!std::binary_search(cut_variables.begin(), cut_variables.end(), split_var)) {
     // If the selected variable cannot be split, use the cutpoint of the closest ancestor
-    c = g_node->FindSameCut(v);
+    cut_val = g_node->FindSameCut(split_var);
   } else {
     // If the variable is good for splitting, select a random cutpoint within the range
-    c = lower_bound_index + 
+    cut_val = lower_bound_index + 
         floor(random.uniform() * (upper_bound_index - lower_bound_index + 1));
   }
 
   // Calculate necessary probabilities for the Metropolis-Hastings acceptance ratio
-  double Pbotx = 1.0 / leafs.size(); // Probability of choosing the node for splitting
-  size_t dnx = g_node->NodeDepth();
-  double PGnx = tree_prior.base / pow(1.0 + dnx, tree_prior.power); // Prior probability for growth
+  double prob_pick_bottom_cur = 1.0 / leaves.size(); // Probability of choosing the node for splitting
+  size_t depth_cur_node = g_node->NodeDepth();
+  double prior_grow_cur_node = tree_prior.base / pow(1.0 + depth_cur_node, tree_prior.power); // Prior probability for growth
 
-  double PGly, PGry; // Prior probabilities for the left and right child nodes
+  double prior_grow_left_child, prior_grow_right_child; // Prior probabilities for the left and right child nodes
   if (cut_variables.size() > 1) {
     // If multiple variables can be split, assign prior probabilities
-    PGly = tree_prior.base / pow(1.0 + dnx + 1.0, tree_prior.power); // Left child
-    PGry = PGly; // Same for right child
+    prior_grow_left_child = tree_prior.base / pow(1.0 + depth_cur_node + 1.0, tree_prior.power); // Left child
+    prior_grow_right_child = prior_grow_left_child; // Same for right child
   } else {
     // If only one variable is good for splitting, adjust probabilities based on cutpoint range
-    PGly = ((int)(c - 1) < lower_bound_index) ? 
-           0.0 : tree_prior.base / pow(1.0 + dnx + 1.0, tree_prior.power);
-    PGry = (upper_bound_index < (int)(c + 1)) ? 
-           0.0 : tree_prior.base / pow(1.0 + dnx + 1.0, tree_prior.power);
+    prior_grow_left_child = ((int)(cut_val - 1) < lower_bound_index) ? 
+           0.0 : tree_prior.base / pow(1.0 + depth_cur_node + 1.0, tree_prior.power);
+    prior_grow_right_child = (upper_bound_index < (int)(cut_val + 1)) ? 
+           0.0 : tree_prior.base / pow(1.0 + depth_cur_node + 1.0, tree_prior.power);
   }
 
   // Calculate the overall probability of the proposed operation
-  double PDy = (leafs.size() > 1 || (PGry != 0 || PGly != 0)) ? 
+  double prob_death_proposal_new = (leaves.size() > 1 || (prior_grow_right_child != 0 || prior_grow_left_child != 0)) ? 
                1.0 - tree_prior.p_GROW : 1.0;
-  double Pnogy = (g_node->GetParent() == nullptr) ? 1.0 : 
+  double prob_pick_nog_new = (g_node->GetParent() == nullptr) ? 1.0 : 
                  (g_node->GetParent()->IsNog() ? 1.0 / tree.NumberOfNogs() : 
                   1.0 / (tree.NumberOfNogs() + 1.0));
 
-  double pr = (PGnx * (1.0 - PGly) * (1.0 - PGry) * PDy * Pnogy) / 
-              ((1.0 - PGnx) * Pbotx * PBx);
+  double tree_ratio = (prior_grow_cur_node * (1.0 - prior_grow_left_child) * (1.0 - prior_grow_right_child) * prob_death_proposal_new * prob_pick_nog_new) / 
+              ((1.0 - prior_grow_cur_node) * prob_pick_bottom_cur * prob_birth_proposal_cur);
 
   // Compute sufficient statistics for the proposed child nodes
   size_t left_count, right_count; // Counts of observations in proposed nodes
   double left_residual, right_residual; // Sums of residuals in proposed nodes
-  SufficientStatistics(tree, g_node, v, c, cutpoints, data, left_count, 
+  SufficientStatistics(tree, g_node, split_var, cut_val, cutpoints, data, left_count, 
                        left_residual, right_count, right_residual);
 
   // Calculate the acceptance ratio (alpha) for the Metropolis-Hastings step
@@ -96,7 +96,7 @@ bool Grow(Tree& tree, Cutpoints& cutpoints, Data& data, TreePrior& tree_prior,
     double lht = LogPostLikelihood(left_count + right_count, 
                                    left_residual + right_residual, 
                                    sigma, tree_prior.eta);
-    log_alpha = log(pr) + (lhl + lhr - lht) + log(sigma);
+    log_alpha = log(tree_ratio) + (lhl + lhr - lht) + log(sigma);
     log_alpha = std::min(0.0, log_alpha); // Ensure log_alpha does not exceed 0
     alpha = exp(log_alpha);
   }
@@ -112,8 +112,8 @@ bool Grow(Tree& tree, Cutpoints& cutpoints, Data& data, TreePrior& tree_prior,
         DrawMuOneLeave(right_count, right_residual, tree_prior.eta, sigma, random));
     
     // Grow the tree with the new child nodes
-    tree.GrowChildren(g_node, v, c, par_left, par_right);
-    variable_inclusion_count[v]++;
+    tree.GrowChildren(g_node, split_var, cut_val, par_left, par_right);
+    variable_inclusion_count[split_var]++;
     return true;  // Grow step accepted
   } else {
     return false; // Grow step rejected
@@ -127,8 +127,8 @@ bool Prune(Tree& tree, Cutpoints& cutpoints, Data& data, TreePrior& tree_prior,
            ScaleMixture& scale_mixture, Random& random) {
 
   // Calculate the probability of growing a tree at a good bottom node
-  std::vector<Tree*> leafs;  // Nodes available for splitting
-  double PBx = GrowProbability(tree, cutpoints, tree_prior, leafs);
+  std::vector<Tree*> leaves;  // Nodes available for splitting
+  double prob_birth_proposal_cur = GrowProbability(tree, cutpoints, tree_prior, leaves);
 
   // Collect all NOG nodes (non-terminal nodes with both children being terminal)
   std::vector<Tree*> nog_nodes;
@@ -141,30 +141,30 @@ bool Prune(Tree& tree, Cutpoints& cutpoints, Data& data, TreePrior& tree_prior,
   // Calculate probabilities needed for the Metropolis-Hastings acceptance ratio
 
   // Probability that the selected NOG node would grow
-  double PGny = tree_prior.base / pow(1.0 + p_node->NodeDepth(), 
+  double prior_grow_selected_node_new = tree_prior.base / pow(1.0 + p_node->NodeDepth(), 
                                        tree_prior.power);
 
   // Probabilities of growth for the left and right child nodes
-  double PGlx = ProbNodeGrows(*(p_node->GetLeft()), cutpoints, tree_prior);
-  double PGrx = ProbNodeGrows(*(p_node->GetRight()), cutpoints, tree_prior);
+  double prior_grow_left_child_cur = ProbNodeGrows(*(p_node->GetLeft()), cutpoints, tree_prior);
+  double prior_grow_right_child_cur = ProbNodeGrows(*(p_node->GetRight()), cutpoints, tree_prior);
 
   // Probability of proposing a birth move at the selected node
-  double PBy = (p_node->GetParent() == nullptr) ? 1.0 : tree_prior.p_GROW;
+  double prob_birth_new = (p_node->GetParent() == nullptr) ? 1.0 : tree_prior.p_GROW;
 
   // Probability of choosing the selected NOG node as a bottom node to split on
-  int ngood = nog_nodes.size();
-  if (Splittable(*(p_node->GetLeft()), cutpoints)) --ngood;
-  if (Splittable(*(p_node->GetRight()), cutpoints)) --ngood;
-  ++ngood;  // Include the selected node itself as splittable
-  double Pboty = 1.0 / ngood;
+  int num_splittable_nodes = nog_nodes.size();
+  if (Splittable(*(p_node->GetLeft()), cutpoints)) --num_splittable_nodes;
+  if (Splittable(*(p_node->GetRight()), cutpoints)) --num_splittable_nodes;
+  ++num_splittable_nodes;  // Include the selected node itself as splittable
+  double prob_pick_bottom_new = 1.0 / num_splittable_nodes;
 
   // Probability of a death move and selecting the chosen NOG node
-  double PDx = 1.0 - PBx; // Probability of death move
-  double Pnogx = 1.0 / nog_nodes.size(); // Probability of choosing NOG node
+  double prob_death_cur = 1.0 - prob_birth_proposal_cur; // Probability of death move
+  double prob_pick_nog_cur = 1.0 / nog_nodes.size(); // Probability of choosing NOG node
 
   // Calculate part of the Metropolis ratio from proposal and prior
-  double pr = ((1.0 - PGny) * PBy * Pboty) / 
-              (PGny * (1.0 - PGlx) * (1.0 - PGrx) * PDx * Pnogx);
+  double tree_ratio = ((1.0 - prior_grow_selected_node_new) * prob_birth_new * prob_pick_bottom_new) / 
+              (prior_grow_selected_node_new * (1.0 - prior_grow_left_child_cur) * (1.0 - prior_grow_right_child_cur) * prob_death_cur * prob_pick_nog_cur);
 
   // Compute sufficient statistics for the left and right child nodes
   size_t count_left, count_right;
@@ -184,7 +184,7 @@ bool Prune(Tree& tree, Cutpoints& cutpoints, Data& data, TreePrior& tree_prior,
   double log_likelihood_ratio = lht - lhl - lhr - log(sigma);
 
   // Calculate the acceptance ratio (alpha)
-  double log_alpha = log(pr) + log_likelihood_ratio;
+  double log_alpha = log(tree_ratio) + log_likelihood_ratio;
   log_alpha = std::min(0.0, log_alpha); // Ensure log_alpha does not exceed 0
 
   // Perform the Metropolis-Hastings acceptance step
@@ -297,16 +297,16 @@ bool RJ_Grow(Tree& tree, Cutpoints& cutpoints, Data& data, TreePrior& tree_prior
              ScaleMixture& scale_mixture, Random& random) {
 
   // Collect all leaf nodes to potentially grow from
-  std::vector<Tree*> leafs;  
-  tree.CollectLeafs(leafs);
-  size_t number_of_leafs = leafs.size();
+  std::vector<Tree*> leaves;  
+  tree.CollectLeaves(leaves);
+  size_t number_of_leaves = leaves.size();
   
   // Select a random bottom node from the list of leaf nodes
-  size_t g_node_index = floor(random.uniform() * number_of_leafs);
-  Tree* g_node = leafs[g_node_index]; // The selected leaf node for the growth
+  size_t g_node_index = floor(random.uniform() * number_of_leaves);
+  Tree* g_node = leaves[g_node_index]; // The selected leaf node for the growth
 
   // Initialize the proposed cutpoint variable
-  size_t c = 0;
+  size_t cut_val = 0;
 
   // Retrieve the variables that the selected node can split on
   std::vector<size_t> cut_variables;
@@ -315,20 +315,20 @@ bool RJ_Grow(Tree& tree, Cutpoints& cutpoints, Data& data, TreePrior& tree_prior
   // Use inclusion probabilities to select a variable for splitting
   random.SetInclusionWeights(variable_inclusion_prob);
   size_t variable_index = floor(random.uniform() * cut_variables.size());
-  size_t v = cut_variables[variable_index]; // The proposed variable to split on
+  size_t split_var = cut_variables[variable_index]; // The proposed variable to split on
 
   // Determine the range of cutpoints for the selected variable
   int lower_bound_index = 0;
-  int upper_bound_index = cutpoints.values[v].size() - 1;
+  int upper_bound_index = cutpoints.values[split_var].size() - 1;
 
   // Draw a cutpoint for the proposed variable
-  c = lower_bound_index + 
+  cut_val = lower_bound_index + 
       floor(random.uniform() * (upper_bound_index - lower_bound_index + 1));
 
   // Compute sufficient statistics for the proposed split
   size_t left_count, right_count;  // Counts for the left and right child nodes
   double left_residual, right_residual; // Sums of outcomes for proposed nodes
-  SufficientStatistics(tree, g_node, v, c, cutpoints, data, left_count, 
+  SufficientStatistics(tree, g_node, split_var, cut_val, cutpoints, data, left_count, 
                        left_residual, right_count, right_residual);
 
   // Initialize parameters for the proposed child nodes
@@ -364,7 +364,7 @@ bool RJ_Grow(Tree& tree, Cutpoints& cutpoints, Data& data, TreePrior& tree_prior
         left_count + right_count, sigma); 
 
     // Calculate the log move ratio and tree ratio for GROW move
-    double log_move_ratio = LogMoveRatio(number_of_nogs, number_of_leafs, 
+    double log_move_ratio = LogMoveRatio(number_of_nogs, number_of_leaves, 
                                           grow_prob, tree_prior.p_PRUNE);
     double log_tree_ratio = LogTreeRatio_GROW(depth, tree_prior);
     
@@ -394,8 +394,8 @@ bool RJ_Grow(Tree& tree, Cutpoints& cutpoints, Data& data, TreePrior& tree_prior
   // Perform the Metropolis-Hastings acceptance step
   if (alpha > 0 && log(random.uniform()) < log_alpha) {
     // If accepted, update the tree with new parameters
-    tree.GrowChildren(g_node, v, c, par_left, par_right);
-    variable_inclusion_count[v]++;
+    tree.GrowChildren(g_node, split_var, cut_val, par_left, par_right);
+    variable_inclusion_count[split_var]++;
     return true; // Grow step accepted
   } else {
     return false; // Grow step rejected
@@ -469,9 +469,9 @@ bool RJ_Prune(Tree& tree, Cutpoints& cutpoints, Data& data, TreePrior& tree_prio
 
   // Compute the move ratio and tree ratio for the pruning operation
   size_t number_of_nogs = tree.NumberOfNogs();
-  size_t number_of_leafs = tree.NumberOfLeafs();
+  size_t number_of_leaves = tree.NumberOfLeaves();
 
-  double log_move_ratio = -LogMoveRatio(number_of_nogs, number_of_leafs, 
+  double log_move_ratio = -LogMoveRatio(number_of_nogs, number_of_leaves, 
                                          grow_prob, tree_prior.p_PRUNE);
   double log_tree_ratio = LogTreeRatio_PRUNE(p_node, tree_prior, cutpoints);
 

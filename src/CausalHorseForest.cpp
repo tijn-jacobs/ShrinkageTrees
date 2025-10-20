@@ -16,7 +16,7 @@ Rcpp::List CausalHorseForest_cpp(
   SEXP param1_controlSEXP, SEXP param2_controlSEXP, SEXP reversible_controlSEXP,
   SEXP sigma_knownSEXP, SEXP sigmaSEXP, SEXP lambdaSEXP,
   SEXP nuSEXP, SEXP N_postSEXP, SEXP N_burnSEXP, SEXP delayed_proposalSEXP,
-  SEXP store_parametersSEXP, SEXP max_stored_leafsSEXP,
+  SEXP store_parametersSEXP, SEXP max_stored_leavesSEXP,
   SEXP store_posterior_sample_controlSEXP, SEXP store_posterior_sample_treatSEXP, SEXP n1SEXP, SEXP n2SEXP, SEXP verboseSEXP
 ) {     
 
@@ -86,7 +86,7 @@ Rcpp::List CausalHorseForest_cpp(
 
   // Storage parameters
   bool store_parameters = Rcpp::as<bool>(store_parametersSEXP);
-  size_t max_stored_leafs = Rcpp::as<size_t>(max_stored_leafsSEXP);
+  size_t max_stored_leaves = Rcpp::as<size_t>(max_stored_leavesSEXP);
   bool store_posterior_sample_control = Rcpp::as<bool>(store_posterior_sample_controlSEXP);
   bool store_posterior_sample_treat = Rcpp::as<bool>(store_posterior_sample_treatSEXP);
 
@@ -159,11 +159,11 @@ Rcpp::List CausalHorseForest_cpp(
   // Initialize storage for the tree topology parameters, if requested
   if (store_parameters) {
     store_global_parameters_control = Rcpp::NumericMatrix(N_post, no_trees_control);
-    store_local_parameters_control = Rcpp::NumericMatrix(N_post, max_stored_leafs * no_trees_control);
-    store_local_indices_control = Rcpp::IntegerMatrix(N_post, max_stored_leafs * no_trees_control);
+    store_local_parameters_control = Rcpp::NumericMatrix(N_post, max_stored_leaves * no_trees_control);
+    store_local_indices_control = Rcpp::IntegerMatrix(N_post, max_stored_leaves * no_trees_control);
     store_global_parameters_treat = Rcpp::NumericMatrix(N_post, no_trees_treat);
-    store_local_parameters_treat = Rcpp::NumericMatrix(N_post, max_stored_leafs * no_trees_treat);
-    store_local_indices_treat = Rcpp::IntegerMatrix(N_post, max_stored_leafs * no_trees_treat);
+    store_local_parameters_treat = Rcpp::NumericMatrix(N_post, max_stored_leaves * no_trees_treat);
+    store_local_indices_treat = Rcpp::IntegerMatrix(N_post, max_stored_leaves * no_trees_treat);
 
     // Initialize with -2 for debugging (optional)
     store_global_parameters_control.fill(-2);
@@ -404,7 +404,7 @@ Rcpp::List CausalHorseForest_cpp(
 
         // Collect all leaf nodes
         std::vector<Tree*> leaf_vector;
-        tree.CollectLeafs(leaf_vector);
+        tree.CollectLeaves(leaf_vector);
 
         // Iterate through the collected leaf nodes
         for (size_t leaf_index = 0; leaf_index < leaf_vector.size(); ++leaf_index) {
@@ -419,7 +419,7 @@ Rcpp::List CausalHorseForest_cpp(
           } 
 
           // Compute the column index for this leaf
-          size_t col_index = tree_counter_control * max_stored_leafs + leaf_index;
+          size_t col_index = tree_counter_control * max_stored_leaves + leaf_index;
 
           // Ensure col_index does not exceed matrix bounds
           if (col_index < static_cast<size_t>(store_local_parameters_control.ncol())) {
@@ -445,7 +445,7 @@ Rcpp::List CausalHorseForest_cpp(
 
         // Collect all leaf nodes
         std::vector<Tree*> leaf_vector;
-        tree.CollectLeafs(leaf_vector);
+        tree.CollectLeaves(leaf_vector);
 
         // Iterate through the collected leaf nodes
         for (size_t leaf_index = 0; leaf_index < leaf_vector.size(); ++leaf_index) {
@@ -460,7 +460,7 @@ Rcpp::List CausalHorseForest_cpp(
           } 
 
           // Compute the column index for this leaf
-          size_t col_index = tree_counter_treat * max_stored_leafs + leaf_index;
+          size_t col_index = tree_counter_treat * max_stored_leaves + leaf_index;
 
           // Ensure col_index does not exceed matrix bounds
           if (col_index < static_cast<size_t>(store_local_parameters_treat.ncol())) {
