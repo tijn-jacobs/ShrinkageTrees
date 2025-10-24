@@ -20,11 +20,13 @@
 #' `outcome_type = "right-censored"`.
 #' @param number_of_trees Number of trees in the ensemble. Default is 200.
 #' @param prior_type Type of prior on the step heights. Options include
-#' `"horseshoe"`, `"horseshoe_fw"`, `"horseshoe_EB"`, and `"half-cauchy"`.
+#' `"horseshoe"`, `"horseshoe_fw"`, `"horseshoe_EB"`, `"half-cauchy"`, and `"standard"`.
 #' @param local_hp Local hyperparameter controlling shrinkage on individual
 #' step heights. Should typically be set smaller than 1 / sqrt(number_of_trees).
+#' Required for `prior_type = "standard"`.
 #' @param global_hp Global hyperparameter controlling overall shrinkage.
-#' Must be specified for Horseshoe-type priors; ignored for `prior_type = "half-cauchy"`.
+#' Must be specified for Horseshoe-type priors; ignored for 
+#' `prior_type = "half-cauchy"` or `"standard"`.
 #' @param power Power parameter for the tree structure prior. Default is 2.0.
 #' @param base Base parameter for the tree structure prior. Default is 0.95.
 #' @param p_grow Probability of proposing a grow move. Default is 0.4.
@@ -183,9 +185,9 @@ ShrinkageTrees <- function(y,
   }
   
   # Check prior_type value
-  allowed_prior <- c("horseshoe", "horseshoe_fw", "horseshoe_EB", "half-cauchy")
+  allowed_prior <- c("horseshoe", "horseshoe_fw", "horseshoe_EB", "half-cauchy", "standard")
   if (!prior_type %in% allowed_prior) {
-    stop("Invalid prior_type. Choose 'horseshoe', 'horseshoe_fw', 'horseshoe_EB', or 'half-cauchy'.")
+    stop("Invalid prior_type. Choose 'horseshoe', 'horseshoe_fw', 'horseshoe_EB', 'half-cauchy' or 'standard'.")
   }
   
   # Prior-specific checks
@@ -207,6 +209,26 @@ ShrinkageTrees <- function(y,
   }
   
   if (prior_type == "horseshoe_EB") prior_type <- "halfcauchy"
+
+  # Default reversible flag
+  reversible_flag <- TRUE
+
+  # 'standard' BART prior: local-only shrinkage, no RJ moves
+  if (prior_type == "standard") {
+    if (is.null(local_hp)) {
+      stop("For prior_type = 'standard', you must provide local_hp.")
+    }
+    if (!is.null(global_hp)) {
+      warning("global_hp is ignored for 'standard' (BART-style prior).")
+    }
+
+    global_hp <- 1          # placeholder (ignored by C++)
+    reversible_flag <- FALSE
+
+    if (delayed_proposal > 0) {
+      delayed_proposal <- 0
+    }
+  }
 
   # Check consistency with status argument
   if (outcome_type == "right-censored" && is.null(status)) {
@@ -322,7 +344,7 @@ ShrinkageTrees <- function(y,
       param1SEXP = local_hp,
       param2SEXP = global_hp,
       prior_typeSEXP = prior_type,
-      reversibleSEXP = TRUE,
+      reversibleSEXP = reversible_flag,
       store_parametersSEXP = FALSE,
       store_posterior_sampleSEXP = store_posterior_sample,
       n1SEXP = seed,

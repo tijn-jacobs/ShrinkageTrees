@@ -15,7 +15,7 @@ void Forest::SetTreePrior(double base, double power, double eta,
                           double p_GROW, double p_PRUNE) {
   tree_prior.base = base;
   tree_prior.power = power;
-  tree_prior.eta = eta;
+  tree_prior.eta = eta; // eta is the fixed variance parameter for standard BART
   tree_prior.p_GROW = p_GROW;
   tree_prior.p_PRUNE = p_PRUNE;
 }

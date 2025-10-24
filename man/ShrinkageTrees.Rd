@@ -54,13 +54,15 @@ or \code{"log"} (already log-transformed). Only used when
 \item{number_of_trees}{Number of trees in the ensemble. Default is 200.}
 
 \item{prior_type}{Type of prior on the step heights. Options include
-\code{"horseshoe"}, \code{"horseshoe_fw"}, \code{"horseshoe_EB"}, and \code{"half-cauchy"}.}
+\code{"horseshoe"}, \code{"horseshoe_fw"}, \code{"horseshoe_EB"}, \code{"half-cauchy"}, and \code{"standard"}.}
 
 \item{local_hp}{Local hyperparameter controlling shrinkage on individual
-step heights. Should typically be set smaller than 1 / sqrt(number_of_trees).}
+step heights. Should typically be set smaller than 1 / sqrt(number_of_trees).
+Required for \code{prior_type = "standard"}.}
 
 \item{global_hp}{Global hyperparameter controlling overall shrinkage.
-Must be specified for Horseshoe-type priors; ignored for \code{prior_type = "half-cauchy"}.}
+Must be specified for Horseshoe-type priors; ignored for
+\code{prior_type = "half-cauchy"} or \code{"standard"}.}
 
 \item{power}{Power parameter for the tree structure prior. Default is 2.0.}
 

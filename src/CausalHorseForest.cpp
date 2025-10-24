@@ -219,14 +219,14 @@ Rcpp::List CausalHorseForest_cpp(
   PriorType prior_control;
   if (prior_type_control == "horseshoe") {
     prior_control = PriorType::Horseshoe;
-  } else if (prior_type_control == "fixed") {
+  } else if (prior_type_control == "fixed" || prior_type_control == "standard") {
     prior_control = PriorType::FixedVariance;
   } else if (prior_type_control == "halfcauchy") {
     prior_control = PriorType::HalfCauchy;
   } else if (prior_type_control == "horseshoe_fw") {
     prior_control = PriorType::Horseshoe_fw;
   } else {
-    Rcpp::stop("Invalid prior type for prognostic forest. Choose one of: 'horseshoe', 'fixed', 'halfcauchy', 'horseshoe_fw'.");
+    Rcpp::stop("Invalid prior type for prognostic forest. Choose one of: 'horseshoe', 'fixed', 'halfcauchy', 'horseshoe_fw', 'standard'.");
   }
   // Initialize the scale mixture prior on the step heights in the leaves for the prognostic model
   ScaleMixture scale_mixture_control(prior_control, param1_control, param2_control);
@@ -245,14 +245,14 @@ Rcpp::List CausalHorseForest_cpp(
   PriorType prior_treat;
   if (prior_type_treat == "horseshoe") {
     prior_treat = PriorType::Horseshoe;
-  } else if (prior_type_treat == "fixed") {
+  } else if (prior_type_treat == "fixed" || prior_type_treat == "standard") {
     prior_treat = PriorType::FixedVariance;
   } else if (prior_type_treat == "halfcauchy") {
     prior_treat = PriorType::HalfCauchy;
   } else if (prior_type_treat == "horseshoe_fw") {
     prior_treat = PriorType::Horseshoe_fw;
   } else {
-    Rcpp::stop("Invalid prior type for treatment effect forest. Choose one of: 'horseshoe', 'fixed', 'halfcauchy', 'horseshoe_fw'.");
+    Rcpp::stop("Invalid prior type for treatment effect forest. Choose one of: 'horseshoe', 'fixed', 'halfcauchy', 'horseshoe_fw', 'standard'.");
   }
 
   // Initialize the scale mixture prior on the step heights in the leaves for the prognostic model
