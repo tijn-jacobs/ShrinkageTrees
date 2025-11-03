@@ -192,7 +192,6 @@ Rcpp::List CausalHorseForest_cpp(
     augmented_outcome_treat[i] = y[i]/2;
     augmented_outcome_control[i] = y[i]/2;
   }
-  
 
   // If prior_type = 6, we have a Horseshoe with forest wide shrinkage.
   // These updates are done in the outer Gibbs step.
