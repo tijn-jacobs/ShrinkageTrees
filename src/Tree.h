@@ -37,6 +37,10 @@ private:
   Tree* left; 
   Tree* right; 
 
+  // ?
+  size_t leaf_index_;  // valid iff this is a leaf during current stats pass
+
+
   // Utility function to copy the structure and data from another tree. 
   // This function might be removed if not needed (indicated by the DELETE 
   // comment).
@@ -46,20 +50,35 @@ public:
 
   // Constructors and Destructor
 
-  // Default constructor initializes 1 parameter by default
-  Tree(double* common_paramaters) 
-    : parameters(), split_var(0), cut_val(0), parent(nullptr), left(nullptr), 
-      right(nullptr) {}
+  // Default constructor with (unused) pointer
+  Tree(double* common_paramaters)
+    : parameters(),
+      split_var(0),
+      cut_val(0),
+      parent(nullptr),
+      left(nullptr),
+      right(nullptr),
+      leaf_index_(std::numeric_limits<size_t>::max()) {}
 
-  // Constructor initializing with a number of parameters
-  Tree() 
-    : parameters(), split_var(0), cut_val(0), parent(nullptr), left(nullptr), 
-      right(nullptr) {}
+  // Plain default constructor
+  Tree()
+    : parameters(),
+      split_var(0),
+      cut_val(0),
+      parent(nullptr),
+      left(nullptr),
+      right(nullptr),
+      leaf_index_(std::numeric_limits<size_t>::max()) {}
 
   // Copy constructor
-  Tree(const Tree& new_tree) 
-    : parameters(), split_var(0), cut_val(0), parent(nullptr), left(nullptr), 
-      right(nullptr) {
+  Tree(const Tree& new_tree)
+    : parameters(),
+      split_var(0),
+      cut_val(0),
+      parent(nullptr),
+      left(nullptr),
+      right(nullptr),
+      leaf_index_(std::numeric_limits<size_t>::max()) {
     CopyTree(this, &new_tree);
   }
 
@@ -158,8 +177,20 @@ public:
   // Collect pointers to all nodes in the tree (const version).
   void CollectNodes(std::vector<const Tree*>& node_vector) const;
 
-  // Find the leaf node corresponding to a given data point.
-  Tree* FindLeaf(double* x, Cutpoints& cutpoints);
+  inline Tree* FindLeaf(double* x_row,
+                            const Cutpoints& cutpoints) const noexcept {
+
+    const Tree* node = this;
+
+    while (node->left) {
+      node = (x_row[node->split_var] <
+              cutpoints.values[node->split_var][node->cut_val])
+               ? node->left
+               : node->right;
+    }
+
+    return const_cast<Tree*>(node);
+  }
 
   // Determine the possible cuts for a given variable, adjusting the interval 
   // [lower_bound, upper_bound].
@@ -189,6 +220,13 @@ public:
 
   // Returns the number of observations that fall into this node.
   size_t NodeSize(Data& data, Cutpoints& cutpoints);
+
+  // Funcions to manage leaf_index_
+  inline void   ResetLeafIndex()         { leaf_index_ = std::numeric_limits<size_t>::max(); }
+  inline void   SetLeafIndex(size_t idx) { leaf_index_ = idx; }
+  inline size_t GetLeafIndex() const     { return leaf_index_; }
+  inline bool   HasLeafIndex() const     { return leaf_index_ != std::numeric_limits<size_t>::max(); }
+
 };
 
 #endif // GUARD_Tree_h

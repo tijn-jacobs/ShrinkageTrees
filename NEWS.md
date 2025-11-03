@@ -1,3 +1,9 @@
+# ShrinkageTrees 1.1.0
+
+- Replaced the internal `std::map` structure with a more efficient vector-based lookup, improving overall computational speed by approximately 30%.
+- Added the `standard` prior type option for `ShrinkageTrees`, corresponding to the conventional BART implementation without reversible jumps.
+- Added missing checks for training data dimensions to improve input validation and error handling.
+
 # ShrinkageTrees 1.0.3
 
 - Refactored the non-reversible tree modification routines in the C++ backend for improved clarity and maintainability.

@@ -627,11 +627,9 @@ bool ReversibleJump(Tree& tree, Cutpoints& cutpoints, Data& data,
   double prob_PRUNE = tree_prior.p_PRUNE;
   double U;
 
-  // Indicator for whether to use Reversible Jump MCMC or standard BART
-  bool RJMCMC = reversible_jump;
-
   // If using Reversible Jump MCMC
-  if (RJMCMC) {
+  if (reversible_jump) {
+
     // For a stump (a tree with only one node), we can only grow
     if (tree.TreeSize() == 1) {
       return RJ_Grow(tree, cutpoints, data, tree_prior, sigma, omega, nodes, 
@@ -657,8 +655,10 @@ bool ReversibleJump(Tree& tree, Cutpoints& cutpoints, Data& data,
       }
     }
   } 
+  
   // If not using Reversible Jump MCMC
   else {
+
     // For a stump, we can only grow
     if (tree.TreeSize() == 1) {
       return Grow(tree, cutpoints, data, tree_prior, sigma, nodes, 

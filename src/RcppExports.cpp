@@ -107,6 +107,25 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// get_cpp_profile
+Rcpp::NumericVector get_cpp_profile();
+RcppExport SEXP _ShrinkageTrees_get_cpp_profile() {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    rcpp_result_gen = Rcpp::wrap(get_cpp_profile());
+    return rcpp_result_gen;
+END_RCPP
+}
+// reset_cpp_profile
+void reset_cpp_profile();
+RcppExport SEXP _ShrinkageTrees_reset_cpp_profile() {
+BEGIN_RCPP
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    reset_cpp_profile();
+    return R_NilValue;
+END_RCPP
+}
 // probitHorseTrees_cpp
 Rcpp::List probitHorseTrees_cpp(SEXP nSEXP, SEXP pSEXP, SEXP n_testSEXP, SEXP X_trainSEXP, SEXP ySEXP, SEXP X_testSEXP, SEXP number_of_treesSEXP, SEXP N_postSEXP, SEXP N_burnSEXP, SEXP delayed_proposalSEXP, SEXP powerSEXP, SEXP baseSEXP, SEXP p_growSEXP, SEXP p_pruneSEXP, SEXP omegaSEXP, SEXP latent_thresholdSEXP, SEXP param1SEXP, SEXP param2SEXP, SEXP prior_typeSEXP, SEXP reversibleSEXP, SEXP store_posterior_sampleSEXP, SEXP n1SEXP, SEXP n2SEXP, SEXP verboseSEXP);
 RcppExport SEXP _ShrinkageTrees_probitHorseTrees_cpp(SEXP nSEXPSEXP, SEXP pSEXPSEXP, SEXP n_testSEXPSEXP, SEXP X_trainSEXPSEXP, SEXP ySEXPSEXP, SEXP X_testSEXPSEXP, SEXP number_of_treesSEXPSEXP, SEXP N_postSEXPSEXP, SEXP N_burnSEXPSEXP, SEXP delayed_proposalSEXPSEXP, SEXP powerSEXPSEXP, SEXP baseSEXPSEXP, SEXP p_growSEXPSEXP, SEXP p_pruneSEXPSEXP, SEXP omegaSEXPSEXP, SEXP latent_thresholdSEXPSEXP, SEXP param1SEXPSEXP, SEXP param2SEXPSEXP, SEXP prior_typeSEXPSEXP, SEXP reversibleSEXPSEXP, SEXP store_posterior_sampleSEXPSEXP, SEXP n1SEXPSEXP, SEXP n2SEXPSEXP, SEXP verboseSEXPSEXP) {
@@ -145,6 +164,8 @@ END_RCPP
 static const R_CallMethodDef CallEntries[] = {
     {"_ShrinkageTrees_CausalHorseForest_cpp", (DL_FUNC) &_ShrinkageTrees_CausalHorseForest_cpp, 47},
     {"_ShrinkageTrees_HorseTrees_cpp", (DL_FUNC) &_ShrinkageTrees_HorseTrees_cpp, 30},
+    {"_ShrinkageTrees_get_cpp_profile", (DL_FUNC) &_ShrinkageTrees_get_cpp_profile, 0},
+    {"_ShrinkageTrees_reset_cpp_profile", (DL_FUNC) &_ShrinkageTrees_reset_cpp_profile, 0},
     {"_ShrinkageTrees_probitHorseTrees_cpp", (DL_FUNC) &_ShrinkageTrees_probitHorseTrees_cpp, 24},
     {NULL, NULL, 0}
 };

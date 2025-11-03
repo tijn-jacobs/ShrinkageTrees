@@ -1,4 +1,5 @@
 #include "HorseTrees.h"
+#include "Timing.h"
 
 // [[Rcpp::export]]
 Rcpp::List HorseTrees_cpp( 
@@ -110,16 +111,18 @@ Rcpp::List HorseTrees_cpp(
   
   if (prior_type == "horseshoe") {
     prior = PriorType::Horseshoe;
-  } else if (prior_type == "fixed") {
+  } else if (prior_type == "fixed" || prior_type == "standard") {
     prior = PriorType::FixedVariance;
   } else if (prior_type == "halfcauchy") {
     prior = PriorType::HalfCauchy;
   } else if (prior_type == "horseshoe_fw") {
     prior = PriorType::Horseshoe_fw;
   } else {
-    Rcpp::stop("Invalid prior type provided. Choose one of: 'horseshoe', 'fixed', 'halfcauchy', 'horseshoe_fw'.");
+    Rcpp::stop("Invalid prior type provided. Choose one of: 'horseshoe', 'fixed', 'halfcauchy', 'horseshoe_fw', 'standard'.");
   }
 
+  // What happens with prior if we use 'standard', i.e., non-reversible-jump BART?
+  // It will not be used. So can we set it to "nothing"?
   
   // Initialize the scale mixture prior on the step heights in the leaves
   ScaleMixture scale_mixture(prior, param1, param2);
@@ -197,9 +200,11 @@ Rcpp::List HorseTrees_cpp(
       Rcpp::Rcout.flush();
     }
 
+
+
     // Update the forest (outer Gibbs step)
     forest.UpdateForest(sigma, scale_mixture, reversible, delayed_proposal, random, accepted);
-  
+    
   
     // Update fores wide shrinkage parameter (outer Gibbs step0
     if (prior_type == "horseshoe_fw") {
@@ -214,6 +219,7 @@ Rcpp::List HorseTrees_cpp(
         random
       );
     }
+  
 
     // Update sigma (outer Gibbs step)
     UpdateSigma(
@@ -228,6 +234,7 @@ Rcpp::List HorseTrees_cpp(
       lambda,
       random
     );
+
 
     // Augment the censored data
     AugmentCensoredObservations(is_survival, y, y_observed, status_indicator, forest.GetPredictions(), sigma, n, random);
@@ -273,6 +280,7 @@ Rcpp::List HorseTrees_cpp(
         tree_counter++;
       }
     }
+
 
     if (i >= N_burn) {
       // Store posterior mean of training predictions

@@ -21,6 +21,8 @@
 #include <ctime>       // Time functions (e.g., clock, time)
 #include <stdexcept>   // 
 #include <memory>      // For dynamic memory management (e.g., std::shared_ptr)
+#include <limits>      // for std::numeric_limits<size_t>::max()
+
 
 // Random number generation library
 #include "Random.h"

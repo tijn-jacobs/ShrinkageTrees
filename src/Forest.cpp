@@ -1,4 +1,5 @@
 #include "Forest.h"
+#include "Timing.h"
 
 // Return the number of splits for each covariate as a reference
 std::vector<size_t>& Forest::GetVariableInclusionCount() {
@@ -15,7 +16,7 @@ void Forest::SetTreePrior(double base, double power, double eta,
                           double p_GROW, double p_PRUNE) {
   tree_prior.base = base;
   tree_prior.power = power;
-  tree_prior.eta = eta;
+  tree_prior.eta = eta; // eta is the fixed variance parameter for standard BART
   tree_prior.p_GROW = p_GROW;
   tree_prior.p_PRUNE = p_PRUNE;
 }
@@ -114,6 +115,8 @@ void Forest::Predict(size_t p, size_t n, double *X, double *predictions) {
   // Free the memory allocated for single_tree_prediction
   delete[] single_tree_prediction;
 }
+
+
 
 // Performs a single iteration of the MCMC process, updating the trees in the forest.
 void Forest::UpdateForest(const double& sigma, ScaleMixture& scale_mixture, bool reversible,

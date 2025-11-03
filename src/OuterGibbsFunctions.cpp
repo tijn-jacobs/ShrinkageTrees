@@ -181,7 +181,7 @@ void UpdateSigma(
   double residual_temp;
 
   for (size_t k = 0; k < n; k++) {
-    residual_temp = y[k] - prediction[k];
+    residual_temp = (y[k] - prediction[k])/sigma;
     residual_sum2 += residual_temp * residual_temp;
   }
   

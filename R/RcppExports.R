@@ -9,6 +9,14 @@ HorseTrees_cpp <- function(nSEXP, pSEXP, n_testSEXP, X_trainSEXP, ySEXP, status_
     .Call(`_ShrinkageTrees_HorseTrees_cpp`, nSEXP, pSEXP, n_testSEXP, X_trainSEXP, ySEXP, status_indicatorSEXP, is_survivalSEXP, X_testSEXP, number_of_treesSEXP, N_postSEXP, N_burnSEXP, delayed_proposalSEXP, powerSEXP, baseSEXP, p_growSEXP, p_pruneSEXP, nuSEXP, lambdaSEXP, sigmaSEXP, sigma_knownSEXP, omegaSEXP, param1SEXP, param2SEXP, prior_typeSEXP, reversibleSEXP, store_parametersSEXP, store_posterior_sampleSEXP, n1SEXP, n2SEXP, verboseSEXP)
 }
 
+get_cpp_profile <- function() {
+    .Call(`_ShrinkageTrees_get_cpp_profile`)
+}
+
+reset_cpp_profile <- function() {
+    invisible(.Call(`_ShrinkageTrees_reset_cpp_profile`))
+}
+
 probitHorseTrees_cpp <- function(nSEXP, pSEXP, n_testSEXP, X_trainSEXP, ySEXP, X_testSEXP, number_of_treesSEXP, N_postSEXP, N_burnSEXP, delayed_proposalSEXP, powerSEXP, baseSEXP, p_growSEXP, p_pruneSEXP, omegaSEXP, latent_thresholdSEXP, param1SEXP, param2SEXP, prior_typeSEXP, reversibleSEXP, store_posterior_sampleSEXP, n1SEXP, n2SEXP, verboseSEXP) {
     .Call(`_ShrinkageTrees_probitHorseTrees_cpp`, nSEXP, pSEXP, n_testSEXP, X_trainSEXP, ySEXP, X_testSEXP, number_of_treesSEXP, N_postSEXP, N_burnSEXP, delayed_proposalSEXP, powerSEXP, baseSEXP, p_growSEXP, p_pruneSEXP, omegaSEXP, latent_thresholdSEXP, param1SEXP, param2SEXP, prior_typeSEXP, reversibleSEXP, store_posterior_sampleSEXP, n1SEXP, n2SEXP, verboseSEXP)
 }
