@@ -1,5 +1,4 @@
 #include "HorseTrees.h"
-#include "Timing.h"
 
 // [[Rcpp::export]]
 Rcpp::List HorseTrees_cpp( 

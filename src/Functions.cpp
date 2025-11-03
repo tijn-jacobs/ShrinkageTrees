@@ -1,5 +1,4 @@
 #include "Functions.h"
-#include "Timing.h"
 
 // The function checks if the given leaf node has ANY variables on which it can 
 // perform a valid split. It iterates through all the potential variables (stored 

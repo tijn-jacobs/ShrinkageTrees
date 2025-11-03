@@ -1,5 +1,4 @@
 #include "Forest.h"
-#include "Timing.h"
 
 // Return the number of splits for each covariate as a reference
 std::vector<size_t>& Forest::GetVariableInclusionCount() {
