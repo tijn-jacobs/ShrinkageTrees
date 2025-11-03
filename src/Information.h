@@ -72,6 +72,12 @@ class Data {
 
   // Function to print the contents of the data object
   void Print() const;
+
+  // Temporary for optimization
+  inline const double* GetDataRowConst(size_t i) const noexcept {
+    return X + i * p; // assuming row-major like you already use
+  }
+
 };
 
 class TreePrior {

@@ -1,5 +1,5 @@
 #include "Functions.h"
-
+#include "Timing.h"
 
 // The function checks if the given leaf node has ANY variables on which it can 
 // perform a valid split. It iterates through all the potential variables (stored 
@@ -264,10 +264,23 @@ double ProbNodeGrows(Tree& tree, Cutpoints& cutpoints, TreePrior& tree_prior) {
   }
 }
 
+//Helper functions to manage leaf_index_ during stats pass. Replaced old map-based approach.
+// Assigns 0..(leaves.size()-1) to each leaf’s leaf_index_.
+static inline void AssignLeafIndices(std::vector<Tree*>& leaves) {
+  for (size_t i = 0; i < leaves.size(); ++i) {
+    leaves[i]->SetLeafIndex(i);
+  }
+}
+
+// Clears the indices after we’re done (defensive).
+static inline void ClearLeafIndices(std::vector<Tree*>& leaves) {
+  for (Tree* leaf : leaves) leaf->ResetLeafIndex();
+}
 
 // Compute sufficient statistics for all bottom nodes in the tree. 
 // This method loops through all the data once, collecting the number of 
 // observations and the sum of residuals for each bottom node.
+/*
 void SufficientStatisticsAllLeaves(Tree& tree, Cutpoints& cutpoints, Data& data, 
                                    std::vector<Tree*>& bottom_nodes, 
                                    std::vector<size_t>& observation_count_vector, 
@@ -314,6 +327,45 @@ void SufficientStatisticsAllLeaves(Tree& tree, Cutpoints& cutpoints, Data& data,
     ++(observation_count_vector[bottom_node_index]);
     residual_sum_vector[bottom_node_index] += data.GetResidual(i);
   }
+}
+*/
+
+void SufficientStatisticsAllLeaves(
+    Tree& tree,
+    Cutpoints& cutpoints,
+    Data& data,
+    std::vector<Tree*>& bottom_nodes,
+    std::vector<size_t>& observation_count_vector,
+    std::vector<double>& residual_sum_vector) {
+
+  bottom_nodes.clear();
+  tree.CollectLeaves(bottom_nodes);
+
+  // Assign dense indices to leaves once per pass
+  AssignLeafIndices(bottom_nodes);
+
+  const size_t L = bottom_nodes.size();
+  observation_count_vector.assign(L, 0);
+  residual_sum_vector.assign(L, 0.0);
+
+  // Fast raw pointers
+  const size_t N = data.GetN();
+  const size_t P = data.GetP();
+  double* Xrow = nullptr;
+  double* X = data.GetX();
+  double* resid = data.GetResidual();
+
+  // Main scan
+  for (size_t i = 0; i < N; ++i) {
+    Xrow = X + i * P;  // contiguous row
+    Tree* leaf = tree.FindLeaf(Xrow, cutpoints);  // iterative inline
+    const size_t idx = leaf->GetLeafIndex();      // O(1)
+    ++observation_count_vector[idx];
+    residual_sum_vector[idx] += resid[i];
+  }
+
+  // Defensive cleanup (cheap, keeps invariants simple)
+  ClearLeafIndices(bottom_nodes);
 }
 
 
@@ -385,7 +437,6 @@ void FullUpdate(Tree& tree, Cutpoints& cutpoints, Data& data,
                           sigma, omega, random);
   }
 }
-
 
 // Draws a single mu (parameter) value from the posterior distribution
 double DrawMuOneLeave(size_t n, double sum_residuals, double prior_variance, 

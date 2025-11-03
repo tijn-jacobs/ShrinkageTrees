@@ -191,6 +191,11 @@ HorseTrees <- function(y,
   # Retrieve dimensions of training data
   n_train <- nrow(X_train)
   p_features <- ncol(X_train)
+
+  # Check if dimensions covariates match with outcome
+  if (length(y) != n_train) {
+    stop("The length of outcome vector y must match the number of rows in X_train.")
+  }
   
   # Check if dimensions match with test data
   if (!is.null(X_test)) {

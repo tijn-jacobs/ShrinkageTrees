@@ -1,7 +1,6 @@
 #include "HorseTrees.h"
 #include "Timing.h"
 
-
 // [[Rcpp::export]]
 Rcpp::List HorseTrees_cpp( 
   SEXP nSEXP,     
@@ -202,11 +201,10 @@ Rcpp::List HorseTrees_cpp(
     }
 
 
-    {
-    ScopedTimer t("UpdateForest");
+
     // Update the forest (outer Gibbs step)
     forest.UpdateForest(sigma, scale_mixture, reversible, delayed_proposal, random, accepted);
-    }
+    
   
     // Update fores wide shrinkage parameter (outer Gibbs step0
     if (prior_type == "horseshoe_fw") {
@@ -222,8 +220,7 @@ Rcpp::List HorseTrees_cpp(
       );
     }
   
-    {
-    ScopedTimer t("UpdateSigma");
+
     // Update sigma (outer Gibbs step)
     UpdateSigma(
       sigma_known,
@@ -237,16 +234,12 @@ Rcpp::List HorseTrees_cpp(
       lambda,
       random
     );
-    }
 
-    {
-    ScopedTimer t("AugmentCensoredObservations");
+
     // Augment the censored data
     AugmentCensoredObservations(is_survival, y, y_observed, status_indicator, forest.GetPredictions(), sigma, n, random);
-    }
 
-    {
-    ScopedTimer t("StoreParametersAuxilliary");
+
     // Save the (averages for now) of the leaf node parameters
     if (store_parameters && i >= N_burn) {
       size_t tree_counter = 0;
@@ -287,10 +280,8 @@ Rcpp::List HorseTrees_cpp(
         tree_counter++;
       }
     }
-    }
 
-    {
-    ScopedTimer t("StoreParameters");
+
     if (i >= N_burn) {
       // Store posterior mean of training predictions
       for (size_t k = 0; k < n; k++) {
@@ -333,7 +324,6 @@ Rcpp::List HorseTrees_cpp(
         sum_accept += accepted[j];
       }
     }
-  }
   }
 
   for (size_t k = 0; k < n; k++) train_predictions_mean[k] /= N_post;

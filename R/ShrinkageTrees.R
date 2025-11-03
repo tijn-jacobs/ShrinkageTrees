@@ -256,6 +256,11 @@ ShrinkageTrees <- function(y,
   # Retrieve dimensions of training data
   n_train <- nrow(X_train)
   p_features <- ncol(X_train)
+
+  # Check if dimensions covariates match with outcome
+  if (length(y) != n_train) {
+    stop("The length of outcome vector y must match the number of rows in X_train.")
+  }
   
   # Check if dimensions match with test data
   if (!is.null(X_test)) {
@@ -394,7 +399,7 @@ ShrinkageTrees <- function(y,
       param1SEXP = local_hp,
       param2SEXP = global_hp,
       prior_typeSEXP = prior_type,
-      reversibleSEXP = TRUE,
+      reversibleSEXP = reversible_flag,
       store_posterior_sampleSEXP = store_posterior_sample,
       n1SEXP = seed,
       n2SEXP = 420,
@@ -435,6 +440,7 @@ ShrinkageTrees <- function(y,
     # Compute mean and standardize  the outcome
     y_mean <- mean(y)
     y <- y - y_mean
+    if (prior_type == "standard") sigma_hat <- 1
     y <- y / sigma_hat  # Standardize y
     
     fit <- HorseTrees_cpp(
@@ -462,7 +468,7 @@ ShrinkageTrees <- function(y,
       param1SEXP = local_hp,
       param2SEXP = global_hp,
       prior_typeSEXP = prior_type,
-      reversibleSEXP = TRUE,
+      reversibleSEXP = reversible_flag,
       store_parametersSEXP = FALSE,
       store_posterior_sampleSEXP = store_posterior_sample,
       n1SEXP = seed,

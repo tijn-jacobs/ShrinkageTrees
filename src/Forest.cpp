@@ -1,4 +1,5 @@
 #include "Forest.h"
+#include "Timing.h"
 
 // Return the number of splits for each covariate as a reference
 std::vector<size_t>& Forest::GetVariableInclusionCount() {
@@ -114,6 +115,8 @@ void Forest::Predict(size_t p, size_t n, double *X, double *predictions) {
   // Free the memory allocated for single_tree_prediction
   delete[] single_tree_prediction;
 }
+
+
 
 // Performs a single iteration of the MCMC process, updating the trees in the forest.
 void Forest::UpdateForest(const double& sigma, ScaleMixture& scale_mixture, bool reversible,
