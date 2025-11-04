@@ -2,6 +2,7 @@
 
 export(CausalHorseForest)
 export(CausalShrinkageForest)
+export(FusionShrinkageForest)
 export(HorseTrees)
 export(ShrinkageTrees)
 importFrom(Rcpp,evalCpp)
