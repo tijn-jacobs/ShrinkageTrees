@@ -71,7 +71,7 @@ internally) or \code{"log"} (already log-transformed). Default is \code{"time"}.
 \item{number_of_trees_treat}{Number of trees in the treatment forest. Default is 200.}
 
 \item{prior_type_control}{Type of prior on control forest step heights. One of
-\code{"horseshoe"}, \code{"horseshoe_fw"}, \code{"horseshoe_EB"}, or \code{"half-cauchy"}.
+\code{"horseshoe"}, \code{"horseshoe_fw"}, \code{"horseshoe_EB"}, \code{"half-cauchy"}, or \code{"standard"}.
 Default is \code{"horseshoe"}.}
 
 \item{prior_type_treat}{Type of prior on treatment forest step heights. Same options as
@@ -170,6 +170,9 @@ not estimated by the software.
 The \code{half-cauchy} prior considers only local shrinkage and does not
 include a global shrinkage component. It places a half-Cauchy prior on each
 local shrinkage parameter with scale hyperparameter \code{local_hp}.
+
+The \code{"standard"} prior uses a fixed local shrinkage parameter
+(\code{local_hp}) with no global shrinkage component.
 }
 \examples{
 # Example: Continuous outcome, homogenuous treatment effect, two priors

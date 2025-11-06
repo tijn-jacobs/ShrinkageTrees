@@ -25,7 +25,7 @@
 #' @param number_of_trees_control Number of trees in the control forest. Default is 200.
 #' @param number_of_trees_treat Number of trees in the treatment forest. Default is 200.
 #' @param prior_type_control Type of prior on control forest step heights. One of 
-#' \code{"horseshoe"}, \code{"horseshoe_fw"}, \code{"horseshoe_EB"}, or \code{"half-cauchy"}. 
+#' \code{"horseshoe"}, \code{"horseshoe_fw"}, \code{"horseshoe_EB"}, \code{"half-cauchy"}, or \code{"standard"}. 
 #' Default is \code{"horseshoe"}.
 #' @param prior_type_treat Type of prior on treatment forest step heights. Same options as 
 #' \code{prior_type_control}.
@@ -100,6 +100,9 @@
 #' The \code{half-cauchy} prior considers only local shrinkage and does not
 #' include a global shrinkage component. It places a half-Cauchy prior on each
 #' local shrinkage parameter with scale hyperparameter \code{local_hp}.
+#' 
+#' The \code{"standard"} prior uses a fixed local shrinkage parameter 
+#' (\code{local_hp}) with no global shrinkage component.
 #' 
 #' @examples
 #' # Example: Continuous outcome, homogenuous treatment effect, two priors
@@ -205,7 +208,8 @@ CausalShrinkageForest <- function(y,
 
   
   # Check prior_type value
-  allowed_prior <- c("horseshoe", "horseshoe_fw", "horseshoe_EB", "half-cauchy")
+  allowed_prior <- c("horseshoe", "horseshoe_fw", "horseshoe_EB", 
+                   "half-cauchy", "standard")
   if (!prior_type_control %in% allowed_prior) {
     stop("Invalid prior_type_control Choose 'horseshoe', 'horseshoe_fw', 
          'horseshoe_EB', or 'half-cauchy'.")
@@ -255,6 +259,30 @@ CausalShrinkageForest <- function(y,
     global_hp_treat <- 1
     prior_type_treat <- "halfcauchy"
   }
+
+  # Handle 'standard' prior: fixed local shrinkage, no global parameter
+  if (prior_type_control == "standard") {
+    if (is.null(local_hp_control)) {
+      stop("For prior_type_control = 'standard', you must provide local_hp_control.")
+    }
+    if (!is.null(global_hp_control)) {
+      warning("global_hp_control is ignored for 'standard' prior.")
+    }
+    global_hp_control <- 1
+    prior_type_control <- "standard"
+  }
+
+  if (prior_type_treat == "standard") {
+    if (is.null(local_hp_treat)) {
+      stop("For prior_type_treat = 'standard', you must provide local_hp_treat.")
+    }
+    if (!is.null(global_hp_treat)) {
+      warning("global_hp_treat is ignored for 'standard' prior.")
+    }
+    global_hp_treat <- 1
+    prior_type_treat <- "standard"
+  }
+
   
   if (prior_type_control == "horseshoe_EB") prior_type_control <- "halfcauchy"
   if (prior_type_treat == "horseshoe_EB") prior_type_treat <- "halfcauchy"

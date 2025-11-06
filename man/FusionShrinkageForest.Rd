@@ -43,7 +43,6 @@ FusionShrinkageForest(
   N_burn = 5000,
   delayed_proposal = 5,
   store_posterior_sample = FALSE,
-  store_posterior_sample_deconf = FALSE,
   seed = NULL,
   verbose = TRUE
 )

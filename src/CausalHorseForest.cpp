@@ -1,5 +1,6 @@
 #include "CausalHorseForest.h"
 
+
 // [[Rcpp::export]]
 Rcpp::List CausalHorseForest_cpp(
   SEXP nSEXP, SEXP p_treatSEXP, SEXP p_controlSEXP, SEXP X_train_treatSEXP,

@@ -1,4 +1,4 @@
-#include "CausalHorseForest.h"
+#include "FusionForest.h"
 
 // [[Rcpp::export]]
 Rcpp::List FusionForest_cpp(
@@ -8,7 +8,6 @@ Rcpp::List FusionForest_cpp(
   SEXP n_testSEXP, SEXP X_test_controlSEXP, SEXP X_test_treatSEXP, SEXP X_test_deconfSEXP,
   SEXP treatment_indicator_testSEXP, SEXP source_indicator_testSEXP,
   SEXP n_deconfSEXP, SEXP p_deconfSEXP, SEXP X_train_deconfSEXP, 
-  SEXP store_posterior_sample_deconfSEXP,
   SEXP no_trees_deconfSEXP, SEXP power_deconfSEXP, SEXP base_deconfSEXP,
   SEXP p_grow_deconfSEXP, SEXP p_prune_deconfSEXP, SEXP omega_deconfSEXP,
   SEXP prior_type_deconfSEXP, SEXP param1_deconfSEXP, SEXP param2_deconfSEXP,
@@ -24,7 +23,8 @@ Rcpp::List FusionForest_cpp(
   SEXP nuSEXP, SEXP rho_knownSEXP, SEXP rhoSEXP,
   SEXP N_postSEXP, SEXP N_burnSEXP, SEXP delayed_proposalSEXP,
   SEXP store_parametersSEXP, SEXP max_stored_leavesSEXP,
-  SEXP store_posterior_sample_controlSEXP, SEXP store_posterior_sample_treatSEXP, SEXP n1SEXP, SEXP n2SEXP, SEXP verboseSEXP
+  SEXP store_posterior_sampleSEXP,
+  SEXP n1SEXP, SEXP n2SEXP, SEXP verboseSEXP
 ) {     
 
   // Conversion of function arguments //
@@ -120,9 +120,7 @@ Rcpp::List FusionForest_cpp(
   // Storage parameters
   bool store_parameters = Rcpp::as<bool>(store_parametersSEXP);
   size_t max_stored_leaves = Rcpp::as<size_t>(max_stored_leavesSEXP);
-  bool store_posterior_sample_control = Rcpp::as<bool>(store_posterior_sample_controlSEXP);
-  bool store_posterior_sample_treat = Rcpp::as<bool>(store_posterior_sample_treatSEXP);
-  bool store_posterior_sample_deconf = Rcpp::as<bool>(store_posterior_sample_deconfSEXP);
+  bool store_posterior_sample = Rcpp::as<bool>(store_posterior_sampleSEXP);
 
   // random number generation
   unsigned int n1 = Rcpp::as<unsigned int>(n1SEXP);
@@ -161,7 +159,7 @@ Rcpp::List FusionForest_cpp(
   // Storage for training and test predictions (posterior sample) of the prognostic model
   Rcpp::NumericMatrix train_predictions_sample_control;
   Rcpp::NumericMatrix test_predictions_sample_control;
-  if (store_posterior_sample_control) { // Allocate memory for posterior samples, if requested
+  if (store_posterior_sample) { // Allocate memory for posterior samples, if requested
     train_predictions_sample_control = Rcpp::NumericMatrix(N_post, n);
     test_predictions_sample_control = Rcpp::NumericMatrix(N_post, n_test);
   }
@@ -169,7 +167,7 @@ Rcpp::List FusionForest_cpp(
   // Storage for training and test predictions (posterior sample) of the treatment effect model
   Rcpp::NumericMatrix train_predictions_sample_treat;
   Rcpp::NumericMatrix test_predictions_sample_treat;
-  if (store_posterior_sample_treat) { // Allocate memory for posterior samples, if requested
+  if (store_posterior_sample) { // Allocate memory for posterior samples, if requested
     train_predictions_sample_treat = Rcpp::NumericMatrix(N_post, n);
     test_predictions_sample_treat = Rcpp::NumericMatrix(N_post, n_test);
   }
@@ -177,7 +175,7 @@ Rcpp::List FusionForest_cpp(
   // Storage for training and test predictions (posterior sample) of the deconfounding model
   Rcpp::NumericMatrix train_predictions_sample_deconf;
   Rcpp::NumericMatrix test_predictions_sample_deconf;
-  if (store_posterior_sample_deconf) { // Allocate memory for posterior samples, if requested
+  if (store_posterior_sample) { // Allocate memory for posterior samples, if requested
     train_predictions_sample_deconf = Rcpp::NumericMatrix(N_post, n_deconf);
     test_predictions_sample_deconf = Rcpp::NumericMatrix(N_post, n_test);
   }
@@ -705,21 +703,21 @@ Rcpp::List FusionForest_cpp(
       }
 
       // Store the posterior sample of training predictions
-      if (store_posterior_sample_control) {
+      if (store_posterior_sample) {
         for (size_t k = 0; k < n; k++) {
           train_predictions_sample_control(i - N_burn, k) = forest_control.GetPrediction(k);
         }
       }
     
       // Store the posterior sample of training predictions
-      if (store_posterior_sample_treat) {
+      if (store_posterior_sample) {
         for (size_t k = 0; k < n; k++) {
           train_predictions_sample_treat(i - N_burn, k) = forest_treat.GetPrediction(k);
         }
       }
       
       // Store the posterior sample of training predictions
-      if (store_posterior_sample_deconf) {
+      if (store_posterior_sample) {
         size_t j_os = 0;
         for (size_t k = 0; k < n; ++k) {
           if (source_indicator[k] == 0) {
@@ -738,14 +736,14 @@ Rcpp::List FusionForest_cpp(
       } 
     
       // Store posterior sample of test predictions
-      if (store_posterior_sample_control && n_test > 0) {
+      if (store_posterior_sample && n_test > 0) {
         for (size_t k = 0; k < n_test; k++) {
           test_predictions_sample_control(i - N_burn, k) = testpred_control[k];
         }
       }
 
       // Store posterior sample of test predictions
-      if (store_posterior_sample_treat && n_test > 0) {
+      if (store_posterior_sample && n_test > 0) {
         for (size_t k = 0; k < n_test; k++) {
           test_predictions_sample_treat(i - N_burn, k) = testpred_treat[k];
         }
@@ -816,7 +814,7 @@ Rcpp::List FusionForest_cpp(
     Rcpp::Rcout << "\n" << std::endl;  // Move to the next line after the progress bar is done.
     Rcpp::Rcout << "Mean acceptance ratio (prognostic model): " << acceptance_ratio_control << std::endl;
     Rcpp::Rcout << "Mean acceptance ratio (treatment effect model): " << acceptance_ratio_treat << std::endl;
-    Rcpp::Rcout << "Mean acceptance ratio (deconf model): " << acceptance_ratio_deconf << std::endl;
+    Rcpp::Rcout << "Mean acceptance ratio (deconfounding model): " << acceptance_ratio_deconf << std::endl;
     Rcpp::Rcout << "\nDone in " << (time_end - time_start) << " seconds.\n";
     Rcpp::Rcout << std::endl;
   }
@@ -853,15 +851,15 @@ Rcpp::List FusionForest_cpp(
   results["acceptance_ratio_control"] = acceptance_ratio_control;
   results["acceptance_ratio_treat"] = acceptance_ratio_treat;
   results["acceptance_ratio_deconf"] = acceptance_ratio_deconf;
-  if (store_posterior_sample_control) {
+  if (store_posterior_sample) {
     results["test_predictions_sample_control"] = test_predictions_sample_control;
     results["train_predictions_sample_control"] = train_predictions_sample_control;
   }
-  if (store_posterior_sample_treat) {
+  if (store_posterior_sample) {
     results["test_predictions_sample_treat"] = test_predictions_sample_treat;
     results["train_predictions_sample_treat"] = train_predictions_sample_treat;
   } 
-  if (store_posterior_sample_deconf) {
+  if (store_posterior_sample) {
     results["test_predictions_sample_deconf"] = test_predictions_sample_deconf;
     results["train_predictions_sample_deconf"] = train_predictions_sample_deconf;
   } 
