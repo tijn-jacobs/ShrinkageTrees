@@ -19,6 +19,10 @@ ShrinkageTrees(
   base = 0.95,
   p_grow = 0.4,
   p_prune = 0.4,
+  dirichlet = FALSE,
+  alpha_dirichlet = NULL,
+  a_dirichlet = 0.5,
+  b_dirichlet = 1,
   nu = 3,
   q = 0.9,
   sigma = NULL,
@@ -71,6 +75,21 @@ Must be specified for Horseshoe-type priors; ignored for
 \item{p_grow}{Probability of proposing a grow move. Default is 0.4.}
 
 \item{p_prune}{Probability of proposing a prune move. Default is 0.4.}
+
+\item{dirichlet}{Logical; whether to enable the Dirichlet prior
+on variable inclusion probabilities. Default is FALSE.}
+
+\item{alpha_dirichlet}{Optional fixed concentration parameter for the
+Dirichlet prior. If NULL, it will be learned adaptively using a Beta
+hyperprior controlled by \code{a_dirichlet} and \code{b_dirichlet}.}
+
+\item{a_dirichlet}{Numeric; shape parameter 'a' of the Beta prior for the
+transformed Dirichlet concentration parameter when
+\code{alpha_dirichlet = NULL}. Default is 0.5.}
+
+\item{b_dirichlet}{Numeric; shape parameter 'b' of the Beta prior for the
+transformed Dirichlet concentration parameter when
+\code{alpha_dirichlet = NULL}. Default is 1.0.}
 
 \item{nu}{Degrees of freedom for the error distribution prior. Default is 3.}
 

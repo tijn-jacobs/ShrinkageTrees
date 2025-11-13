@@ -52,7 +52,12 @@
 #ifndef GUARD_Forest_h
 #define GUARD_Forest_h
 
+#include <vector>
+using std::vector; // DOUBLE?!?!?
+
 #include "TreeModifications.h"
+#include "Dirichlet.h"
+
 
 class Forest {
 
@@ -79,6 +84,16 @@ class Forest {
   std::vector<size_t> variable_inclusion_count; // Number of splits per feature
   std::vector<double> variable_inclusion_prob;  // Feature inclusion probabilities
 
+  // Variables for Dirichlet prior on splitting probabilities
+  vector<double> log_split_probs;    // log splitting probabilities (length p)
+  vector<size_t> var_counts;         // number of times each variable used in splits
+  double alpha_dirichlet;            // Dirichlet concentration parameter
+  bool const_alpha;                  // whether alpha is fixed or updated
+  double a_dirichlet;                // Beta(a,b) prior hyperparameter
+  double b_dirichlet;                // Beta(a,b) prior hyperparameter
+  double rho_dirichlet;              // scaling parameter, usually = p.
+
+
 public:
 
   // Friend function declaration for ReversibleJump
@@ -92,35 +107,52 @@ public:
                              Random& random);
 
   // Constructors
-  Forest() 
-    : m(200), trees(m, Tree()), tree_prior(), p(0), n(0), x(nullptr), 
-      y(nullptr), cutpoints(), data(), predictions(nullptr), 
-      residual(nullptr), temporary_fit(nullptr) {}
+  Forest()
+    : m(200), trees(m, Tree()), tree_prior(), p(0), n(0), x(nullptr),
+      y(nullptr), cutpoints(), data(), predictions(nullptr),
+      residual(nullptr), temporary_fit(nullptr),
+      log_split_probs(), var_counts(),
+      alpha_dirichlet(1.0), const_alpha(false),
+      a_dirichlet(0.5), b_dirichlet(1.0), rho_dirichlet(0.0) {}
 
-  Forest(size_t im) 
-    : m(im), trees(m), tree_prior(), p(0), n(0), x(nullptr), y(nullptr), 
-      cutpoints(), data(), predictions(nullptr), residual(nullptr), 
-      temporary_fit(nullptr) {}
+  Forest(size_t im)
+    : m(im), trees(m), tree_prior(), p(0), n(0), x(nullptr), y(nullptr),
+      cutpoints(), data(), predictions(nullptr), residual(nullptr),
+      temporary_fit(nullptr),
+      log_split_probs(), var_counts(),
+      alpha_dirichlet(1.0), const_alpha(false),
+      a_dirichlet(0.5), b_dirichlet(1.0), rho_dirichlet(0.0) {}
 
   // Copy constructor
   Forest(const Forest& forest)
     : m(forest.m), trees(forest.trees), tree_prior(forest.tree_prior),
       p(forest.p), n(forest.n), x(forest.x), y(forest.y),
-      cutpoints(forest.cutpoints), data(forest.data), 
-      predictions(nullptr), residual(nullptr), temporary_fit(nullptr) {
+      cutpoints(forest.cutpoints), data(forest.data),
+      predictions(nullptr), residual(nullptr), temporary_fit(nullptr),
+      log_split_probs(forest.log_split_probs),
+      var_counts(forest.var_counts),
+      alpha_dirichlet(forest.alpha_dirichlet),
+      const_alpha(forest.const_alpha),
+      a_dirichlet(forest.a_dirichlet),
+      b_dirichlet(forest.b_dirichlet),
+      rho_dirichlet(forest.rho_dirichlet) {
 
     if (forest.predictions != nullptr) {
       predictions = new double[n];
       std::copy(forest.predictions, forest.predictions + n, predictions);
     }
+
     if (forest.residual != nullptr) {
       residual = new double[n];
       std::copy(forest.residual, forest.residual + n, residual);
     }
+
     if (forest.temporary_fit != nullptr) {
       temporary_fit = new double[n];
-      std::copy(forest.temporary_fit, forest.temporary_fit + n, temporary_fit);
+      std::copy(forest.temporary_fit, forest.temporary_fit + n,
+                temporary_fit);
     }
+
     variable_inclusion_count = forest.variable_inclusion_count;
     variable_inclusion_prob = forest.variable_inclusion_prob;
   }
@@ -133,7 +165,12 @@ public:
   }
 
   // Setters and Getters
-  void SetUpForest(size_t p, size_t n, double *x, double *y, int* nc, double omega);
+  void SetUpForest(size_t p, size_t n, double *x, double *y, int *nc,
+                  double omega,
+                  double alpha_dirichlet = 1.0,
+                  bool const_alpha = false,
+                  double a_dirichlet = 0.5,
+                  double b_dirichlet = 1.0);
   void SetTreePrior(TreePrior& _tree_prior);
   void SetTreePrior(double _base, double _power, double _eta, double _p_GROW, 
                     double _p_PRUNE);
@@ -143,6 +180,10 @@ public:
   double* GetPredictions() const;
   std::vector<Tree>* GetTreesPointer();
   size_t GetM() const { return m; }; 
+  double GetAlphaDirichlet() const { return alpha_dirichlet; }
+  const vector<double>& GetVariableInclusionProb() const { return variable_inclusion_prob; }
+
+  
 
   // Methods
   void Predict(size_t p, size_t n, double *X, double *predictions);  
@@ -150,6 +191,8 @@ public:
                     const size_t& delayed_proposal,
                     Random& random, bool* accepted);
   void PrintForest(size_t tree_index = std::numeric_limits<size_t>::max());
+  void UpdateDirichlet(Random& random);
+
 
 };
 

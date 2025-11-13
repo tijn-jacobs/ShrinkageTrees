@@ -39,8 +39,17 @@ std::vector<Tree>* Forest::GetTreesPointer() {
 // Sets dimensions, pointers to input data, allocates memory for working
 // variables (predictions, residuals, temporary_fit), initializes cutpoints, 
 // sets up the Data object, and initializes feature usage counters and probs.
-void Forest::SetUpForest(size_t p, size_t n, double *x, double *y, int *nc, double omega) {
-  
+// Initialize data and related structures within the Forest class.
+// Sets dimensions, pointers to input data, allocates memory for working
+// variables (predictions, residuals, temporary_fit), initializes cutpoints,
+// sets up the Data object, and initializes feature usage counters and probs.
+void Forest::SetUpForest(size_t p, size_t n, double *x, double *y,
+                         int *nc, double omega,
+                         double alpha_dirichlet,
+                         bool const_alpha,
+                         double a_dirichlet,
+                         double b_dirichlet) {
+
   // Set the dimensions and pointers to the input data
   this->p = p;
   this->n = n;
@@ -51,26 +60,22 @@ void Forest::SetUpForest(size_t p, size_t n, double *x, double *y, int *nc, doub
   this->omega = omega;
 
   // Initialize cutpoints if not set
-  if (cutpoints.p == 0) {
+  if (cutpoints.p == 0)
     cutpoints.SetCutpoints(p, n, x, nc);
-  }
 
   // Allocate memory for predictions
-  if (predictions != nullptr) {
+  if (predictions != nullptr)
     delete[] predictions;
-  }
   predictions = new double[n];
 
   // Allocate memory for residuals
-  if (residual != nullptr) {
+  if (residual != nullptr)
     delete[] residual;
-  }
   residual = new double[n];
 
   // Allocate memory for temporary_fit
-  if (temporary_fit != nullptr) {
+  if (temporary_fit != nullptr)
     delete[] temporary_fit;
-  }
   temporary_fit = new double[n];
 
   // Set up data in the Data object
@@ -86,7 +91,25 @@ void Forest::SetUpForest(size_t p, size_t n, double *x, double *y, int *nc, doub
   // Initialize feature usage counters and probabilities
   variable_inclusion_count.resize(p, 0);
   variable_inclusion_prob.resize(p, 1.0 / static_cast<double>(p));
+
+  // -------------------------------
+  // DART (Dirichlet Adaptive Regression Trees) setup
+  // -------------------------------
+
+  // Scaling parameter for the Dirichlet prior
+  rho_dirichlet = static_cast<double>(p);
+
+  // Initialize Dirichlet hyperparameters
+  this->alpha_dirichlet = alpha_dirichlet;
+  this->const_alpha = const_alpha;
+  this->a_dirichlet = a_dirichlet;
+  this->b_dirichlet = b_dirichlet;
+
+  // Initialize DART variable inclusion probabilities and counts
+  log_split_probs.assign(p, log(1.0 / static_cast<double>(p)));
+  var_counts.assign(p, 0);
 }
+
 
 // Predicts the output for a given set of covariates using the entire forest
 void Forest::Predict(size_t p, size_t n, double *X, double *predictions) {
@@ -183,3 +206,22 @@ void Forest::PrintForest(size_t tree_index) {
 
   cout << endl;
 }
+
+// Update the Dirichlet parameters
+void Forest::UpdateDirichlet(Random& random) {
+
+  DrawSplitProbs(variable_inclusion_count,
+                 log_split_probs,
+                 alpha_dirichlet,
+                 random);
+
+  DrawDirichletAlpha(const_alpha,
+                     alpha_dirichlet,
+                     log_split_probs,
+                     variable_inclusion_prob,
+                     a_dirichlet,
+                     b_dirichlet,
+                     rho_dirichlet,
+                     random);
+}
+

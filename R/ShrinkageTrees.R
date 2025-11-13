@@ -31,6 +31,17 @@
 #' @param base Base parameter for the tree structure prior. Default is 0.95.
 #' @param p_grow Probability of proposing a grow move. Default is 0.4.
 #' @param p_prune Probability of proposing a prune move. Default is 0.4.
+#' @param dirichlet Logical; whether to enable the Dirichlet prior
+#' on variable inclusion probabilities. Default is FALSE.
+#' @param alpha_dirichlet Optional fixed concentration parameter for the
+#' Dirichlet prior. If NULL, it will be learned adaptively using a Beta
+#' hyperprior controlled by \code{a_dirichlet} and \code{b_dirichlet}.
+#' @param a_dirichlet Numeric; shape parameter 'a' of the Beta prior for the
+#' transformed Dirichlet concentration parameter when 
+#' \code{alpha_dirichlet = NULL}. Default is 0.5.
+#' @param b_dirichlet Numeric; shape parameter 'b' of the Beta prior for the
+#' transformed Dirichlet concentration parameter when 
+#' \code{alpha_dirichlet = NULL}. Default is 1.0.
 #' @param nu Degrees of freedom for the error distribution prior. Default is 3.
 #' @param q Quantile hyperparameter for the error variance prior. Default is 0.90.
 #' @param sigma Optional known value for error standard deviation. If NULL,
@@ -167,15 +178,21 @@ ShrinkageTrees <- function(y,
                            base = 0.95,
                            p_grow = 0.4,
                            p_prune = 0.4,
+                           dirichlet = FALSE,
+                           alpha_dirichlet = NULL,
+                           a_dirichlet = 0.5,
+                           b_dirichlet = 1.0,
                            nu = 3,
                            q = 0.90,
                            sigma = NULL,
-                           N_post = 1000, 
+                           N_post = 1000,
                            N_burn = 1000,
                            delayed_proposal = 5,
-                           store_posterior_sample = TRUE, 
+                           store_posterior_sample = TRUE,
                            seed = NULL,
                            verbose = TRUE) {
+
+
   
   # Check outcome_type value
   allowed_types <- c("continuous", "binary", "right-censored")
@@ -286,6 +303,14 @@ ShrinkageTrees <- function(y,
   # Set a random seed if not provided
   # By taking a random number, we ensure compatibility with set.seed()
   if (is.null(seed)) seed <- as.integer(runif(1, 1, 1000000))
+
+  # Determine const_alpha based on whether alpha_dirichlet was provided
+  if (!is.null(alpha_dirichlet)) {
+    const_alpha <- TRUE
+  } else {
+    const_alpha <- FALSE
+    alpha_dirichlet <- 1.0  # default starting value when adaptive
+  }
   
   if (outcome_type == "right-censored") {
     
@@ -322,7 +347,7 @@ ShrinkageTrees <- function(y,
     # Compute lambda parameter for error distribution prior
     qchi <- qchisq(1.0 - q, nu)
     lambda <- (sigma_hat^2 * qchi) / nu
-    
+
     # Fit a HorseTrees model
     fit <- HorseTrees_cpp(
       nSEXP = n_train,
@@ -343,6 +368,11 @@ ShrinkageTrees <- function(y,
       p_pruneSEXP = p_prune,
       nuSEXP = nu,
       lambdaSEXP = lambda,
+      dirichlet_boolSEXP = dirichlet,
+      alpha_dirichletSEXP = alpha_dirichlet,
+      const_alphaSEXP = const_alpha,
+      a_dirichletSEXP = a_dirichlet,
+      b_dirichletSEXP = b_dirichlet,
       sigmaSEXP = sigma_hat,
       sigma_knownSEXP = sigma_known,
       omegaSEXP = 1,
@@ -462,6 +492,11 @@ ShrinkageTrees <- function(y,
       p_pruneSEXP = p_prune,
       nuSEXP = nu,
       lambdaSEXP = lambda,
+      dirichlet_boolSEXP = dirichlet,
+      alpha_dirichletSEXP = alpha_dirichlet,
+      const_alphaSEXP = const_alpha,
+      a_dirichletSEXP = a_dirichlet,
+      b_dirichletSEXP = b_dirichlet,
       sigmaSEXP = sigma_hat,
       sigma_knownSEXP = sigma_known,
       omegaSEXP = 1,

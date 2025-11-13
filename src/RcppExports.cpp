@@ -68,8 +68,8 @@ BEGIN_RCPP
 END_RCPP
 }
 // HorseTrees_cpp
-Rcpp::List HorseTrees_cpp(SEXP nSEXP, SEXP pSEXP, SEXP n_testSEXP, SEXP X_trainSEXP, SEXP ySEXP, SEXP status_indicatorSEXP, SEXP is_survivalSEXP, SEXP X_testSEXP, SEXP number_of_treesSEXP, SEXP N_postSEXP, SEXP N_burnSEXP, SEXP delayed_proposalSEXP, SEXP powerSEXP, SEXP baseSEXP, SEXP p_growSEXP, SEXP p_pruneSEXP, SEXP nuSEXP, SEXP lambdaSEXP, SEXP sigmaSEXP, SEXP sigma_knownSEXP, SEXP omegaSEXP, SEXP param1SEXP, SEXP param2SEXP, SEXP prior_typeSEXP, SEXP reversibleSEXP, SEXP store_parametersSEXP, SEXP store_posterior_sampleSEXP, SEXP n1SEXP, SEXP n2SEXP, SEXP verboseSEXP);
-RcppExport SEXP _ShrinkageTrees_HorseTrees_cpp(SEXP nSEXPSEXP, SEXP pSEXPSEXP, SEXP n_testSEXPSEXP, SEXP X_trainSEXPSEXP, SEXP ySEXPSEXP, SEXP status_indicatorSEXPSEXP, SEXP is_survivalSEXPSEXP, SEXP X_testSEXPSEXP, SEXP number_of_treesSEXPSEXP, SEXP N_postSEXPSEXP, SEXP N_burnSEXPSEXP, SEXP delayed_proposalSEXPSEXP, SEXP powerSEXPSEXP, SEXP baseSEXPSEXP, SEXP p_growSEXPSEXP, SEXP p_pruneSEXPSEXP, SEXP nuSEXPSEXP, SEXP lambdaSEXPSEXP, SEXP sigmaSEXPSEXP, SEXP sigma_knownSEXPSEXP, SEXP omegaSEXPSEXP, SEXP param1SEXPSEXP, SEXP param2SEXPSEXP, SEXP prior_typeSEXPSEXP, SEXP reversibleSEXPSEXP, SEXP store_parametersSEXPSEXP, SEXP store_posterior_sampleSEXPSEXP, SEXP n1SEXPSEXP, SEXP n2SEXPSEXP, SEXP verboseSEXPSEXP) {
+Rcpp::List HorseTrees_cpp(SEXP nSEXP, SEXP pSEXP, SEXP n_testSEXP, SEXP X_trainSEXP, SEXP ySEXP, SEXP status_indicatorSEXP, SEXP is_survivalSEXP, SEXP X_testSEXP, SEXP number_of_treesSEXP, SEXP N_postSEXP, SEXP N_burnSEXP, SEXP delayed_proposalSEXP, SEXP powerSEXP, SEXP baseSEXP, SEXP p_growSEXP, SEXP p_pruneSEXP, SEXP nuSEXP, SEXP lambdaSEXP, SEXP dirichlet_boolSEXP, SEXP alpha_dirichletSEXP, SEXP const_alphaSEXP, SEXP a_dirichletSEXP, SEXP b_dirichletSEXP, SEXP sigmaSEXP, SEXP sigma_knownSEXP, SEXP omegaSEXP, SEXP param1SEXP, SEXP param2SEXP, SEXP prior_typeSEXP, SEXP reversibleSEXP, SEXP store_parametersSEXP, SEXP store_posterior_sampleSEXP, SEXP n1SEXP, SEXP n2SEXP, SEXP verboseSEXP);
+RcppExport SEXP _ShrinkageTrees_HorseTrees_cpp(SEXP nSEXPSEXP, SEXP pSEXPSEXP, SEXP n_testSEXPSEXP, SEXP X_trainSEXPSEXP, SEXP ySEXPSEXP, SEXP status_indicatorSEXPSEXP, SEXP is_survivalSEXPSEXP, SEXP X_testSEXPSEXP, SEXP number_of_treesSEXPSEXP, SEXP N_postSEXPSEXP, SEXP N_burnSEXPSEXP, SEXP delayed_proposalSEXPSEXP, SEXP powerSEXPSEXP, SEXP baseSEXPSEXP, SEXP p_growSEXPSEXP, SEXP p_pruneSEXPSEXP, SEXP nuSEXPSEXP, SEXP lambdaSEXPSEXP, SEXP dirichlet_boolSEXPSEXP, SEXP alpha_dirichletSEXPSEXP, SEXP const_alphaSEXPSEXP, SEXP a_dirichletSEXPSEXP, SEXP b_dirichletSEXPSEXP, SEXP sigmaSEXPSEXP, SEXP sigma_knownSEXPSEXP, SEXP omegaSEXPSEXP, SEXP param1SEXPSEXP, SEXP param2SEXPSEXP, SEXP prior_typeSEXPSEXP, SEXP reversibleSEXPSEXP, SEXP store_parametersSEXPSEXP, SEXP store_posterior_sampleSEXPSEXP, SEXP n1SEXPSEXP, SEXP n2SEXPSEXP, SEXP verboseSEXPSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -91,6 +91,11 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< SEXP >::type p_pruneSEXP(p_pruneSEXPSEXP);
     Rcpp::traits::input_parameter< SEXP >::type nuSEXP(nuSEXPSEXP);
     Rcpp::traits::input_parameter< SEXP >::type lambdaSEXP(lambdaSEXPSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type dirichlet_boolSEXP(dirichlet_boolSEXPSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type alpha_dirichletSEXP(alpha_dirichletSEXPSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type const_alphaSEXP(const_alphaSEXPSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type a_dirichletSEXP(a_dirichletSEXPSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type b_dirichletSEXP(b_dirichletSEXPSEXP);
     Rcpp::traits::input_parameter< SEXP >::type sigmaSEXP(sigmaSEXPSEXP);
     Rcpp::traits::input_parameter< SEXP >::type sigma_knownSEXP(sigma_knownSEXPSEXP);
     Rcpp::traits::input_parameter< SEXP >::type omegaSEXP(omegaSEXPSEXP);
@@ -103,7 +108,7 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< SEXP >::type n1SEXP(n1SEXPSEXP);
     Rcpp::traits::input_parameter< SEXP >::type n2SEXP(n2SEXPSEXP);
     Rcpp::traits::input_parameter< SEXP >::type verboseSEXP(verboseSEXPSEXP);
-    rcpp_result_gen = Rcpp::wrap(HorseTrees_cpp(nSEXP, pSEXP, n_testSEXP, X_trainSEXP, ySEXP, status_indicatorSEXP, is_survivalSEXP, X_testSEXP, number_of_treesSEXP, N_postSEXP, N_burnSEXP, delayed_proposalSEXP, powerSEXP, baseSEXP, p_growSEXP, p_pruneSEXP, nuSEXP, lambdaSEXP, sigmaSEXP, sigma_knownSEXP, omegaSEXP, param1SEXP, param2SEXP, prior_typeSEXP, reversibleSEXP, store_parametersSEXP, store_posterior_sampleSEXP, n1SEXP, n2SEXP, verboseSEXP));
+    rcpp_result_gen = Rcpp::wrap(HorseTrees_cpp(nSEXP, pSEXP, n_testSEXP, X_trainSEXP, ySEXP, status_indicatorSEXP, is_survivalSEXP, X_testSEXP, number_of_treesSEXP, N_postSEXP, N_burnSEXP, delayed_proposalSEXP, powerSEXP, baseSEXP, p_growSEXP, p_pruneSEXP, nuSEXP, lambdaSEXP, dirichlet_boolSEXP, alpha_dirichletSEXP, const_alphaSEXP, a_dirichletSEXP, b_dirichletSEXP, sigmaSEXP, sigma_knownSEXP, omegaSEXP, param1SEXP, param2SEXP, prior_typeSEXP, reversibleSEXP, store_parametersSEXP, store_posterior_sampleSEXP, n1SEXP, n2SEXP, verboseSEXP));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -144,7 +149,7 @@ END_RCPP
 
 static const R_CallMethodDef CallEntries[] = {
     {"_ShrinkageTrees_CausalHorseForest_cpp", (DL_FUNC) &_ShrinkageTrees_CausalHorseForest_cpp, 47},
-    {"_ShrinkageTrees_HorseTrees_cpp", (DL_FUNC) &_ShrinkageTrees_HorseTrees_cpp, 30},
+    {"_ShrinkageTrees_HorseTrees_cpp", (DL_FUNC) &_ShrinkageTrees_HorseTrees_cpp, 35},
     {"_ShrinkageTrees_probitHorseTrees_cpp", (DL_FUNC) &_ShrinkageTrees_probitHorseTrees_cpp, 24},
     {NULL, NULL, 0}
 };

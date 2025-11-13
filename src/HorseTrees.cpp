@@ -19,7 +19,12 @@ Rcpp::List HorseTrees_cpp(
   SEXP p_growSEXP,
   SEXP p_pruneSEXP,
   SEXP nuSEXP,     
-  SEXP lambdaSEXP,     
+  SEXP lambdaSEXP,
+  SEXP dirichlet_boolSEXP,
+  SEXP alpha_dirichletSEXP,
+  SEXP const_alphaSEXP,
+  SEXP a_dirichletSEXP,
+  SEXP b_dirichletSEXP,     
   SEXP sigmaSEXP,
   SEXP sigma_knownSEXP,     
   SEXP omegaSEXP,
@@ -60,7 +65,12 @@ Rcpp::List HorseTrees_cpp(
   double p_grow = Rcpp::as<double>(p_growSEXP);   
   double p_prune = Rcpp::as<double>(p_pruneSEXP);   
   double nu = Rcpp::as<double>(nuSEXP);   
-  double lambda = Rcpp::as<double>(lambdaSEXP);   
+  double lambda = Rcpp::as<double>(lambdaSEXP);  
+  bool dirichlet_bool = Rcpp::as<bool>(dirichlet_boolSEXP);
+  double alpha_dirichlet = Rcpp::as<double>(alpha_dirichletSEXP);
+  bool const_alpha = Rcpp::as<bool>(const_alphaSEXP);
+  double a_dirichlet = Rcpp::as<double>(a_dirichletSEXP);
+  double b_dirichlet = Rcpp::as<double>(b_dirichletSEXP); 
   double sigma = Rcpp::as<double>(sigmaSEXP);
   bool sigma_known = Rcpp::as<bool>(sigma_knownSEXP);
   double omega = Rcpp::as<double>(omegaSEXP);
@@ -98,7 +108,15 @@ Rcpp::List HorseTrees_cpp(
     train_predictions_sample = Rcpp::NumericMatrix(N_post, n);
     test_predictions_sample = Rcpp::NumericMatrix(N_post, n_test);
   }
-  
+
+  Rcpp::NumericVector store_alpha_dirichlet;
+  Rcpp::NumericMatrix store_split_probs;  
+
+  if (dirichlet_bool) {
+    Rcpp::NumericVector store_alpha_dirichlet(N_post);
+    Rcpp::NumericMatrix store_split_probs(N_post, p);
+  }
+
   std::vector<size_t> cumulative_inclusion_count(p, 0);
   std::vector<std::vector<double>> variable_inclusion_prob;
   
@@ -119,9 +137,6 @@ Rcpp::List HorseTrees_cpp(
   } else {
     Rcpp::stop("Invalid prior type provided. Choose one of: 'horseshoe', 'fixed', 'halfcauchy', 'horseshoe_fw', 'standard'.");
   }
-
-  // What happens with prior if we use 'standard', i.e., non-reversible-jump BART?
-  // It will not be used. So can we set it to "nothing"?
   
   // Initialize the scale mixture prior on the step heights in the leaves
   ScaleMixture scale_mixture(prior, param1, param2);
@@ -129,7 +144,9 @@ Rcpp::List HorseTrees_cpp(
   // Build the forest
   Forest forest(number_of_trees);
   forest.SetTreePrior(base, power, param1, p_grow, p_prune); // In case of NON-RJ; param1 = step height variance
-  forest.SetUpForest(p, n, X_train, y, nullptr, omega);
+  forest.SetUpForest(p, n, X_train, y, nullptr, omega,
+                     alpha_dirichlet, const_alpha, a_dirichlet, b_dirichlet);
+
   
   for (size_t i = 0; i < n; i++) train_predictions_mean[i] = 0.0;
   for (size_t i = 0; i < n_test; i++) test_predictions_mean[i] = 0.0;
@@ -200,12 +217,18 @@ Rcpp::List HorseTrees_cpp(
     }
 
 
-
     // Update the forest (outer Gibbs step)
-    forest.UpdateForest(sigma, scale_mixture, reversible, delayed_proposal, random, accepted);
+    forest.UpdateForest(
+      sigma, 
+      scale_mixture, 
+      reversible, 
+      delayed_proposal, 
+      random, 
+      accepted
+    );
     
   
-    // Update fores wide shrinkage parameter (outer Gibbs step0
+    // Update fores wide shrinkage parameter (outer Gibbs step)
     if (prior_type == "horseshoe_fw") {
       UpdateForestwideShrinkage(
         all_trees,
@@ -236,8 +259,22 @@ Rcpp::List HorseTrees_cpp(
 
 
     // Augment the censored data
-    AugmentCensoredObservations(is_survival, y, y_observed, status_indicator, forest.GetPredictions(), sigma, n, random);
+    AugmentCensoredObservations(
+      is_survival, 
+      y, 
+      y_observed, 
+      status_indicator, 
+      forest.GetPredictions(), 
+      sigma, 
+      n, 
+      random
+    );
 
+
+    // Update Dirichlet parameters, if applicable
+    if (dirichlet_bool) {
+      forest.UpdateDirichlet(random);
+    }
 
     // Save the (averages for now) of the leaf node parameters
     if (store_parameters && i >= N_burn) {
@@ -322,6 +359,14 @@ Rcpp::List HorseTrees_cpp(
       for (size_t j = 0; j < number_of_trees; j++) {
         sum_accept += accepted[j];
       }
+
+      if (dirichlet_bool) {
+        store_alpha_dirichlet[i - N_burn] = forest.GetAlphaDirichlet();
+        const std::vector<double>& probs = forest.GetVariableInclusionProb();
+        for (size_t j = 0; j < p; ++j) {
+          store_split_probs(i - N_burn, j) = probs[j];
+        }
+      }
     }
   }
 
@@ -368,6 +413,11 @@ Rcpp::List HorseTrees_cpp(
   if (prior_type == "horseshoe_fw") {
     results["forestwide_shrinkage"] = store_forestwide_shrinkage;
   } 
+  if (dirichlet_bool) {
+    results["alpha_dirichlet"] = store_alpha_dirichlet;
+    results["split_probs"] = store_split_probs;
+  }
+
   
   if (testpred) delete[] testpred;
   delete[] accepted;
