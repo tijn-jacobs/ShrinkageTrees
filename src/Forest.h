@@ -82,11 +82,9 @@ class Forest {
 
   // Variables related to feature selection
   std::vector<size_t> variable_inclusion_count; // Number of splits per feature
-  std::vector<double> variable_inclusion_prob;  // Feature inclusion probabilities
+  std::vector<double> variable_inclusion_prob, log_vip;  // Feature inclusion probabilities
 
   // Variables for Dirichlet prior on splitting probabilities
-  vector<double> log_split_probs;    // log splitting probabilities (length p)
-  vector<size_t> var_counts;         // number of times each variable used in splits
   double alpha_dirichlet;            // Dirichlet concentration parameter
   bool const_alpha;                  // whether alpha is fixed or updated
   double a_dirichlet;                // Beta(a,b) prior hyperparameter
@@ -111,7 +109,6 @@ public:
     : m(200), trees(m, Tree()), tree_prior(), p(0), n(0), x(nullptr),
       y(nullptr), cutpoints(), data(), predictions(nullptr),
       residual(nullptr), temporary_fit(nullptr),
-      log_split_probs(), var_counts(),
       alpha_dirichlet(1.0), const_alpha(false),
       a_dirichlet(0.5), b_dirichlet(1.0), rho_dirichlet(0.0) {}
 
@@ -119,7 +116,6 @@ public:
     : m(im), trees(m), tree_prior(), p(0), n(0), x(nullptr), y(nullptr),
       cutpoints(), data(), predictions(nullptr), residual(nullptr),
       temporary_fit(nullptr),
-      log_split_probs(), var_counts(),
       alpha_dirichlet(1.0), const_alpha(false),
       a_dirichlet(0.5), b_dirichlet(1.0), rho_dirichlet(0.0) {}
 
@@ -129,8 +125,6 @@ public:
       p(forest.p), n(forest.n), x(forest.x), y(forest.y),
       cutpoints(forest.cutpoints), data(forest.data),
       predictions(nullptr), residual(nullptr), temporary_fit(nullptr),
-      log_split_probs(forest.log_split_probs),
-      var_counts(forest.var_counts),
       alpha_dirichlet(forest.alpha_dirichlet),
       const_alpha(forest.const_alpha),
       a_dirichlet(forest.a_dirichlet),
@@ -155,6 +149,7 @@ public:
 
     variable_inclusion_count = forest.variable_inclusion_count;
     variable_inclusion_prob = forest.variable_inclusion_prob;
+    log_vip = forest.log_vip;
   }
 
   // Destructor
@@ -182,6 +177,7 @@ public:
   size_t GetM() const { return m; }; 
   double GetAlphaDirichlet() const { return alpha_dirichlet; }
   const vector<double>& GetVariableInclusionProb() const { return variable_inclusion_prob; }
+  const vector<size_t>& GetVariableInclusionCount() const { return variable_inclusion_count; }
 
   
 

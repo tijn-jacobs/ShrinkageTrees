@@ -81,7 +81,7 @@ public:
     for (size_t j = 0; j < _wts.size(); j++) smw += _wts[j];
     for (size_t j = 0; j < _wts.size(); j++) wts.push_back(_wts[j] / smw);
   }
-  
+
 private:
   std::vector<double> wts;
   genD gen;

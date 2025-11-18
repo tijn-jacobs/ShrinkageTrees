@@ -106,8 +106,6 @@ void Forest::SetUpForest(size_t p, size_t n, double *x, double *y,
   this->b_dirichlet = b_dirichlet;
 
   // Initialize DART variable inclusion probabilities and counts
-  log_split_probs.assign(p, log(1.0 / static_cast<double>(p)));
-  var_counts.assign(p, 0);
 }
 
 
@@ -207,21 +205,25 @@ void Forest::PrintForest(size_t tree_index) {
   cout << endl;
 }
 
+
 // Update the Dirichlet parameters
 void Forest::UpdateDirichlet(Random& random) {
 
   DrawSplitProbs(variable_inclusion_count,
-                 log_split_probs,
+                 log_vip,
                  alpha_dirichlet,
                  random);
 
   DrawDirichletAlpha(const_alpha,
                      alpha_dirichlet,
-                     log_split_probs,
-                     variable_inclusion_prob,
+                     log_vip,
                      a_dirichlet,
                      b_dirichlet,
                      rho_dirichlet,
                      random);
-}
+                     
 
+  for(size_t j = 0; j < p; j++) {
+    variable_inclusion_prob[j] = std::exp(log_vip[j]);
+  }
+}

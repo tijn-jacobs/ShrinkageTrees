@@ -15,7 +15,7 @@
 // Non-reversible tree moves // 
 //                           //
 
-
+/*
 bool Grow(Tree& tree, Cutpoints& cutpoints, Data& data, TreePrior& tree_prior, 
           const double& sigma, std::vector<size_t>& variable_inclusion_count, 
           std::vector<double>& variable_inclusion_prob, 
@@ -50,6 +50,7 @@ bool Grow(Tree& tree, Cutpoints& cutpoints, Data& data, TreePrior& tree_prior,
     cut_val = g_node->FindSameCut(split_var);
   } else {
     // If the variable is good for splitting, select a random cutpoint within the range
+    g_node->PossibleCuts(split_var, &lower_bound_index, &upper_bound_index);
     cut_val = lower_bound_index + 
         floor(random.uniform() * (upper_bound_index - lower_bound_index + 1));
   }
@@ -120,7 +121,157 @@ bool Grow(Tree& tree, Cutpoints& cutpoints, Data& data, TreePrior& tree_prior,
   }
 }
 
+*/
 
+bool Grow(Tree& tree,
+          Cutpoints& cutpoints,
+          Data& data,
+          TreePrior& tree_prior,
+          const double& sigma,
+          std::vector<size_t>& variable_inclusion_count,
+          std::vector<double>& variable_inclusion_prob,
+          ScaleMixture& scale_mixture,
+          Random& random) {
+
+  // goodbots in BART: all splittable bottom nodes
+  std::vector<Tree*> goodbots;
+  double PBx = GrowProbability(tree, cutpoints, tree_prior, goodbots);
+
+  if (goodbots.empty()) return false;
+
+  // --- draw bottom node (nx) ---
+  size_t ni =
+    static_cast<size_t>(std::floor(random.uniform() * goodbots.size()));
+  Tree* nx = goodbots[ni];
+
+  // --- draw variable v using Dirichlet weights (pv) ---
+  std::vector<size_t> goodvars;  // variables nx can split on
+  GetSplittableVariables(*nx, cutpoints, goodvars);
+
+  random.SetInclusionWeights(variable_inclusion_prob);
+  size_t v = random.discrete();
+
+  // --- draw cutpoint c for variable v ---
+  int L = 0;
+  int U = static_cast<int>(cutpoints.values[v].size()) - 1;
+  size_t c;
+
+  // if v is not splittable at nx, use ancestor cut (degenerate tree strategy)
+  if (!std::binary_search(goodvars.begin(), goodvars.end(), v)) {
+    c = nx->FindSameCut(v);
+  } else {
+    nx->PossibleCuts(v, &L, &U);
+    c = static_cast<size_t>(
+      L + std::floor(random.uniform() * (U - L + 1)));
+  }
+
+  // -------------------------------
+  // Metropolis ratio: tree structure
+  // -------------------------------
+
+  double Pbotx = 1.0 / static_cast<double>(goodbots.size());
+  size_t dnx = nx->NodeDepth();
+
+  double PGnx =
+    tree_prior.base /
+    std::pow(1.0 + static_cast<double>(dnx), tree_prior.power);
+
+  double PGly, PGry;
+  if (goodvars.size() > 1) {
+    // there is at least one other good variable for children
+    PGly = tree_prior.base /
+           std::pow(1.0 + static_cast<double>(dnx + 1),
+                    tree_prior.power);
+    PGry = PGly;
+  } else {
+    // only v was good; check exhaustions in children
+    if (static_cast<int>(c) - 1 < L) {
+      PGly = 0.0;
+    } else {
+      PGly = tree_prior.base /
+             std::pow(1.0 + static_cast<double>(dnx + 1),
+                      tree_prior.power);
+    }
+
+    if (U < static_cast<int>(c) + 1) {
+      PGry = 0.0;
+    } else {
+      PGry = tree_prior.base /
+             std::pow(1.0 + static_cast<double>(dnx + 1),
+                      tree_prior.power);
+    }
+  }
+
+  double PDy;
+  if (goodbots.size() > 1) {
+    PDy = 1.0 - tree_prior.p_GROW;
+  } else {
+    if ((PGry == 0.0) && (PGly == 0.0)) {
+      PDy = 1.0;
+    } else {
+      PDy = 1.0 - tree_prior.p_GROW;
+    }
+  }
+
+  double Pnogy;
+  Tree* nxp = nx->GetParent();
+  if (nxp == nullptr) {
+    Pnogy = 1.0;
+  } else {
+    if (nxp->IsNog()) {
+      Pnogy = 1.0 / static_cast<double>(tree.NumberOfNogs());
+    } else {
+      Pnogy = 1.0 / static_cast<double>(tree.NumberOfNogs() + 1);
+    }
+  }
+
+  double tree_ratio =
+    (PGnx * (1.0 - PGly) * (1.0 - PGry) * PDy * Pnogy) /
+    ((1.0 - PGnx) * Pbotx * PBx);
+
+  // -------------------------------
+  // Likelihood part
+  // -------------------------------
+
+  size_t nl, nr;
+  double rl, rr;
+  SufficientStatistics(tree, nx, v, c, cutpoints, data,
+                       nl, rl, nr, rr);
+
+  double log_alpha = -std::numeric_limits<double>::infinity();
+
+  if ((nl >= 5) && (nr >= 5)) {
+    double lhl = LogPostLikelihood(nl, rl, sigma, tree_prior.eta);
+    double lhr = LogPostLikelihood(nr, rr, sigma, tree_prior.eta);
+    double lht =
+      LogPostLikelihood(nl + nr, rl + rr, sigma, tree_prior.eta);
+
+    log_alpha = std::log(tree_ratio) + (lhl + lhr - lht) + std::log(sigma);
+    if (log_alpha > 0.0) log_alpha = 0.0;
+  }
+
+  // -------------------------------
+  // MH accept / reject
+  // -------------------------------
+  if (log(random.uniform()) < log_alpha) {
+    Parameters par_left(nx->GetParameters());
+    Parameters par_right(nx->GetParameters());
+
+    par_left.SetParameters(
+      0, DrawMuOneLeave(nl, rl, tree_prior.eta, sigma, random));
+    par_right.SetParameters(
+      0, DrawMuOneLeave(nr, rr, tree_prior.eta, sigma, random));
+
+    tree.GrowChildren(nx, v, c, par_left, par_right);
+    variable_inclusion_count[v]++;
+
+    return true;
+  }
+  return false;
+}
+
+
+/*
 bool Prune(Tree& tree, Cutpoints& cutpoints, Data& data, TreePrior& tree_prior, 
            const double& sigma, std::vector<size_t>& variable_inclusion_count, 
            std::vector<double>& variable_inclusion_prob, 
@@ -199,6 +350,93 @@ bool Prune(Tree& tree, Cutpoints& cutpoints, Data& data, TreePrior& tree_prior,
   } else {
     return false; // Pruning rejected
   }
+}
+*/
+
+bool Prune(Tree& tree,
+           Cutpoints& cutpoints,
+           Data& data,
+           TreePrior& tree_prior,
+           const double& sigma,
+           std::vector<size_t>& variable_inclusion_count,
+           std::vector<double>& variable_inclusion_prob,
+           ScaleMixture& scale_mixture,
+           Random& random) {
+
+  // goodbots and PBx for current tree
+  std::vector<Tree*> goodbots;
+  double PBx = GrowProbability(tree, cutpoints, tree_prior, goodbots);
+
+  // collect nog nodes
+  std::vector<Tree*> nogs;
+  tree.CollectNogs(nogs);
+  if (nogs.empty()) return false;
+
+  // choose nog to prune
+  size_t ni =
+    static_cast<size_t>(std::floor(random.uniform() * nogs.size()));
+  Tree* nx = nogs[ni];
+
+  // prior prob of growing at nx in new tree
+  double PGnx_new =
+    tree_prior.base /
+    std::pow(1.0 + static_cast<double>(nx->NodeDepth()),
+             tree_prior.power);
+
+  // prior prob of growing at children in current tree
+  double PGly_cur = ProbNodeGrows(*(nx->GetLeft()), cutpoints, tree_prior);
+  double PGry_cur = ProbNodeGrows(*(nx->GetRight()), cutpoints, tree_prior);
+
+  // birth probability in new tree
+  double PB_new =
+    (nx->GetParent() == nullptr) ? 1.0 : tree_prior.p_GROW;
+
+  // number of splittable nodes in new tree (after prune)
+  int nsplittable = static_cast<int>(nogs.size());
+  if (Splittable(*(nx->GetLeft()), cutpoints))  nsplittable--;
+  if (Splittable(*(nx->GetRight()), cutpoints)) nsplittable--;
+  nsplittable++;  // add nx itself
+
+  double Pbot_new = 1.0 / static_cast<double>(nsplittable);
+
+  // death probability and choosing this nog in current tree
+  double PD_cur = 1.0 - PBx;
+  double Pnog_cur = 1.0 / static_cast<double>(nogs.size());
+
+  double tree_ratio =
+    ((1.0 - PGnx_new) * PB_new * Pbot_new) /
+    (PGnx_new *
+     (1.0 - PGly_cur) * (1.0 - PGry_cur) *
+     PD_cur * Pnog_cur);
+
+  // Likelihood: combine children into parent
+  size_t nl, nr;
+  double rl, rr;
+  SufficientStatistics(tree,
+                       nx->GetLeft(), nx->GetRight(),
+                       cutpoints, data,
+                       nl, rl, nr, rr);
+
+  double lhl = LogPostLikelihood(nl, rl, sigma, tree_prior.eta);
+  double lhr = LogPostLikelihood(nr, rr, sigma, tree_prior.eta);
+  double lht = LogPostLikelihood(nl + nr, rl + rr,
+                                 sigma, tree_prior.eta);
+
+  double log_alpha =
+    std::log(tree_ratio) + (lht - lhl - lhr) - std::log(sigma);
+  if (log_alpha > 0.0) log_alpha = 0.0;
+
+  if (log(random.uniform()) < log_alpha) {
+    Parameters par(tree.GetParameters());
+    par.SetParameters(
+      0, DrawMuOneLeave(nl + nr, rl + rr,
+                        tree_prior.eta, sigma, random));
+
+    variable_inclusion_count[nx->GetSplitVar()]--;
+    tree.KillChildren(nx, par);
+    return true;
+  }
+  return false;
 }
 
 

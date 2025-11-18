@@ -110,15 +110,16 @@ Rcpp::List HorseTrees_cpp(
   }
 
   Rcpp::NumericVector store_alpha_dirichlet;
-  Rcpp::NumericMatrix store_split_probs;  
+  Rcpp::NumericMatrix store_split_probs;
+  Rcpp::NumericMatrix store_split_counts;
 
   if (dirichlet_bool) {
-    Rcpp::NumericVector store_alpha_dirichlet(N_post);
-    Rcpp::NumericMatrix store_split_probs(N_post, p);
+    store_alpha_dirichlet = Rcpp::NumericVector(N_post);
+    store_split_probs     = Rcpp::NumericMatrix(N_post, p);
   }
+  store_split_counts     = Rcpp::NumericMatrix(N_post, p);
 
   std::vector<size_t> cumulative_inclusion_count(p, 0);
-  std::vector<std::vector<double>> variable_inclusion_prob;
   
   // Initialize the C-based random number generator
   arn random(n1, n2);
@@ -271,8 +272,8 @@ Rcpp::List HorseTrees_cpp(
     );
 
 
-    // Update Dirichlet parameters, if applicable
-    if (dirichlet_bool) {
+    // Update Dirichlet parameters after half burn-in
+    if (dirichlet_bool && i >= (N_burn/2)) {
       forest.UpdateDirichlet(random);
     }
 
@@ -367,6 +368,9 @@ Rcpp::List HorseTrees_cpp(
           store_split_probs(i - N_burn, j) = probs[j];
         }
       }
+      const std::vector<size_t>& counts = forest.GetVariableInclusionCount();
+      for (size_t j = 0; j < p; ++j) store_split_counts(i - N_burn, j) = counts[j];
+      
     }
   }
 
@@ -417,6 +421,7 @@ Rcpp::List HorseTrees_cpp(
     results["alpha_dirichlet"] = store_alpha_dirichlet;
     results["split_probs"] = store_split_probs;
   }
+  results["store_split_counts"] = store_split_counts;
 
   
   if (testpred) delete[] testpred;
