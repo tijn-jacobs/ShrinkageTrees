@@ -25,7 +25,7 @@
   SEXP p_prune_controlSEXP, SEXP omega_controlSEXP, SEXP prior_type_controlSEXP,
   SEXP param1_controlSEXP, SEXP param2_controlSEXP, SEXP reversible_controlSEXP,
   SEXP sigma_knownSEXP, SEXP sigmaSEXP, SEXP lambdaSEXP,
-  SEXP nuSEXP, SEXP rho_knownSEXP, SEXP rhoSEXP,
+  SEXP nuSEXP, 
   SEXP N_postSEXP, SEXP N_burnSEXP, SEXP delayed_proposalSEXP,
   SEXP store_parametersSEXP, SEXP max_stored_leavesSEXP,
   SEXP store_posterior_sample_controlSEXP, SEXP store_posterior_sample_treatSEXP,

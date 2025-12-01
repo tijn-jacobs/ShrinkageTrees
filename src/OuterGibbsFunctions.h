@@ -39,13 +39,6 @@ void UpdateSigma(
   Random& random
 );
 
-// UpdateRho
-void UpdateRho(
-  bool rho_known,
-  double& rho,
-  Rcpp::NumericVector& store_rho
-);
-
 // AugmentCensoredObservations
 void AugmentCensoredObservations(
   bool is_survival,

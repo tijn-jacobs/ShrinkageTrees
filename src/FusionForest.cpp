@@ -20,7 +20,7 @@ Rcpp::List FusionForest_cpp(
   SEXP p_prune_controlSEXP, SEXP omega_controlSEXP, SEXP prior_type_controlSEXP,
   SEXP param1_controlSEXP, SEXP param2_controlSEXP, SEXP reversible_controlSEXP,
   SEXP sigma_knownSEXP, SEXP sigmaSEXP, SEXP lambdaSEXP,
-  SEXP nuSEXP, SEXP rho_knownSEXP, SEXP rhoSEXP,
+  SEXP nuSEXP, SEXP eta_commensurateSEXP,
   SEXP N_postSEXP, SEXP N_burnSEXP, SEXP delayed_proposalSEXP,
   SEXP store_parametersSEXP, SEXP max_stored_leavesSEXP,
   SEXP store_posterior_sampleSEXP,
@@ -109,8 +109,7 @@ Rcpp::List FusionForest_cpp(
   double nu = Rcpp::as<double>(nuSEXP);
 
   // Parameters for the borrowing model
-  bool rho_known = Rcpp::as<bool>(rho_knownSEXP);
-  double rho = Rcpp::as<double>(rhoSEXP);
+  double eta = Rcpp::as<double>(eta_commensurateSEXP);
 
   // Computational parameters
   size_t N_post = Rcpp::as<size_t>(N_postSEXP);
@@ -183,8 +182,11 @@ Rcpp::List FusionForest_cpp(
   // Declare sigma storage based on whether sigma is known
   Rcpp::NumericVector store_sigma = sigma_known ? Rcpp::NumericVector::create(sigma) : Rcpp::NumericVector(N_post + N_burn);
 
-  // Declare rho storage based on whether rho is known
-  Rcpp::NumericVector store_rho = rho_known ? Rcpp::NumericVector::create(rho) : Rcpp::NumericVector(N_post + N_burn);
+  // Storage for commensurate parameters
+  Rcpp::NumericVector store_eta(N_burn);
+  Rcpp::NumericVector store_nu(N_burn);
+  Rcpp::IntegerVector store_z(N_burn);
+  Rcpp::NumericVector store_w(N_burn);
 
   // Declare parameters for keeping track of the acceptance ratio
   bool* accepted_control = new bool[no_trees_control];  
@@ -237,7 +239,7 @@ Rcpp::List FusionForest_cpp(
 
   // Variables for the augmented outcome for both models
   // These need to be updated after each update of the other model
-  double* augmented_outcome_treat = new double[n];          //  (y_i - m(x_i) - rho * b_i * (1 - s_i) * tau1(x_i)) / b_i
+  double* augmented_outcome_treat = new double[n];          //  (y_i - m(x_i) -  b_i * (1 - s_i) * tau1(x_i)) / b_i
   double* augmented_outcome_control = new double[n];        //  y_i - b_i * tau(x_i) - b_i * (1- - s_i) * tau1(x_i)
   double* augmented_outcome_deconf = new double[n_deconf];  //   (y_i - m(x_i) - b_i * tau0(x_i)) / b_i     (only on the OS!)
 
@@ -424,7 +426,8 @@ Rcpp::List FusionForest_cpp(
     size_t j = 0;
     for (size_t k = 0; k < n; ++k) {
 
-      double b = (treatment_indicator[k] == 1) ? 0.5 : -0.5;
+      const double b = (treatment_indicator[k] == 1) ? 0.5 : -0.5;
+      const double s = (source_indicator[k] == 1) ? 1.0 : 0.0;
 
       // c(x_k): from deconf forest only for OS rows, otherwise 0
       double c_k = 0.0;
@@ -434,15 +437,15 @@ Rcpp::List FusionForest_cpp(
         c_k = forest_deconf.GetPrediction(j);
 
         // update deconf augmented outcome (OS length)
-        augmented_outcome_deconf[j] = (y[k] - forest_control.GetPrediction(k) - b * forest_treat.GetPrediction(k)) / (b * rho);
+        augmented_outcome_deconf[j] = (y[k] - forest_control.GetPrediction(k) - eta -  b * forest_treat.GetPrediction(k)) / b;
 
         ++j; // increment OS counter AFTER using it
       }
 
       // update treat augmented outcome for all rows
-      // y = m(x) + b * [tau(x) + rho (1 - s) c(x)] + e
-      // => y* for treat = (y - m(x) - b * (1 - s) c(x)) / b
-      augmented_outcome_treat[k] = (y[k] - forest_control.GetPrediction(k) - b * rho * c_k) / b;
+      // y = m(x) + (1 - s) * eta + b * [tau(x) + (1 - s) * c(x)] + e
+      // => y* for treat = (y - m(x) - (1 - s) * eta - b * (1 - s) c(x)) / b
+      augmented_outcome_treat[k] = (y[k] - (1 - s) * eta - forest_control.GetPrediction(k) - b * c_k) / b;
     }
 
 
@@ -470,22 +473,25 @@ Rcpp::List FusionForest_cpp(
     // After updating TREAT: refresh DECONF (OS-only) and CONTROL (full)
     j = 0;  // OS-row counter
     for (size_t k = 0; k < n; ++k) {
+
       const double b = (treatment_indicator[k] == 1) ? 0.5 : -0.5;
+      const double s = (source_indicator[k] == 1) ? 1.0 : 0.0;
+
 
       // c(x_k): use latest deconf prediction for OS, else 0
       double c_k = 0.0;
       if (source_indicator[k] == 0) {
 
         // Update deconf augmented outcome (OS length)
-        augmented_outcome_deconf[j] = (y[k] - forest_control.GetPrediction(k) - b * forest_treat.GetPrediction(k)) / (b * rho);
+        augmented_outcome_deconf[j] = (y[k] - forest_control.GetPrediction(k) - eta - b * forest_treat.GetPrediction(k)) / b;
         c_k = forest_deconf.GetPrediction(j);       // c(x_k) for CONTROL update
         ++j;
       }
 
       // Update CONTROL augmented outcome (full length)
-      // y = m(x) + b * [tau(x) + (1 - s) c(x)] + e
-      // => y*_{control} = y - b * tau(x) - b * (1 - s) c(x)
-      augmented_outcome_control[k] = y[k] - b * forest_treat.GetPrediction(k) - b * rho * c_k;     
+      // y = m(x) + (1 - s) * eta + b * [tau(x) + (1 - s) * c(x)] + e
+      // => y* for control  = y - (1 - s) * eta - b * tau(x) - b * (1 - s) c(x)
+      augmented_outcome_control[k] = y[k] - (1 - s) * eta - b * forest_treat.GetPrediction(k) - b * c_k;     
     }
 
 
@@ -513,7 +519,9 @@ Rcpp::List FusionForest_cpp(
     // After updating DECONF: refresh TREAT (full) and CONTROL (full)
     j = 0;  // OS-row counter (0..n_deconf-1)
     for (size_t k = 0; k < n; ++k) {
+
       const double b = (treatment_indicator[k] == 1) ? 0.5 : -0.5;
+      const double s = (source_indicator[k] == 1) ? 1.0 : 0.0;
 
       // c(x_k): only defined on OS rows; 0 for RCT
       double c_k = 0.0;
@@ -522,23 +530,16 @@ Rcpp::List FusionForest_cpp(
         ++j;
       }
 
-      // y = m(x) + b * [tau(x) + (1 - s) c(x)] + e
-      // => treat outcome: (y - m(x) - b * (1 - s) c(x)) / b
-      augmented_outcome_treat[k] =
-        (y[k] - forest_control.GetPrediction(k) - b * rho * c_k) / b;
+      // y = m(x) + (1 - s) * eta + b * [tau(x) + (1 - s) c(x)] + e
+      // => treat outcome: (y - m(x) - (1 - s) * eta - b * (1 - s) c(x)) / b
+      augmented_outcome_treat[k] = (y[k] - (1 - s) * eta - forest_control.GetPrediction(k) - b * c_k) / b;
 
-      // => control outcome: y - b * tau(x) - b * (1 - s) c(x)
-      augmented_outcome_control[k] =
-        y[k] - b * forest_treat.GetPrediction(k) - b * rho * c_k;
+      // => control outcome: y - (1 - s) * eta - b * tau(x) - b * (1 - s) c(x)
+      augmented_outcome_control[k] = y[k] - (1 - s) * eta - b * forest_treat.GetPrediction(k) - b * c_k;
     }
 
-    // Update rho (outer Gibbs step), if applicable
-    UpdateRho(
-      rho_known,
-      rho,
-      store_rho
-      // TBD
-    );
+    // Update commensurate parameters (outer Gibbs step)
+    
 
     // Compute total predictions after updating all forests
     j = 0;  // OS-row counter
@@ -547,16 +548,15 @@ Rcpp::List FusionForest_cpp(
 
       // c(x_k): deconf prediction for OS rows, else 0
       double c_k = 0.0;
+      double s = 1.0;
       if (source_indicator[k] == 0) {
+        s = 0.0;
         c_k = forest_deconf.GetPrediction(j);
         ++j;
       }
 
-      // total: m(x) + b * [tau(x) + (1 - s) * c(x)]
-      total_predictions[k] =
-        forest_control.GetPredictions()[k] +
-        b * forest_treat.GetPredictions()[k] +
-        b * rho * c_k;
+      // total: m(x) + (1 - s) * eta + b * [tau(x) + (1 - s) * c(x)]
+      total_predictions[k] = forest_control.GetPredictions()[k] + (1 - s) * eta + b * forest_treat.GetPredictions()[k] + b * c_k;
     }
 
     // Update sigma (outer Gibbs step), if applicable
@@ -687,7 +687,9 @@ Rcpp::List FusionForest_cpp(
 
         // c(x_k) only for OS rows, else 0
         double c_k = 0.0;
+        double s = 1.0;
         if (source_indicator[k] == 0) {
+          s = 0.0;  
           c_k = forest_deconf.GetPrediction(j_os);
           // accumulate posterior mean of c(x) in OS order
           train_predictions_mean_deconf[j_os] += c_k;
@@ -695,7 +697,7 @@ Rcpp::List FusionForest_cpp(
         }
 
         // total fitted mean
-        train_predictions_mean[k] += m_k + b * (tau_k + rho * c_k);
+        train_predictions_mean[k] += m_k + (1 - s) * eta + b * (tau_k + c_k);
 
         // component means
         train_predictions_mean_control[k] += m_k;
@@ -755,8 +757,8 @@ Rcpp::List FusionForest_cpp(
         const double s = (source_indicator_test[k] == 1) ? 1.0 : 0.0; // 1 = RCT, 0 = OS
         const double c_k = testpred_deconf[k];
 
-        // total mean: m + b * (tau + (1 - s) * c)
-        test_predictions_mean[k] += testpred_control[k] + b * testpred_treat[k] + (1.0 - s) * b * rho * c_k;
+        // total mean: m + (1 - S) * eta + b * (tau + (1 - s) * c)
+        test_predictions_mean[k] += testpred_control[k] + (1 - s) * eta + b * testpred_treat[k] + (1.0 - s) * b * c_k;
 
         // component means
         test_predictions_mean_control[k] += testpred_control[k];
@@ -790,6 +792,12 @@ Rcpp::List FusionForest_cpp(
       if(prior_type_deconf == "horseshoe_fw") {
         store_forestwide_shrinkage_deconf(i - N_burn) = forestwide_shrinkage_deconf;
       }
+
+      // Store commensurate parameters
+      store_eta[i - N_burn] = eta;
+      // store_nu[i - N_burn]  = nu;
+      // store_z[i - N_burn]   = z;
+      // store_w[i - N_burn]   = w;
     }
 
     
@@ -839,7 +847,6 @@ Rcpp::List FusionForest_cpp(
   // Declare the results to be returned
   Rcpp::List results;
   results["sigma"] = store_sigma;
-  results["rho"] = store_rho;
   results["test_predictions"] = test_predictions_mean;
   results["train_predictions"] = train_predictions_mean;
   results["test_predictions_control"] = test_predictions_mean_control;
@@ -880,6 +887,10 @@ Rcpp::List FusionForest_cpp(
     if (prior_type_deconf == "horseshoe_fw") {
     results["forestwide_shrinkage_deconf"] = store_forestwide_shrinkage_deconf;
   }
+  results["eta"] = store_eta;
+  results["nu"]  = store_nu;
+  results["z"]   = store_z;
+  results["w"]   = store_w;
 
 
   // Clean up memory

@@ -196,16 +196,6 @@ void UpdateSigma(
   }
 }
 
-void UpdateRho(
-  bool rho_known,
-  double& rho,
-  Rcpp::NumericVector& store_rho
-) {
-
-  if (rho_known) return;
-
-}
-
 void UpdateForestwideShrinkage(
   string prior_type,
   std::vector<Tree>* all_trees,
