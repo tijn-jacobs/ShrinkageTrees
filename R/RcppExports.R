@@ -9,6 +9,10 @@ HorseTrees_cpp <- function(nSEXP, pSEXP, n_testSEXP, X_trainSEXP, ySEXP, status_
     .Call(`_ShrinkageTrees_HorseTrees_cpp`, nSEXP, pSEXP, n_testSEXP, X_trainSEXP, ySEXP, status_indicatorSEXP, is_survivalSEXP, X_testSEXP, number_of_treesSEXP, N_postSEXP, N_burnSEXP, delayed_proposalSEXP, powerSEXP, baseSEXP, p_growSEXP, p_pruneSEXP, nuSEXP, lambdaSEXP, dirichlet_boolSEXP, alpha_dirichletSEXP, const_alphaSEXP, a_dirichletSEXP, b_dirichletSEXP, sigmaSEXP, sigma_knownSEXP, omegaSEXP, param1SEXP, param2SEXP, prior_typeSEXP, reversibleSEXP, store_parametersSEXP, store_posterior_sampleSEXP, n1SEXP, n2SEXP, verboseSEXP)
 }
 
+cwbart <- function(ntrain, ip, inp, ixSEXP, iySEXP, ixpSEXP, im, inc, ind, iburn, ipower, ibase, itau, inu, ilambda, isigest, iwSEXP, idart, itheta, iomega, ia, ib, irho, iaug, inkeeptrain, inkeeptest, inkeeptestme, inkeeptreedraws, inprintevery, XinfoSEXP) {
+    .Call(`_ShrinkageTrees_cwbart`, ntrain, ip, inp, ixSEXP, iySEXP, ixpSEXP, im, inc, ind, iburn, ipower, ibase, itau, inu, ilambda, isigest, iwSEXP, idart, itheta, iomega, ia, ib, irho, iaug, inkeeptrain, inkeeptest, inkeeptestme, inkeeptreedraws, inprintevery, XinfoSEXP)
+}
+
 probitHorseTrees_cpp <- function(nSEXP, pSEXP, n_testSEXP, X_trainSEXP, ySEXP, X_testSEXP, number_of_treesSEXP, N_postSEXP, N_burnSEXP, delayed_proposalSEXP, powerSEXP, baseSEXP, p_growSEXP, p_pruneSEXP, omegaSEXP, latent_thresholdSEXP, param1SEXP, param2SEXP, prior_typeSEXP, reversibleSEXP, store_posterior_sampleSEXP, n1SEXP, n2SEXP, verboseSEXP) {
     .Call(`_ShrinkageTrees_probitHorseTrees_cpp`, nSEXP, pSEXP, n_testSEXP, X_trainSEXP, ySEXP, X_testSEXP, number_of_treesSEXP, N_postSEXP, N_burnSEXP, delayed_proposalSEXP, powerSEXP, baseSEXP, p_growSEXP, p_pruneSEXP, omegaSEXP, latent_thresholdSEXP, param1SEXP, param2SEXP, prior_typeSEXP, reversibleSEXP, store_posterior_sampleSEXP, n1SEXP, n2SEXP, verboseSEXP)
 }
