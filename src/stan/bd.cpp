@@ -27,9 +27,9 @@ bool bd(StanTree& x, xinfo& xi, dinfo& di, pinfo& pi, double sigma,
       double alpha=0.0, lalpha=0.0;
       double lhl, lhr, lht;
       if((nl>=5) && (nr>=5)) { //cludge?
-         lhl = lh(nl,syl,sigma,pi.tau);
-         lhr = lh(nr,syr,sigma,pi.tau);
-         lht = lh(nl+nr,syl+syr,sigma,pi.tau);
+         lhl = lh(nl,syl,sigma,pi.eta);
+         lhr = lh(nr,syr,sigma,pi.eta);
+         lht = lh(nl+nr,syl+syr,sigma,pi.eta);
    
          alpha=1.0;
          lalpha = log(pr) + (lhl+lhr-lht) + log(sigma);
@@ -42,8 +42,8 @@ bool bd(StanTree& x, xinfo& xi, dinfo& di, pinfo& pi, double sigma,
       double uu = random.uniform();
       bool dostep = (alpha > 0) && (log(uu) < lalpha);
       if(dostep) {
-         mul = drawnodemu(nl,syl,pi.tau,sigma,random);
-         mur = drawnodemu(nr,syr,pi.tau,sigma,random);
+         mul = drawnodemu(nl,syl,pi.eta,sigma,random);
+         mur = drawnodemu(nr,syr,pi.eta,sigma,random);
          x.birthp(nx,v,c,mul,mur);
 	 nv[v]++;
          return true;
@@ -66,9 +66,9 @@ bool bd(StanTree& x, xinfo& xi, dinfo& di, pinfo& pi, double sigma,
       //--------------------------------------------------
       //compute alpha
       double lhl, lhr, lht;
-      lhl = lh(nl,syl,sigma,pi.tau);
-      lhr = lh(nr,syr,sigma,pi.tau);
-      lht = lh(nl+nr,syl+syr,sigma,pi.tau);
+      lhl = lh(nl,syl,sigma,pi.eta);
+      lhr = lh(nr,syr,sigma,pi.eta);
+      lht = lh(nl+nr,syl+syr,sigma,pi.eta);
 
       double lalpha = log(pr) + (lht - lhl - lhr) - log(sigma);
       lalpha = std::min(0.0,lalpha);
@@ -77,7 +77,7 @@ bool bd(StanTree& x, xinfo& xi, dinfo& di, pinfo& pi, double sigma,
       //try metrop
       double mu;
       if(log(random.uniform()) < lalpha) {
-         mu = drawnodemu(nl+nr,syl+syr,pi.tau,sigma,random);
+         mu = drawnodemu(nl+nr,syl+syr,pi.eta,sigma,random);
 	 nv[nx->GetSplitVar()]--;
          x.deathp(nx,mu);
          return true;

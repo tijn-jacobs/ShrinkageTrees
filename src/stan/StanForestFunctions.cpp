@@ -74,19 +74,19 @@ void getsuff(StanTree& x, StanTree::StanTree_p nx, size_t v, size_t c, xinfo& xi
 
 }
 //lh, replacement for lil that only depends on sum y.
-double lh(size_t n, double sy, double sigma, double tau)
+double lh(size_t n, double sy, double sigma, double eta)
 {
    double s2 = sigma*sigma;
-   double t2 = tau*tau;
+   double t2 = eta*eta;
    double k = n*t2+s2;
    return -.5*log(k) + ((t2*sy*sy)/(2.0*s2*k));
 }
 //--------------------------------------------------
-//get prob a node grows, 0 if no good vars, else alpha/(1+d)^beta
+//get prob a node grows, 0 if no good vars, else base/(1+d)^beta
 double pgrow(StanTree::StanTree_p n, xinfo& xi, pinfo& pi)
 {
    if(cansplit(n,xi)) {
-      return pi.alpha/pow(1.0+n->depth(),pi.mybeta);
+      return pi.base/pow(1.0+n->depth(),pi.power);
    } else {
       return 0.0;
    }
@@ -150,7 +150,7 @@ void drmu(StanTree& t, xinfo& xi, dinfo& di, pinfo& pi, double sigma, Random& ra
    allsuff(t,xi,di,leaves,nv,syv);
 
    for(StanTree::npv::size_type i=0;i!=leaves.size();i++) 
-      leaves[i]->settheta(drawnodemu(nv[i],syv[i],pi.tau,sigma,random));
+      leaves[i]->settheta(drawnodemu(nv[i],syv[i],pi.eta,sigma,random));
 }
 //--------------------------------------------------
 //bprop: function to generate birth proposal
@@ -238,22 +238,22 @@ void bprop(StanTree& x, xinfo& xi, pinfo& pi, StanTree::npv& goodbots, double& P
 
       double Pbotx = 1.0/goodbots.size(); //proposal prob of choosing nx
       size_t dnx = nx->depth();
-      double PGnx = pi.alpha/pow(1.0 + dnx,pi.mybeta); //prior prob of growing at nx
+      double PGnx = pi.base/pow(1.0 + dnx,pi.power); //prior prob of growing at nx
 
       double PGly, PGry; //prior probs of growing at new children (l and r) of proposal
       if(goodvars.size()>1) { //know there are variables we could split l and r on
-         PGly = pi.alpha/pow(1.0 + dnx+1.0,pi.mybeta); //depth of new nodes would be one more
+         PGly = pi.base/pow(1.0 + dnx+1.0,pi.power); //depth of new nodes would be one more
          PGry = PGly;
       } else { //only had v to work with, if it is exhausted at either child need PG=0
          if((int)(c-1)<L) { //v exhausted in new left child l, new upper limit would be c-1
             PGly = 0.0;
          } else {
-            PGly = pi.alpha/pow(1.0 + dnx+1.0,pi.mybeta);
+            PGly = pi.base/pow(1.0 + dnx+1.0,pi.power);
          }
          if(U < (int)(c+1)) { //v exhausted in new right child r, new lower limit would be c+1
             PGry = 0.0;
          } else {
-            PGry = pi.alpha/pow(1.0 + dnx+1.0,pi.mybeta);
+            PGry = pi.base/pow(1.0 + dnx+1.0,pi.power);
          }
       }
 
@@ -298,7 +298,7 @@ void dprop(StanTree& x, xinfo& xi, pinfo& pi,StanTree::npv& goodbots, double& PB
 
       double PGny; //prob the nog node grows
       size_t dny = nx->depth();
-      PGny = pi.alpha/pow(1.0+dny,pi.mybeta);
+      PGny = pi.base/pow(1.0+dny,pi.power);
 
       //better way to code these two?
       double PGlx = pgrow(nx->getl(),xi,pi);
@@ -325,11 +325,11 @@ void dprop(StanTree& x, xinfo& xi, pinfo& pi,StanTree::npv& goodbots, double& PB
 }
 //--------------------------------------------------
 //draw one mu from post 
-double drawnodemu(size_t n, double sy, double tau, double sigma, Random& random)
+double drawnodemu(size_t n, double sy, double eta, double sigma, Random& random)
 {
    double s2 = sigma*sigma;
    double b = n/s2;
-   double a = 1.0/(tau*tau);
+   double a = 1.0/(eta*eta);
    return (sy/s2)/(a+b) + random.normal()/sqrt(a+b);
 }
 

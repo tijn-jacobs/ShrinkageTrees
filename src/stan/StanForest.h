@@ -6,7 +6,7 @@
 
 #include "StanTree.h"
 #include "StanTreeFunctions.h"
-#include "info.h"
+#include "Info.h"
 #include "StanForestFunctions.h"
 #include "bd.h"
 
@@ -32,8 +32,8 @@ public:
    void setdata(size_t p, size_t n, double *x, double *y, size_t nc=100);
    void setdata(size_t p, size_t n, double *x, double *y, int* nc);
    void setpi(pinfo& pi) {this->pi = pi;}
-   void setprior(double alpha, double beta, double tau)
-      {pi.alpha=alpha; pi.mybeta = beta; pi.tau=tau;}
+   void setprior(double base, double power, double eta)
+      {pi.base=base; pi.power = power; pi.eta=eta;}
    void setdart(double _a, double _b, double _rho, bool _aug, bool _dart, 
 		double _theta=0., double _omega=1.) {
      this->a=_a; this->b=_b; this->rho=_rho; this->aug=_aug; 
@@ -48,7 +48,6 @@ public:
      }
 }
    void startdart() {this->dartOn=!(this->dartOn);}
-   void settau(double tau) {pi.tau=tau;}
    StanTree& getStanTree(size_t i ) { return t[i];}
    xinfo& getxinfo() {return xi;}
    void setxinfo(xinfo& _xi);

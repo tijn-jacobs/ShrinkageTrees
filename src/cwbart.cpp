@@ -19,7 +19,7 @@
 
 #include "stan/StanTree.h"
 #include "stan/StanTreeFunctions.h"
-#include "stan/info.h"
+#include "stan/Info.h"
 #include "stan/StanForestFunctions.h"
 #include "stan/bd.h"
 #include "stan/StanForest.h"

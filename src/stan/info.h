@@ -16,19 +16,14 @@ public:
 class pinfo
 {
 public:
-   pinfo(): pbd(1.0),pb(.5),alpha(.95),mybeta(2.0),tau(1.0) {}
+   pinfo(): pbd(1.0),pb(.5),base(.95),power(2.0),eta(1.0) {}
 //mcmc info
    double pbd; //prob of birth/death
    double pb;  //prob of birth
 //prior info
-   double alpha;
-   double mybeta;
-   double tau;
-   void pr() {
-      cout << "pbd,pb: " << pbd << ", " << pb << std::endl;
-      cout << "alpha,beta,tau: " << alpha << 
-             ", " << mybeta << ", " << tau << std::endl;
-   }
+   double base;
+   double power;
+   double eta;
 };
 
 #endif

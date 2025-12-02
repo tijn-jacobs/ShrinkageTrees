@@ -3,7 +3,7 @@
 
 #include "StanTree.h"
 #include "StanTreeFunctions.h"
-#include "info.h"
+#include "Info.h"
 #include <algorithm>
 
 //--------------------------------------------------
@@ -18,7 +18,7 @@ double getpb(StanTree& t, xinfo& xi, pinfo& pi, StanTree::npv& goodbots);
 void getsuff(StanTree& x, StanTree::StanTree_p nx, size_t v, size_t c, xinfo& xi, dinfo& di, size_t& nl, double& syl, size_t& nr, double& syr);
 //--------------------------------------------------
 //lh, replacement for lil that only depends on sum y.
-double lh(size_t n, double sy, double sigma, double tau);
+double lh(size_t n, double sy, double sigma, double eta);
 //--------------------------------------------------
 //get prob a node grows, 0 if no good vars, else a/(1+d)^b
 double pgrow(StanTree::StanTree_p n, xinfo& xi, pinfo& pi);
@@ -39,7 +39,7 @@ void bprop(StanTree& x, xinfo& xi, pinfo& pi, StanTree::npv& goodbots, double& P
 void dprop(StanTree& x, xinfo& xi, pinfo& pi, StanTree::npv& goodbots, double& PBx, StanTree::StanTree_p& nx, double& pr, Random& random);
 //--------------------------------------------------
 //draw one mu from post 
-double drawnodemu(size_t n, double sy, double tau, double sigma, Random& random);
+double drawnodemu(size_t n, double sy, double eta, double sigma, Random& random);
 //--------------------------------------------------
 //draw variable splitting probabilities from Dirichlet (Linero, 2018)
 void draw_s(std::vector<size_t>& nv, std::vector<double>& lpv, double& theta, Random& random);

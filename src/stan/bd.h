@@ -2,7 +2,7 @@
 #ifndef GUARD_bd_h
 #define GUARD_bd_h
 
-#include "info.h"
+#include "Info.h"
 #include "StanTree.h"
 #include "StanTreeFunctions.h"
 #include "StanForestFunctions.h"

@@ -1,9 +1,6 @@
 #ifndef GUARD_StanTree_h
 #define GUARD_StanTree_h
 
-#include <map>
-#include <cmath>
-#include <cstddef>
 #include "../Prerequisites.h"
 
 //--------------------------------------------------

@@ -136,7 +136,6 @@ void StanForest::pr() //print to screen
    cout << "t[0]:\n " << t[0] << std::endl;
    cout << "t[m-1]:\n " << t[m-1] << std::endl;
    cout << "prior and mcmc info:\n";
-   pi.pr();
    if(dart){
      cout << "*****dart prior (On):\n";
      cout << "a: " << a << std::endl;
