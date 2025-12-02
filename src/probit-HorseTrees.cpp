@@ -22,8 +22,6 @@ Rcpp::List probitHorseTrees_cpp(SEXP nSEXP,
                       SEXP prior_typeSEXP,
                       SEXP reversibleSEXP,
                       SEXP store_posterior_sampleSEXP, 
-                      SEXP n1SEXP,     
-                      SEXP n2SEXP,
                       SEXP verboseSEXP
                       ) {     
       
@@ -62,8 +60,6 @@ Rcpp::List probitHorseTrees_cpp(SEXP nSEXP,
   double param2 = Rcpp::as<double>(param2SEXP);
   string prior_type = Rcpp::as<string>(prior_typeSEXP);  
   
-  unsigned int n1 = Rcpp::as<unsigned int>(n1SEXP);   
-  unsigned int n2 = Rcpp::as<unsigned int>(n2SEXP);  
   bool print_progress = Rcpp::as<bool>(verboseSEXP);
   double sigma = 1;
 
@@ -81,8 +77,8 @@ Rcpp::List probitHorseTrees_cpp(SEXP nSEXP,
   }
   
   // Initialize the C-based random number generator
-  arn random(n1, n2);
-  
+  RandomGenerator random;
+
   // Map the input to the corresponding PriorType
   PriorType prior;
   if (prior_type == "horseshoe") {

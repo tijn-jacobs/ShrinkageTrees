@@ -1,15 +1,15 @@
 
-#include "bart.h"
+#include "StanForest.h"
 
 //--------------------------------------------------
 //constructor
-bart::bart():m(200),t(m),pi(),p(0),n(0),x(0),y(0),xi(),allfit(0),r(0),ftemp(0),di(),dartOn(false) {}
-bart::bart(size_t im):m(im),t(m),pi(),p(0),n(0),x(0),y(0),xi(),allfit(0),r(0),ftemp(0),di(),dartOn(false) {}
-bart::bart(const bart& ib):m(ib.m),t(m),pi(ib.pi),p(0),n(0),x(0),y(0),xi(),allfit(0),r(0),ftemp(0),di(),dartOn(false)
+StanForest::StanForest():m(200),t(m),pi(),p(0),n(0),x(0),y(0),xi(),allfit(0),r(0),ftemp(0),di(),dartOn(false) {}
+StanForest::StanForest(size_t im):m(im),t(m),pi(),p(0),n(0),x(0),y(0),xi(),allfit(0),r(0),ftemp(0),di(),dartOn(false) {}
+StanForest::StanForest(const StanForest& ib):m(ib.m),t(m),pi(ib.pi),p(0),n(0),x(0),y(0),xi(),allfit(0),r(0),ftemp(0),di(),dartOn(false)
 {
    this->t = ib.t;
 }
-bart::~bart()
+StanForest::~StanForest()
 {
    if(allfit) delete[] allfit;
    if(r) delete[] r;
@@ -18,7 +18,7 @@ bart::~bart()
 
 //--------------------------------------------------
 //operators
-bart& bart::operator=(const bart& rhs)
+StanForest& StanForest::operator=(const StanForest& rhs)
 {
    if(&rhs != this) {
 
@@ -39,7 +39,7 @@ bart& bart::operator=(const bart& rhs)
 }
 //--------------------------------------------------
 //get,set
-void bart::setm(size_t m)
+void StanForest::setm(size_t m)
 {
    t.resize(m);
    this->m = t.size();
@@ -48,7 +48,7 @@ void bart::setm(size_t m)
 }
 
 //--------------------------------------------------
-void bart::setxinfo(xinfo& _xi)
+void StanForest::setxinfo(xinfo& _xi)
 {
    size_t p=_xi.size();
    xi.resize(p);
@@ -59,7 +59,7 @@ void bart::setxinfo(xinfo& _xi)
    }
 }
 //--------------------------------------------------
-void bart::setdata(size_t p, size_t n, double *x, double *y, size_t numcut)
+void StanForest::setdata(size_t p, size_t n, double *x, double *y, size_t numcut)
 {
   int* nc = new int[p];
   for(size_t i=0; i<p; ++i) nc[i]=numcut;
@@ -67,7 +67,7 @@ void bart::setdata(size_t p, size_t n, double *x, double *y, size_t numcut)
   delete [] nc;
 }
 
-void bart::setdata(size_t p, size_t n, double *x, double *y, int *nc)
+void StanForest::setdata(size_t p, size_t n, double *x, double *y, int *nc)
 {
    this->p=p; this->n=n; this->x=x; this->y=y;
    if(xi.size()==0) makexinfo(p,n,&x[0],xi,nc);
@@ -92,7 +92,7 @@ void bart::setdata(size_t p, size_t n, double *x, double *y, int *nc)
    }
 }
 //--------------------------------------------------
-void bart::predict(size_t p, size_t n, double *x, double *fp)
+void StanForest::predict(size_t p, size_t n, double *x, double *fp)
 //uses: m,t,xi
 {
    double *fptemp = new double[n];
@@ -106,7 +106,7 @@ void bart::predict(size_t p, size_t n, double *x, double *fp)
    delete[] fptemp;
 }
 //--------------------------------------------------
-void bart::draw(double sigma, rn& gen)
+void StanForest::draw(double sigma, Random& random)
 {
    for(size_t j=0;j<m;j++) {
       fit(t[j],xi,p,n,x,ftemp);
@@ -114,24 +114,24 @@ void bart::draw(double sigma, rn& gen)
          allfit[k] = allfit[k]-ftemp[k];
          r[k] = y[k]-allfit[k];
       }
-      bd(t[j],xi,di,pi,sigma,nv,pv,aug,gen);
-      drmu(t[j],xi,di,pi,sigma,gen);
+      bd(t[j],xi,di,pi,sigma,nv,pv,aug,random);
+      drmu(t[j],xi,di,pi,sigma,random);
       fit(t[j],xi,p,n,x,ftemp);
       for(size_t k=0;k<n;k++) allfit[k] += ftemp[k];
    }
    /*
    if(dartOn) {
-     draw_s(nv,lpv,theta,gen);
-     draw_theta0(const_theta,theta,lpv,a,b,rho,gen);
+     draw_s(nv,lpv,theta,random);
+     draw_theta0(const_theta,theta,lpv,a,b,rho,random);
      for(size_t j=0;j<p;j++) pv[j]=::exp(lpv[j]);
    }
    */
 }
 //--------------------------------------------------
 //public functions
-void bart::pr() //print to screen
+void StanForest::pr() //print to screen
 {
-   cout << "*****bart object:\n";
+   cout << "*****StanForest object:\n";
    cout << "m: " << m << std::endl;
    cout << "t[0]:\n " << t[0] << std::endl;
    cout << "t[m-1]:\n " << t[m-1] << std::endl;

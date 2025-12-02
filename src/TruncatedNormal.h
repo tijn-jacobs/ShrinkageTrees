@@ -3,6 +3,6 @@
 
 #include "Prerequisites.h"
 
-double rtnorm(double mean, double truncation, double sd, Random& gen);
+double rtnorm(double mean, double truncation, double sd, Random& random);
 
 #endif

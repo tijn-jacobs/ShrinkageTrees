@@ -5,9 +5,9 @@
 #include "info.h"
 #include "StanTree.h"
 #include "StanTreeFunctions.h"
-#include "bartfuns.h"
+#include "StanForestFunctions.h"
 
 bool bd(StanTree& x, xinfo& xi, dinfo& di, pinfo& pi, double sigma,
-	std::vector<size_t>& nv, std::vector<double>& pv, bool aug, rn& gen);
+	std::vector<size_t>& nv, std::vector<double>& pv, bool aug, Random& random);
 
 #endif

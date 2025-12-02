@@ -17,21 +17,13 @@
  *  https://www.R-project.org/Licenses/GPL-2
  */
 
-#include "stan/stantree.h"
-#include "stan/stantreefuns.h"
+#include "stan/StanTree.h"
+#include "stan/StanTreeFunctions.h"
 #include "stan/info.h"
-#include "stan/bartfuns.h"
+#include "stan/StanForestFunctions.h"
 #include "stan/bd.h"
-#include "stan/bart.h"
+#include "stan/StanForest.h"
 
-/*
-#include "stantree.h"
-#include "stantreefuns.h"
-#include "info.h"
-#include "bartfuns.h"
-#include "bd.h"
-#include "bart.h"
-*/
 
 #define TRDRAW(a, b) trdraw(a, b)
 #define TEDRAW(a, b) tedraw(a, b)
@@ -128,9 +120,9 @@ Rcpp::List cwbart(
    Rcpp::IntegerMatrix varcnt(nkeeptreedraws,p);
 
    //random number generation
-   arn gen;
+   RandomGenerator random;
 
-   bart bm(m);
+   StanForest bm(m);
 
    if(Xinfo.size()>0) {
      xinfo _xi;
@@ -223,11 +215,11 @@ Rcpp::List cwbart(
       if(i%printevery==0) printf("done %zu (out of %zu)\n",i,total);
       if(i==(burn/2)&&dart) bm.startdart();
       //draw bart
-      bm.draw(sigma,gen);
+      bm.draw(sigma,random);
       //draw sigma
       rss=0.0;
       for(size_t k=0;k<n;k++) {restemp=(iy[k]-bm.f(k))/(iw[k]); rss += restemp*restemp;}
-      sigma = sqrt((nu*lambda + rss)/gen.chi_square(n+nu));
+      sigma = sqrt((nu*lambda + rss)/random.chi_square(n+nu));
       sdraw[i]=sigma;
       if(i>=burn) {
          for(size_t k=0;k<n;k++) trmean[k]+=bm.f(k);
@@ -253,7 +245,7 @@ Rcpp::List cwbart(
          keeptreedraw = nkeeptreedraws && (((i-burn+1) % skiptreedraws) ==0);
          if(keeptreedraw) {
       for(size_t j=0;j<m;j++) {
-	      treess << bm.getstantree(j);
+	      treess << bm.getStanTree(j);
 
 	    }
 

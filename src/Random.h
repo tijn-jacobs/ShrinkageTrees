@@ -1,94 +1,118 @@
 #ifndef GUARD_Random_h
 #define GUARD_Random_h
 
-#include <vector>
-#include <random>
-#include <cmath>
+#include "Prerequisites.h"
 
-// Pure virtual base class for random numbers
+double log_sum_exp(std::vector<double>& v);
+
+// Abstract RNG interface
 class Random {
 public:
   Random() {}
-  virtual double normal() = 0;    // Standard normal
-  virtual double uniform() = 0;   // Uniform(0,1)
-  virtual double chi_square(double df) = 0; // Chi-square
-  virtual double exp() = 0;       // Exponential
+
+  virtual double normal() = 0;
+  virtual double uniform() = 0;
+  virtual double chi_square(double df) = 0;
+  virtual double exp() = 0;
+
   virtual double log_gamma(double shape) = 0;
   virtual double gamma(double shape, double rate) = 0;
   virtual double inv_gamma(double shape, double rate) = 0;
-  virtual size_t discrete() = 0;  // Discrete (categorical) distribution
+  virtual double beta(double a, double b) = 0;
+
+  virtual size_t discrete() = 0;
+  virtual size_t geometric(double p) = 0;
+
   virtual void SetInclusionWeights(std::vector<double>& _wts) = 0;
+  virtual std::vector<double>
+  log_dirichlet(std::vector<double>& alpha) = 0;
+
   virtual ~Random() {}
 };
 
-// Abstract random number generator based on C++ <random>
-class arn : public Random {
-  typedef std::default_random_engine genD;
-  typedef std::normal_distribution<double> norD;
-  typedef std::uniform_real_distribution<double> uniD;
-  typedef std::chi_squared_distribution<double> chiD;
-  typedef std::gamma_distribution<double> gamD;
-  typedef std::discrete_distribution<int> disD;
-  
+// Rcpp-based RNG implementation
+class RandomGenerator : public Random {
 public:
-  // Constructor
-  arn() : gen(std::random_device{}()) {}
-  arn(unsigned int n1, unsigned int n2) : gen(n1 + n2) {}
-  
-  // Virtual destructor
-  virtual ~arn() {}
-  
-  // Implementations of pure virtual functions
-  virtual double normal() { return nor(gen); }
-  
-  virtual double uniform() { return uni(gen); }
-  
-  virtual double chi_square(double df) {
-    chi = chiD(df);
-    return chi(gen);
-  }
-  
-  virtual double exp() { return -std::log(this->uniform()); }
-  
+  RandomGenerator() {}
+
+  virtual ~RandomGenerator() {}
+
+  // Basic distributions
+  virtual double normal() { return R::norm_rand(); }
+  virtual double uniform() { return R::unif_rand(); }
+  virtual double chi_square(double df) { return R::rchisq(df); }
+  virtual double exp() { return R::exp_rand(); }
+
+  // Gamma family
   virtual double log_gamma(double shape) {
-    gam = gamD(shape + 1., 1.);
-    double y = std::log(gam(gen)), z = std::log(this->uniform()) / shape;
+    double y = std::log(R::rgamma(shape + 1.0, 1.0));
+    double z = std::log(this->uniform()) / shape;
     return y + z;
   }
-  
+
   virtual double gamma(double shape, double rate) {
-    if (shape < 0.01) {
+    if (shape < 0.01)
       return std::exp(this->log_gamma(shape)) / rate;
-    } else {
-      gam = gamD(shape, 1.);
-      return (gam(gen)) / rate;
-    }
+    return R::rgamma(shape, 1.0) / rate;
   }
-  
-  virtual double inv_gamma(double a, double b) {
-    double gamma_sample = this->gamma(a, b);
-    return 1.0 / gamma_sample;
+
+  virtual double inv_gamma(double shape, double rate) {
+    double g = this->gamma(shape, rate);
+    return 1.0 / g;
   }
-  
+
+  virtual double beta(double a, double b) {
+    double x1 = this->gamma(a, 1.0);
+    double x2 = this->gamma(b, 1.0);
+    return x1 / (x1 + x2);
+  }
+
+  // Multinomial draw using R::rmultinom
   virtual size_t discrete() {
-    disD dis(wts.begin(), wts.end());
-    return dis(gen);
+    size_t k = wts.size();
+    if (k == 0) return 0;
+
+    std::vector<int> out(k, 0);
+    R::rmultinom(1, wts.data(), k, out.data());
+
+    for (size_t j = 0; j < k; j++)
+      if (out[j] == 1) return j;
+
+    return 0;
+  }
+
+  virtual size_t geometric(double p) {
+    return R::rgeom(p);
   }
 
   virtual void SetInclusionWeights(std::vector<double>& _wts) {
-    double smw = 0.;
+    double sumw = 0.0;
     wts.clear();
-    for (size_t j = 0; j < _wts.size(); j++) smw += _wts[j];
-    for (size_t j = 0; j < _wts.size(); j++) wts.push_back(_wts[j] / smw);
+
+    for (double x : _wts) sumw += x;
+    if (sumw <= 0.0) return;
+
+    for (double x : _wts) wts.push_back(x / sumw);
+  }
+
+  virtual std::vector<double>
+  log_dirichlet(std::vector<double>& alpha) {
+    size_t k = alpha.size();
+    std::vector<double> out(k);
+
+    for (size_t j = 0; j < k; j++)
+      out[j] = this->log_gamma(alpha[j]);
+
+    double lse = log_sum_exp(out);
+    for (size_t j = 0; j < k; j++)
+      out[j] -= lse;
+
+    return out;
   }
 
 private:
   std::vector<double> wts;
-  genD gen;
-  norD nor;
-  uniD uni;
-  chiD chi;
-  gamD gam;
+  Rcpp::RNGScope RNGstate;
 };
 
-#endif // GUARD_Random_h
+#endif  // GUARD_Random_h

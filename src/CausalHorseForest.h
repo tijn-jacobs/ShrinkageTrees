@@ -22,7 +22,7 @@
     SEXP sigma_knownSEXP, SEXP sigmaSEXP, SEXP lambdaSEXP,
     SEXP nuSEXP, SEXP N_postSEXP, SEXP N_burnSEXP, SEXP delayed_proposalSEXP,
     SEXP store_parametersSEXP, SEXP max_stored_leavesSEXP,
-    SEXP store_posterior_sampleSEXP, SEXP n1SEXP, SEXP n2SEXP, SEXP verboseSEXP
+    SEXP store_posterior_sampleSEXP, SEXP verboseSEXP
   );
  
  #endif // CAUSAL_HORSETREES_H

@@ -1,30 +1,30 @@
 
-#ifndef GUARD_bart_h
-#define GUARD_bart_h
+#ifndef GUARD_StanForest_h
+#define GUARD_StanForest_h
 
 #include <ctime>
 
 #include "StanTree.h"
 #include "StanTreeFunctions.h"
 #include "info.h"
-#include "bartfuns.h"
+#include "StanForestFunctions.h"
 #include "bd.h"
 
-class bart {
+class StanForest {
 public:
    //------------------------------
    //friends
    friend bool bd(StanTree& x, xinfo& xi, dinfo& di, pinfo& pi, double sigma,
-		  std::vector<size_t>& nv, std::vector<double>& pv, bool aug, rn& gen);
+		  std::vector<size_t>& nv, std::vector<double>& pv, bool aug, Random& random);
    //------------------------------
    //constructor/destructor
-   bart();
-   bart(size_t m);
-   bart(const bart&);
-   ~bart();
+   StanForest();
+   StanForest(size_t m);
+   StanForest(const StanForest&);
+   ~StanForest();
    //------------------------------
    //operators
-   bart& operator=(const bart&);
+   StanForest& operator=(const StanForest&);
    //------------------------------
    //get,set
    size_t getm() {return m;}
@@ -64,8 +64,8 @@ public:
    void pr();
    void tonull() {for(size_t i=0;i!=t.size();i++) t[i].tonull();}
    void predict(size_t p, size_t n, double *x, double *fp);
-   void draw(double sigma, rn& gen);
-//   void draw_s(rn& gen);
+   void draw(double sigma, Random& random);
+//   void draw_s(Random& random);
    double f(size_t i) {return allfit[i];}
 protected:
    size_t m;  //number of StanTrees

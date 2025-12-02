@@ -23,17 +23,18 @@
 #include <memory>      // For dynamic memory management (e.g., std::shared_ptr)
 #include <limits>      // for std::numeric_limits<size_t>::max()
 
+#include "Rcpp.h"
+
 
 // Random number generation library
 #include "Random.h"
-
-#include "Rcpp.h"
 
 // Namespace declarations for commonly used entities
 using namespace Rcpp;
 using std::endl;
 using std::string;
 #define cout Rcpp::Rcout
+#define printf Rprintf
 
 // Define commonly used mathematical constants for convenience
 #define PI 3.141592653589793238462643383280
@@ -102,13 +103,6 @@ inline double standard_normal_quantile(double p) {
   return (((((a1 * r + a2) * r + a3) * r + a4) * r + a5) * r + a6) * q /
          (((((b1 * r + b2) * r + b3) * r + b4) * r + b5) * r + 1);
 }
-
-
-
-
-
-
-
 
 
 #endif

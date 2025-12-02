@@ -2,19 +2,19 @@
 #include "bd.h"
 
 bool bd(StanTree& x, xinfo& xi, dinfo& di, pinfo& pi, double sigma, 
-	std::vector<size_t>& nv, std::vector<double>& pv, bool aug, rn& gen)
+	std::vector<size_t>& nv, std::vector<double>& pv, bool aug, Random& random)
 {
    StanTree::npv goodbots;  //nodes we could birth at (split on)
    double PBx = getpb(x,xi,pi,goodbots); //prob of a birth at x
 
-   if(gen.uniform() < PBx) { //do birth or death
+   if(random.uniform() < PBx) { //do birth or death
 
       //--------------------------------------------------
       //draw proposal
       StanTree::StanTree_p nx; //bottom node
       size_t v,c; //variable and cutpoint
       double pr; //part of metropolis ratio from proposal and prior
-      bprop(x,xi,pi,goodbots,PBx,nx,v,c,pr,nv,pv,aug,gen);
+      bprop(x,xi,pi,goodbots,PBx,nx,v,c,pr,nv,pv,aug,random);
 
       //--------------------------------------------------
       //compute sufficient statistics
@@ -39,11 +39,11 @@ bool bd(StanTree& x, xinfo& xi, dinfo& di, pinfo& pi, double sigma,
       //--------------------------------------------------
       //try metrop
       double mul,mur; //means for new bottom nodes, left and right
-      double uu = gen.uniform();
+      double uu = random.uniform();
       bool dostep = (alpha > 0) && (log(uu) < lalpha);
       if(dostep) {
-         mul = drawnodemu(nl,syl,pi.tau,sigma,gen);
-         mur = drawnodemu(nr,syr,pi.tau,sigma,gen);
+         mul = drawnodemu(nl,syl,pi.tau,sigma,random);
+         mur = drawnodemu(nr,syr,pi.tau,sigma,random);
          x.birthp(nx,v,c,mul,mur);
 	 nv[v]++;
          return true;
@@ -55,7 +55,7 @@ bool bd(StanTree& x, xinfo& xi, dinfo& di, pinfo& pi, double sigma,
       //draw proposal
       double pr;  //part of metropolis ratio from proposal and prior
       StanTree::StanTree_p nx; //nog node to death at
-      dprop(x,xi,pi,goodbots,PBx,nx,pr,gen);
+      dprop(x,xi,pi,goodbots,PBx,nx,pr,random);
 
       //--------------------------------------------------
       //compute sufficient statistics
@@ -76,8 +76,8 @@ bool bd(StanTree& x, xinfo& xi, dinfo& di, pinfo& pi, double sigma,
       //--------------------------------------------------
       //try metrop
       double mu;
-      if(log(gen.uniform()) < lalpha) {
-         mu = drawnodemu(nl+nr,syl+syr,pi.tau,sigma,gen);
+      if(log(random.uniform()) < lalpha) {
+         mu = drawnodemu(nl+nr,syl+syr,pi.tau,sigma,random);
 	 nv[nx->GetSplitVar()]--;
          x.deathp(nx,mu);
          return true;

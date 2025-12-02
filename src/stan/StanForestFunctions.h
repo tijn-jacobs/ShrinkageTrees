@@ -1,5 +1,5 @@
-#ifndef GUARD_bartfuns_h
-#define GUARD_bartfuns_h
+#ifndef GUARD_StanForestFunctions_h
+#define GUARD_StanForestFunctions_h
 
 #include "StanTree.h"
 #include "StanTreeFunctions.h"
@@ -30,21 +30,21 @@ void getsuff(StanTree& x, StanTree::StanTree_p l, StanTree::StanTree_p r, xinfo&
 void allsuff(StanTree& x, xinfo& xi, dinfo& di, StanTree::npv& leaves, std::vector<size_t>& nv, std::vector<double>& syv);
 //--------------------------------------------------
 // draw all the bottom node mu's
-void drmu(StanTree& t, xinfo& xi, dinfo& di, pinfo& pi, double sigma, rn& gen);
+void drmu(StanTree& t, xinfo& xi, dinfo& di, pinfo& pi, double sigma, Random& random);
 //--------------------------------------------------
 //birth proposal
-void bprop(StanTree& x, xinfo& xi, pinfo& pi, StanTree::npv& goodbots, double& PBx, StanTree::StanTree_p& nx, size_t& v, size_t& c, double& pr, std::vector<size_t>& nv, std::vector<double>& pv, bool aug, rn& gen);
+void bprop(StanTree& x, xinfo& xi, pinfo& pi, StanTree::npv& goodbots, double& PBx, StanTree::StanTree_p& nx, size_t& v, size_t& c, double& pr, std::vector<size_t>& nv, std::vector<double>& pv, bool aug, Random& random);
 //--------------------------------------------------
 // death proposal
-void dprop(StanTree& x, xinfo& xi, pinfo& pi, StanTree::npv& goodbots, double& PBx, StanTree::StanTree_p& nx, double& pr, rn& gen);
+void dprop(StanTree& x, xinfo& xi, pinfo& pi, StanTree::npv& goodbots, double& PBx, StanTree::StanTree_p& nx, double& pr, Random& random);
 //--------------------------------------------------
 //draw one mu from post 
-double drawnodemu(size_t n, double sy, double tau, double sigma, rn& gen);
+double drawnodemu(size_t n, double sy, double tau, double sigma, Random& random);
 //--------------------------------------------------
 //draw variable splitting probabilities from Dirichlet (Linero, 2018)
-void draw_s(std::vector<size_t>& nv, std::vector<double>& lpv, double& theta, rn& gen);
+void draw_s(std::vector<size_t>& nv, std::vector<double>& lpv, double& theta, Random& random);
 //--------------------------------------------------
 //draw Dirichlet sparsity parameter from posterior using grid
 void draw_theta0(bool const_theta, double& theta, std::vector<double>& lpv,
-		 double a, double b, double rho, rn& gen);
+		 double a, double b, double rho, Random& random);
 #endif

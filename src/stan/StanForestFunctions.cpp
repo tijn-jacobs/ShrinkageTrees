@@ -1,5 +1,5 @@
 
-#include "bartfuns.h"
+#include "StanForestFunctions.h"
 
 //--------------------------------------------------
 //make xinfo = cutpoints
@@ -142,33 +142,22 @@ void allsuff(StanTree& x, xinfo& xi, dinfo& di, StanTree::npv& leaves, std::vect
 }
 //--------------------------------------------------
 // draw all the bottom node mu's
-void drmu(StanTree& t, xinfo& xi, dinfo& di, pinfo& pi, double sigma, rn& gen)
+void drmu(StanTree& t, xinfo& xi, dinfo& di, pinfo& pi, double sigma, Random& random)
 {
    StanTree::npv leaves;
    std::vector<size_t> nv;
    std::vector<double> syv;
    allsuff(t,xi,di,leaves,nv,syv);
 
-
-   if(leaves.size()>1) Rprintf("drmu: leaves size=%d\n", (int)leaves.size());
-  
-  /*
-   for (StanTree::npv::size_type i = 0; i < leaves.size(); i++) {
-      Rprintf("  node %zu: nv=%zu syv=%f nodeptr=%p\n",
-              i, nv[i], syv[i], (void*)leaves[i]);
-      leaves[i]->settheta(0.0);
-  }*/
-  /*
    for(StanTree::npv::size_type i=0;i!=leaves.size();i++) 
-      // leaves[i]->settheta(drawnodemu(nv[i],syv[i],pi.tau,sigma,gen));
-      leaves[i]->settheta(0.5);*/
+      leaves[i]->settheta(drawnodemu(nv[i],syv[i],pi.tau,sigma,random));
 }
 //--------------------------------------------------
 //bprop: function to generate birth proposal
-void bprop(StanTree& x, xinfo& xi, pinfo& pi, StanTree::npv& goodbots, double& PBx, StanTree::StanTree_p& nx, size_t& v, size_t& c, double& pr, std::vector<size_t>& nv, std::vector<double>& pv, bool aug, rn& gen)
+void bprop(StanTree& x, xinfo& xi, pinfo& pi, StanTree::npv& goodbots, double& PBx, StanTree::StanTree_p& nx, size_t& v, size_t& c, double& pr, std::vector<size_t>& nv, std::vector<double>& pv, bool aug, Random& random)
 {
       //draw bottom node, choose node index ni from list in goodbots
-      size_t ni = floor(gen.uniform()*goodbots.size());
+      size_t ni = floor(random.uniform()*goodbots.size());
       nx = goodbots[ni]; //the bottom node we might birth at
 
       //draw v,  the variable
@@ -177,15 +166,15 @@ void bprop(StanTree& x, xinfo& xi, pinfo& pi, StanTree::npv& goodbots, double& P
       // Degenerate StanTrees Strategy (Assumption 2.2)
       if(!aug){
       getgoodvars(nx,xi,goodvars);
-	gen.set_wts(pv);
-	v = gen.discrete();
+	random.SetInclusionWeights(pv);
+	v = random.discrete();
 	L=0; U=xi[v].size()-1;
 	if(!std::binary_search(goodvars.begin(),goodvars.end(),v)){ // if variable is bad
 	  c=nx->getbadcut(v); // set cutpoint of node to be same as next highest interior node with same variable
 	}
 	else{ // if variable is good
 	  nx->rg(v,&L,&U);
-	  c = L + floor(gen.uniform()*(U-L+1)); // draw cutpoint usual way
+	  c = L + floor(random.uniform()*(U-L+1)); // draw cutpoint usual way
 	}
       }
       // Modified Data Augmentation Strategy (Mod. Assumption 2.1)
@@ -218,23 +207,23 @@ void bprop(StanTree& x, xinfo& xi, pinfo& pi, StanTree::npv& goodbots, double& P
 	  }
 	}
 	//set the weights for variable draw and draw a good variable
-	gen.set_wts(pgoodvars);
-	v = goodvars[gen.discrete()];
+	random.SetInclusionWeights(pgoodvars);
+	v = goodvars[random.discrete()];
 	if(nbadvars!=0){ // if we have bad vars then we need to augment, otherwise we skip
-	  //gen.set_p(smpgoodvars); // set parameter for G
-	  //nbaddraws=gen.geometric(); // draw G = g ~ Geom
+	  //random.set_p(smpgoodvars); // set parameter for G
+	  //nbaddraws=random.geometric(); // draw G = g ~ Geom
 	  // for each bad variable, set its c_j equal to its expected count
 	  /*
-	    gen.set_wts(pbadvars); 
+	    random.SetInclusionWeights(pbadvars); 
 	  for(size_t k=0;k!=nbaddraws;k++) {
-	    nv[badvars[gen.discrete()]]++;
+	    nv[badvars[random.discrete()]]++;
 	    }
 	  */
 	  for(size_t j=0;j<nbadvars;j++)
 	    nv[badvars[j]]=nv[badvars[j]]+(1/smpgoodvars)*(pv[badvars[j]]/smpbadvars); 	  
 	}
 /*
-      size_t vi = floor(gen.uniform()*goodvars.size()); //index of chosen split variable
+      size_t vi = floor(random.uniform()*goodvars.size()); //index of chosen split variable
       v = goodvars[vi];
 */
 
@@ -242,7 +231,7 @@ void bprop(StanTree& x, xinfo& xi, pinfo& pi, StanTree::npv& goodbots, double& P
       //int L,U;
       L=0; U = xi[v].size()-1;
       nx->rg(v,&L,&U);
-      c = L + floor(gen.uniform()*(U-L+1)); //U-L+1 is number of available split points
+      c = L + floor(random.uniform()*(U-L+1)); //U-L+1 is number of available split points
       }
       //--------------------------------------------------
       //compute things needed for metropolis ratio
@@ -296,12 +285,12 @@ void bprop(StanTree& x, xinfo& xi, pinfo& pi, StanTree::npv& goodbots, double& P
 }
 //--------------------------------------------------
 // death proposal
-void dprop(StanTree& x, xinfo& xi, pinfo& pi,StanTree::npv& goodbots, double& PBx, StanTree::StanTree_p& nx, double& pr, rn& gen)
+void dprop(StanTree& x, xinfo& xi, pinfo& pi,StanTree::npv& goodbots, double& PBx, StanTree::StanTree_p& nx, double& pr, Random& random)
 {
       //draw nog node, any nog node is a possibility
       StanTree::npv nognds; //nog nodes
       x.getnogs(nognds);
-      size_t ni = floor(gen.uniform()*nognds.size());
+      size_t ni = floor(random.uniform()*nognds.size());
       nx = nognds[ni]; //the nog node we might kill children at
 
       //--------------------------------------------------
@@ -336,12 +325,12 @@ void dprop(StanTree& x, xinfo& xi, pinfo& pi,StanTree::npv& goodbots, double& PB
 }
 //--------------------------------------------------
 //draw one mu from post 
-double drawnodemu(size_t n, double sy, double tau, double sigma, rn& gen)
+double drawnodemu(size_t n, double sy, double tau, double sigma, Random& random)
 {
    double s2 = sigma*sigma;
    double b = n/s2;
    double a = 1.0/(tau*tau);
-   return (sy/s2)/(a+b) + gen.normal()/sqrt(a+b);
+   return (sy/s2)/(a+b) + random.normal()/sqrt(a+b);
 }
 
 double stan_log_sum_exp(std::vector<double>& v){
@@ -355,19 +344,19 @@ double stan_log_sum_exp(std::vector<double>& v){
 
 //--------------------------------------------------
 //draw variable splitting probabilities from Dirichlet (Linero, 2018)
-void draw_s(std::vector<size_t>& nv, std::vector<double>& lpv, double& theta, rn& gen){
+void draw_s(std::vector<size_t>& nv, std::vector<double>& lpv, double& theta, Random& random){
   size_t p=nv.size();
 // Now draw s, the vector of splitting probabilities
   std::vector<double> _theta(p);
   for(size_t j=0;j<p;j++) _theta[j]=theta/(double)p+(double)nv[j];
-  //gen.set_alpha(_theta);
-  lpv=gen.log_dirichlet(_theta);
+  //random.set_alpha(_theta);
+  lpv=random.log_dirichlet(_theta);
 }
 
 //--------------------------------------------------
 //draw Dirichlet sparsity parameter from posterior using grid
 void draw_theta0(bool const_theta, double& theta, std::vector<double>& lpv,
-		 double a, double b, double rho, rn& gen){
+		 double a, double b, double rho, Random& random){
   // Draw sparsity parameter theta_0 (Linero calls it alpha); see Linero, 2018
   // theta / (theta + rho ) ~ Beta(a,b)
   // Set (a=0.5, b=1) for sparsity
@@ -394,8 +383,8 @@ void draw_theta0(bool const_theta, double& theta, std::vector<double>& lpv,
       lwt_g[k]=exp(lwt_g[k]-lse);
 //      cout << "LWT: " << lwt_g[k] << '\n';
     }
-    gen.set_wts(lwt_g);    
-    theta=theta_g[gen.discrete()];
+    random.SetInclusionWeights(lwt_g);    
+    theta=theta_g[random.discrete()];
   } 
 }
 

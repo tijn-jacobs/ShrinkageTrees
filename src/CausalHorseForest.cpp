@@ -17,7 +17,7 @@ Rcpp::List CausalHorseForest_cpp(
   SEXP sigma_knownSEXP, SEXP sigmaSEXP, SEXP lambdaSEXP,
   SEXP nuSEXP, SEXP N_postSEXP, SEXP N_burnSEXP, SEXP delayed_proposalSEXP,
   SEXP store_parametersSEXP, SEXP max_stored_leavesSEXP,
-  SEXP store_posterior_sample_controlSEXP, SEXP store_posterior_sample_treatSEXP, SEXP n1SEXP, SEXP n2SEXP, SEXP verboseSEXP
+  SEXP store_posterior_sample_controlSEXP, SEXP store_posterior_sample_treatSEXP, SEXP verboseSEXP
 ) {     
 
   // Conversion of function arguments //
@@ -89,11 +89,6 @@ Rcpp::List CausalHorseForest_cpp(
   size_t max_stored_leaves = Rcpp::as<size_t>(max_stored_leavesSEXP);
   bool store_posterior_sample_control = Rcpp::as<bool>(store_posterior_sample_controlSEXP);
   bool store_posterior_sample_treat = Rcpp::as<bool>(store_posterior_sample_treatSEXP);
-
-
-  // random number generation
-  unsigned int n1 = Rcpp::as<unsigned int>(n1SEXP);
-  unsigned int n2 = Rcpp::as<unsigned int>(n2SEXP);
 
   // Verbose
   bool verbose = Rcpp::as<bool>(verboseSEXP);
@@ -266,7 +261,7 @@ Rcpp::List CausalHorseForest_cpp(
   std::vector<Tree>* trees_treat = forest_treat.GetTreesPointer();
 
   // Initialize the C-based random number generator
-  arn random(n1, n2);
+  RandomGenerator random;
 
   // Start the clock
   time_t time_stamp;

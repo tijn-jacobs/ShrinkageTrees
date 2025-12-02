@@ -445,8 +445,6 @@ CausalHorseForest <- function(y,
       max_stored_leavesSEXP = 1,
       store_posterior_sample_controlSEXP = store_posterior_sample,
       store_posterior_sample_treatSEXP = store_posterior_sample,
-      n1SEXP = seed,
-      n2SEXP = 420,
       verboseSEXP = verbose
     )
    
@@ -580,8 +578,6 @@ CausalHorseForest <- function(y,
       max_stored_leavesSEXP = 1,
       store_posterior_sample_controlSEXP = store_posterior_sample,
       store_posterior_sample_treatSEXP = store_posterior_sample,
-      n1SEXP = seed,
-      n2SEXP = 420,
       verboseSEXP = verbose
     )
     

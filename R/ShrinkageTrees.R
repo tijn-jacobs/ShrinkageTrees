@@ -382,8 +382,6 @@ ShrinkageTrees <- function(y,
       reversibleSEXP = reversible_flag,
       store_parametersSEXP = FALSE,
       store_posterior_sampleSEXP = store_posterior_sample,
-      n1SEXP = seed,
-      n2SEXP = 420,
       verboseSEXP = verbose
     )
     
@@ -431,8 +429,6 @@ ShrinkageTrees <- function(y,
       prior_typeSEXP = prior_type,
       reversibleSEXP = reversible_flag,
       store_posterior_sampleSEXP = store_posterior_sample,
-      n1SEXP = seed,
-      n2SEXP = 420,
       verboseSEXP = verbose
     )
     
@@ -506,8 +502,6 @@ ShrinkageTrees <- function(y,
       reversibleSEXP = reversible_flag,
       store_parametersSEXP = FALSE,
       store_posterior_sampleSEXP = store_posterior_sample,
-      n1SEXP = seed,
-      n2SEXP = 420,
       verboseSEXP = verbose
     )
     

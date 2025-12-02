@@ -34,8 +34,6 @@ Rcpp::List HorseTrees_cpp(
   SEXP reversibleSEXP,
   SEXP store_parametersSEXP,
   SEXP store_posterior_sampleSEXP,
-  SEXP n1SEXP,     
-  SEXP n2SEXP,
   SEXP verboseSEXP
 ) {     
   
@@ -81,8 +79,6 @@ Rcpp::List HorseTrees_cpp(
   string prior_type = Rcpp::as<string>(prior_typeSEXP);
   bool store_parameters =  Rcpp::as<bool>(store_parametersSEXP);
 
-  unsigned int n1 = Rcpp::as<unsigned int>(n1SEXP);   
-  unsigned int n2 = Rcpp::as<unsigned int>(n2SEXP);  
   bool print_progress = Rcpp::as<bool>(verboseSEXP);
 
   // Objects for is_survival data
@@ -122,7 +118,7 @@ Rcpp::List HorseTrees_cpp(
   std::vector<size_t> cumulative_inclusion_count(p, 0);
   
   // Initialize the C-based random number generator
-  arn random(n1, n2);
+  RandomGenerator random;
 
   // Map the input to the corresponding PriorType
   PriorType prior;

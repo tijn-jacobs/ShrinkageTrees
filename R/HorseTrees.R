@@ -287,8 +287,6 @@ HorseTrees <- function(y,
       reversibleSEXP = TRUE,
       store_parametersSEXP = FALSE,
       store_posterior_sampleSEXP = store_posterior_sample,
-      n1SEXP = seed,
-      n2SEXP = 420,
       verboseSEXP = verbose
     )
     
@@ -335,8 +333,6 @@ HorseTrees <- function(y,
       prior_typeSEXP = "horseshoe",
       reversibleSEXP = TRUE,
       store_posterior_sampleSEXP = store_posterior_sample,
-      n1SEXP = seed,
-      n2SEXP = 420,
       verboseSEXP = verbose
     )
 
@@ -404,8 +400,6 @@ HorseTrees <- function(y,
       reversibleSEXP = TRUE,
       store_parametersSEXP = FALSE,
       store_posterior_sampleSEXP = store_posterior_sample,
-      n1SEXP = seed,
-      n2SEXP = 420,
       verboseSEXP = verbose
     )
     
