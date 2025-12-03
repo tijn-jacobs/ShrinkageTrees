@@ -44,11 +44,7 @@ std::vector<Tree>* Forest::GetTreesPointer() {
 // variables (predictions, residuals, temporary_fit), initializes cutpoints,
 // sets up the Data object, and initializes feature usage counters and probs.
 void Forest::SetUpForest(size_t p, size_t n, double *x, double *y,
-                         int *nc, double omega,
-                         double alpha_dirichlet,
-                         bool const_alpha,
-                         double a_dirichlet,
-                         double b_dirichlet) {
+                         int *nc, double omega) {
 
   // Set the dimensions and pointers to the input data
   this->p = p;
@@ -91,21 +87,6 @@ void Forest::SetUpForest(size_t p, size_t n, double *x, double *y,
   // Initialize feature usage counters and probabilities
   variable_inclusion_count.resize(p, 0);
   variable_inclusion_prob.resize(p, 1.0 / static_cast<double>(p));
-
-  // -------------------------------
-  // DART (Dirichlet Adaptive Regression Trees) setup
-  // -------------------------------
-
-  // Scaling parameter for the Dirichlet prior
-  rho_dirichlet = static_cast<double>(p);
-
-  // Initialize Dirichlet hyperparameters
-  this->alpha_dirichlet = alpha_dirichlet;
-  this->const_alpha = const_alpha;
-  this->a_dirichlet = a_dirichlet;
-  this->b_dirichlet = b_dirichlet;
-
-  // Initialize DART variable inclusion probabilities and counts
 }
 
 
@@ -164,8 +145,8 @@ void Forest::UpdateForest(const double& sigma, ScaleMixture& scale_mixture, bool
                                  reversible, scale_mixture, random);
 
     // Draw new values for all the terminal nodes' parameters (mu) of tree `j`
-//    DrawMuAllLeaves(trees[j], cutpoints, data, tree_prior, sigma, omega,
-//                    scale_mixture, random);
+    DrawMuAllLeaves(trees[j], cutpoints, data, tree_prior, sigma, omega,
+                    scale_mixture, random);
 
     // Update the variables of all the leaf node parameters
     FullUpdate(trees[j], cutpoints, data, sigma, omega, scale_mixture, random);
@@ -203,27 +184,4 @@ void Forest::PrintForest(size_t tree_index) {
   }
 
   cout << endl;
-}
-
-
-// Update the Dirichlet parameters
-void Forest::UpdateDirichlet(Random& random) {
-
-  DrawSplitProbs(variable_inclusion_count,
-                 log_vip,
-                 alpha_dirichlet,
-                 random);
-
-  DrawDirichletAlpha(const_alpha,
-                     alpha_dirichlet,
-                     log_vip,
-                     a_dirichlet,
-                     b_dirichlet,
-                     rho_dirichlet,
-                     random);
-                     
-
-  for(size_t j = 0; j < p; j++) {
-    variable_inclusion_prob[j] = std::exp(log_vip[j]);
-  }
 }

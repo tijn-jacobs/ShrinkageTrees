@@ -3,13 +3,13 @@
 
 #include "../Prerequisites.h"
 
-//--------------------------------------------------
+
 //xinfo xi, then xi[v][c] is the c^{th} cutpoint for variable v.
 //left if x[v] < xi[v][c]
 typedef std::vector<double> vec_d; //double vector
 typedef std::vector<vec_d> xinfo; //vector of vectors, will be split rules
 
-//--------------------------------------------------
+
 //info contained in a node, used by input operator
 struct node_info {
    std::size_t id; // node id
@@ -18,7 +18,7 @@ struct node_info {
    double step_height;   // step_height
 };
 
-//--------------------------------------------------
+
 class StanTree {
 public:
    //friends--------------------

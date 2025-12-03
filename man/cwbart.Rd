@@ -15,7 +15,6 @@ cwbart(
   b = 1,
   augment = FALSE,
   rho = NULL,
-  xinfo = matrix(0, 0, 0),
   usequants = FALSE,
   cont = FALSE,
   rm.const = TRUE,

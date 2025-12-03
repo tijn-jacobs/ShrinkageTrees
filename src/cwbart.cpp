@@ -49,7 +49,6 @@ Rcpp::List cwbart(
    SEXP iwSEXP,
    SEXP idart,
    SEXP itheta,
-   SEXP iomega,
    SEXP ia,
    SEXP ib,
    SEXP irho,
@@ -58,8 +57,7 @@ Rcpp::List cwbart(
    SEXP inkeeptest,
    SEXP inkeeptestme,
    SEXP inkeeptreedraws,
-   SEXP inprintevery,
-   SEXP XinfoSEXP
+   SEXP inprintevery
 )
 {
 
@@ -99,15 +97,13 @@ Rcpp::List cwbart(
    if(Rcpp::as<int>(iaug)==1) aug=true;
    else aug=false;
    double theta = Rcpp::as<double>(itheta);
-   double omega = Rcpp::as<double>(iomega);
    size_t nkeeptrain = Rcpp::as<int>(inkeeptrain);
    size_t nkeeptest = Rcpp::as<int>(inkeeptest);
    size_t nkeeptestme = Rcpp::as<int>(inkeeptestme);
    size_t nkeeptreedraws = Rcpp::as<int>(inkeeptreedraws);
    size_t printevery = Rcpp::as<int>(inprintevery);
-//   int treesaslists = Rcpp::as<int>(_treesaslists);
-   Rcpp::NumericMatrix Xinfo(XinfoSEXP);
-//   Rcpp::IntegerMatrix varcount(nkeeptreedraws, p);
+
+   
 
    //return data structures (using Rcpp)
    Rcpp::NumericVector trmean(n); //train
@@ -123,17 +119,6 @@ Rcpp::List cwbart(
    RandomGenerator random;
 
    StanForest bm(m);
-
-   if(Xinfo.size()>0) {
-     xinfo _xi;
-     _xi.resize(p);
-     for(size_t i=0;i<p;i++) {
-       _xi[i].resize(numcut[i]);
-       //Rcpp::IntegerVector cutpts(Xinfo[i]);
-       for(size_t j=0;j<(size_t)numcut[i];j++) _xi[i][j]=Xinfo(i, j);
-     }
-     bm.setxinfo(_xi);
-  }
 
    for(size_t i=0;i<n;i++) trmean[i]=0.0;
    for(size_t i=0;i<np;i++) temean[i]=0.0;
@@ -165,8 +150,8 @@ Rcpp::List cwbart(
                    mybeta,alpha,tau,nu,lambda);
    printf("*****sigma: %lf\n",sigma);
    printf("*****w (weights): %lf ... %lf\n",iw[0],iw[n-1]);
-   cout << "*****Dirichlet:sparse,theta,omega,a,b,rho,augment: " 
-	<< dart << ',' << theta << ',' << omega << ',' << a << ',' 
+   cout << "*****Dirichlet:sparse,theta,a,b,rho,augment: " 
+	<< dart << ',' << theta << ',' << a << ',' 
 	<< b << ',' << rho << ',' << aug << endl;
    printf("*****nkeeptrain,nkeeptest,nkeeptestme,nkeeptreedraws: %zu,%zu,%zu,%zu\n",
                nkeeptrain,nkeeptest,nkeeptestme,nkeeptreedraws);
@@ -175,14 +160,10 @@ Rcpp::List cwbart(
 
    //--------------------------------------------------
    bm.setprior(alpha,mybeta,tau);
-   bm.setdata(p,n,ix,iy,numcut);
-   bm.setdart(a,b,rho,aug,dart,theta,omega);
+   bm.setdata(p,n,ix,iy,nullptr);
+   bm.setdart(a,b,rho,aug,dart,theta);
 
-   //--------------------------------------------------
 
-   std::stringstream treess;  //string stream to write trees to  
-   treess.precision(10);
-   treess << nkeeptreedraws << " " << m << " " << p << endl;
    // dart iterations
    std::vector<double> ivarprb (p,0.);
    std::vector<size_t> ivarcnt (p,0);
@@ -207,7 +188,6 @@ Rcpp::List cwbart(
 
    time_t tp;
    int time1 = time(&tp);
-   xinfo& xi = bm.getxinfo();
    size_t total=nd+burn;
 
 
@@ -215,7 +195,7 @@ Rcpp::List cwbart(
       if(i%printevery==0) printf("done %zu (out of %zu)\n",i,total);
       if(i==(burn/2)&&dart) bm.startdart();
       //draw bart
-      bm.draw(sigma,random);
+      bool accept = bm.draw(sigma,random);
       //draw sigma
       rss=0.0;
       for(size_t k=0;k<n;k++) {restemp=(iy[k]-bm.f(k))/(iw[k]); rss += restemp*restemp;}
@@ -244,10 +224,7 @@ Rcpp::List cwbart(
          }
          keeptreedraw = nkeeptreedraws && (((i-burn+1) % skiptreedraws) ==0);
          if(keeptreedraw) {
-      for(size_t j=0;j<m;j++) {
-	      treess << bm.getStanTree(j);
-
-	    }
+      
 
       //	    if(treesaslists) list_of_lists(treedrawscnt)=lists;
 	    ivarcnt=bm.getnv();
@@ -294,22 +271,8 @@ cout << "Completed MCMC iterations." << endl;
    ret["varcount"]=varcnt;
    ret["varprob"]=varprb;
 
-   //for(size_t i=0;i<m;i++) {
-    //  bm.getstantree(i).pr();
-   //}
-   Rcpp::List xiret(xi.size());
-   for(size_t i=0;i<xi.size();i++) {
-      Rcpp::NumericVector vtemp(xi[i].size());
-      std::copy(xi[i].begin(),xi[i].end(),vtemp.begin());
-      xiret[i] = Rcpp::NumericVector(vtemp);
-   }
    Rcpp::List treesL;
-   //treesL["nkeeptreedraws"] = Rcpp::wrap<int>(nkeeptreedraws); //in trees
-   //treesL["ntree"] = Rcpp::wrap<int>(m); //in trees
-   //treesL["numx"] = Rcpp::wrap<int>(p); //in cutpoints
-   treesL["cutpoints"] = xiret;
-   treesL["trees"]=Rcpp::CharacterVector(treess.str());
-//   if(treesaslists) treesL["lists"]=list_of_lists;
+
    ret["treedraws"] = treesL;
 
    return ret;

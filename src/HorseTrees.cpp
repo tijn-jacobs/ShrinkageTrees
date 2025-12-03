@@ -1,4 +1,5 @@
 #include "HorseTrees.h"
+#include "ForestEngine.h"
 
 // [[Rcpp::export]]
 Rcpp::List HorseTrees_cpp( 
@@ -139,10 +140,9 @@ Rcpp::List HorseTrees_cpp(
   ScaleMixture scale_mixture(prior, param1, param2);
   
   // Build the forest
-  Forest forest(number_of_trees);
-  forest.SetTreePrior(base, power, param1, p_grow, p_prune); // In case of NON-RJ; param1 = step height variance
-  forest.SetUpForest(p, n, X_train, y, nullptr, omega,
-                     alpha_dirichlet, const_alpha, a_dirichlet, b_dirichlet);
+  ForestEngine forest(ForestEngineType::stan_forest_type, number_of_trees);
+  forest.SetTreePrior(base, power, param1, p_grow, p_prune, a_dirichlet, b_dirichlet, p, false, dirichlet_bool, alpha_dirichlet); // In case of NON-RJ; param1 = step height variance
+  forest.SetUpForest(p, n, X_train, y, nullptr, omega);
 
   
   for (size_t i = 0; i < n; i++) train_predictions_mean[i] = 0.0;
@@ -167,7 +167,7 @@ Rcpp::List HorseTrees_cpp(
 
   int max_stored_leaves = 1;
   if(store_parameters)  max_stored_leaves = 20;
-  std::vector<Tree>* all_trees = forest.GetTreesPointer();
+  // std::vector<Tree>* all_trees = forest.GetTreesPointer();
 
   Rcpp::NumericMatrix store_global_parameters;
   Rcpp::NumericMatrix store_local_parameters;
@@ -224,7 +224,7 @@ Rcpp::List HorseTrees_cpp(
       accepted
     );
     
-  
+  /*
     // Update fores wide shrinkage parameter (outer Gibbs step)
     if (prior_type == "horseshoe_fw") {
       UpdateForestwideShrinkage(
@@ -238,7 +238,7 @@ Rcpp::List HorseTrees_cpp(
         random
       );
     }
-  
+  */
 
     // Update sigma (outer Gibbs step)
     UpdateSigma(
@@ -267,12 +267,7 @@ Rcpp::List HorseTrees_cpp(
       random
     );
 
-
-    // Update Dirichlet parameters after half burn-in
-    if (dirichlet_bool && i >= (N_burn/2)) {
-      forest.UpdateDirichlet(random);
-    }
-
+    /*
     // Save the (averages for now) of the leaf node parameters
     if (store_parameters && i >= N_burn) {
       size_t tree_counter = 0;
@@ -313,7 +308,7 @@ Rcpp::List HorseTrees_cpp(
         tree_counter++;
       }
     }
-
+    */
 
     if (i >= N_burn) {
       // Store posterior mean of training predictions
@@ -358,7 +353,6 @@ Rcpp::List HorseTrees_cpp(
       }
 
       if (dirichlet_bool) {
-        store_alpha_dirichlet[i - N_burn] = forest.GetAlphaDirichlet();
         const std::vector<double>& probs = forest.GetVariableInclusionProb();
         for (size_t j = 0; j < p; ++j) {
           store_split_probs(i - N_burn, j) = probs[j];

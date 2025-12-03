@@ -1,40 +1,65 @@
 
 #include "StanForestFunctions.h"
 
-//--------------------------------------------------
-//make xinfo = cutpoints
-void makexinfo(size_t p, size_t n, double *x, xinfo& xi, size_t numcut)
-{
-  int* nc = new int[p];
-  for(size_t i=0; i<p; ++i) nc[i]=numcut;
-  makexinfo(p, n, x, xi, nc);
-  delete [] nc;
+
+// make xinfo = cutpoints (mirrors Cutpoints::SetCutpoints)
+void makexinfo(size_t p, size_t n, double *x, xinfo& xi, int *nc) {
+
+    xi.resize(p);
+
+    // CASE 1: nc != nullptr  →  UNIFORM CUTPOINTS
+    if (nc != nullptr) {
+
+        // compute min and max for each x
+        std::vector<double> minx(p,  std::numeric_limits<double>::infinity());
+        std::vector<double> maxx(p, -std::numeric_limits<double>::infinity());
+
+        double xx;
+        for (size_t i = 0; i < p; i++) {
+            for (size_t j = 0; j < n; j++) {
+                xx = *(x + p * j + i);
+                if (xx < minx[i]) minx[i] = xx;
+                if (xx > maxx[i]) maxx[i] = xx;
+            }
+        }
+
+        // build uniform grid
+        size_t numcuts;
+        double delta;
+        for (size_t i = 0; i < p; i++) {
+            numcuts = nc[i];
+            delta = (maxx[i] - minx[i]) / (numcuts + 1.0);
+
+            xi[i].resize(numcuts);
+            for (size_t j = 0; j < numcuts; j++) {
+                xi[i][j] = minx[i] + (j + 1) * delta;
+            }
+        }
+
+    }
+    // CASE 2: nc == nullptr  →  EMPIRICAL CUTPOINTS
+    else {
+
+        for (size_t i = 0; i < p; i++) {
+
+            std::vector<double> observed(n);
+
+            for (size_t j = 0; j < n; j++)
+                observed[j] = *(x + p * j + i);
+
+            std::sort(observed.begin(), observed.end());
+
+            auto last = std::unique(observed.begin(), observed.end());
+            observed.erase(last, observed.end());
+
+            // empirical unique sorted cutpoints
+            xi[i] = observed;
+        }
+    }
 }
 
-void makexinfo(size_t p, size_t n, double *x, xinfo& xi, int *nc)
-{
-   double xinc;
 
-   //compute min and max for each x
-   std::vector<double> minx(p,INFINITY);
-   std::vector<double> maxx(p,-INFINITY);
-   double xx;
-   for(size_t i=0;i<p;i++) {
-      for(size_t j=0;j<n;j++) {
-         xx = *(x+p*j+i);
-         if(xx < minx[i]) minx[i]=xx;
-         if(xx > maxx[i]) maxx[i]=xx;
-      }
-   }
-   //make grid of nc cutpoints between min and max for each x.
-   xi.resize(p);
-   for(size_t i=0;i<p;i++) {
-      xinc = (maxx[i]-minx[i])/(nc[i]+1.0);
-      xi[i].resize(nc[i]);
-      for(size_t j=0;j<(size_t)nc[i];j++) xi[i][j] = minx[i] + (j+1)*xinc;
-   }
-}
-//--------------------------------------------------
+
 //compute prob of a birth, goodbots will contain all the good bottom nodes
 double getpb(StanTree& t, xinfo& xi, pinfo& pi, StanTree::npv& goodbots)
 {
@@ -51,7 +76,7 @@ double getpb(StanTree& t, xinfo& xi, pinfo& pi, StanTree::npv& goodbots)
    }
    return pb;
 }
-//--------------------------------------------------
+
 //compute n and \sum y_i for left and right give bot and v,c
 void getsuff(StanTree& x, StanTree::StanTree_p nx, size_t v, size_t c, xinfo& xi, dinfo& di, size_t& nl, double& syl, size_t& nr, double& syr)
 {
@@ -81,7 +106,7 @@ double lh(size_t n, double sy, double sigma, double eta)
    double k = n*t2+s2;
    return -.5*log(k) + ((t2*sy*sy)/(2.0*s2*k));
 }
-//--------------------------------------------------
+
 //get prob a node grows, 0 if no good vars, else base/(1+d)^beta
 double pgrow(StanTree::StanTree_p n, xinfo& xi, pinfo& pi)
 {
@@ -91,7 +116,7 @@ double pgrow(StanTree::StanTree_p n, xinfo& xi, pinfo& pi)
       return 0.0;
    }
 }
-//--------------------------------------------------
+
 //compute n and \sum y_i for left and right bots
 void getsuff(StanTree& x, StanTree::StanTree_p l, StanTree::StanTree_p r, xinfo& xi, dinfo& di, size_t& nl, double& syl, size_t& nr, double& syr)
 {
@@ -112,7 +137,7 @@ void getsuff(StanTree& x, StanTree::StanTree_p l, StanTree::StanTree_p r, xinfo&
       }
    }
 }
-//--------------------------------------------------
+
 //get sufficients stats for all bottom nodes, this way just loop through all the data once.
 void allsuff(StanTree& x, xinfo& xi, dinfo& di, StanTree::npv& leaves, std::vector<size_t>& nv, std::vector<double>& syv)
 {
@@ -140,7 +165,7 @@ void allsuff(StanTree& x, xinfo& xi, dinfo& di, StanTree::npv& leaves, std::vect
       syv[ni] += di.y[i];
    }
 }
-//--------------------------------------------------
+
 // draw all the bottom node mu's
 void drmu(StanTree& t, xinfo& xi, dinfo& di, pinfo& pi, double sigma, Random& random)
 {
@@ -152,7 +177,7 @@ void drmu(StanTree& t, xinfo& xi, dinfo& di, pinfo& pi, double sigma, Random& ra
    for(StanTree::npv::size_type i=0;i!=leaves.size();i++) 
       leaves[i]->settheta(drawnodemu(nv[i],syv[i],pi.eta,sigma,random));
 }
-//--------------------------------------------------
+
 //bprop: function to generate birth proposal
 void bprop(StanTree& x, xinfo& xi, pinfo& pi, StanTree::npv& goodbots, double& PBx, StanTree::StanTree_p& nx, size_t& v, size_t& c, double& pr, std::vector<size_t>& nv, std::vector<double>& pv, bool aug, Random& random)
 {
@@ -233,7 +258,7 @@ void bprop(StanTree& x, xinfo& xi, pinfo& pi, StanTree::npv& goodbots, double& P
       nx->rg(v,&L,&U);
       c = L + floor(random.uniform()*(U-L+1)); //U-L+1 is number of available split points
       }
-      //--------------------------------------------------
+      
       //compute things needed for metropolis ratio
 
       double Pbotx = 1.0/goodbots.size(); //proposal prob of choosing nx
@@ -283,7 +308,7 @@ void bprop(StanTree& x, xinfo& xi, pinfo& pi, StanTree::npv& goodbots, double& P
 
       pr = (PGnx*(1.0-PGly)*(1.0-PGry)*PDy*Pnogy)/((1.0-PGnx)*Pbotx*PBx);
 }
-//--------------------------------------------------
+
 // death proposal
 void dprop(StanTree& x, xinfo& xi, pinfo& pi,StanTree::npv& goodbots, double& PBx, StanTree::StanTree_p& nx, double& pr, Random& random)
 {
@@ -293,7 +318,7 @@ void dprop(StanTree& x, xinfo& xi, pinfo& pi,StanTree::npv& goodbots, double& PB
       size_t ni = floor(random.uniform()*nognds.size());
       nx = nognds[ni]; //the nog node we might kill children at
 
-      //--------------------------------------------------
+      
       //compute things needed for metropolis ratio
 
       double PGny; //prob the nog node grows
@@ -323,7 +348,7 @@ void dprop(StanTree& x, xinfo& xi, pinfo& pi,StanTree::npv& goodbots, double& PB
 
       pr =  ((1.0-PGny)*PBy*Pboty)/(PGny*(1.0-PGlx)*(1.0-PGrx)*PDx*Pnogx);
 }
-//--------------------------------------------------
+
 //draw one mu from post 
 double drawnodemu(size_t n, double sy, double eta, double sigma, Random& random)
 {
@@ -333,7 +358,7 @@ double drawnodemu(size_t n, double sy, double eta, double sigma, Random& random)
    return (sy/s2)/(a+b) + random.normal()/sqrt(a+b);
 }
 
-double stan_log_sum_exp(std::vector<double>& v){
+double log_sum_exp(std::vector<double>& v){
     double mx=v[0],sm=0.;
     for(size_t i=0;i<v.size();i++) if(v[i]>mx) mx=v[i];
     for(size_t i=0;i<v.size();i++){
@@ -342,7 +367,7 @@ double stan_log_sum_exp(std::vector<double>& v){
     return mx+log(sm);
 }
 
-//--------------------------------------------------
+
 //draw variable splitting probabilities from Dirichlet (Linero, 2018)
 void draw_s(std::vector<size_t>& nv, std::vector<double>& lpv, double& theta, Random& random){
   size_t p=nv.size();
@@ -353,7 +378,7 @@ void draw_s(std::vector<size_t>& nv, std::vector<double>& lpv, double& theta, Ra
   lpv=random.log_dirichlet(_theta);
 }
 
-//--------------------------------------------------
+
 //draw Dirichlet sparsity parameter from posterior using grid
 void draw_theta0(bool const_theta, double& theta, std::vector<double>& lpv,
 		 double a, double b, double rho, Random& random){
@@ -378,7 +403,7 @@ void draw_theta0(bool const_theta, double& theta, std::vector<double>& lpv,
 //      cout << "SLP: " << sumlogpv << "\nTLL: " << theta_log_lik << "\nBLP: " << beta_log_prior << '\n';
       lwt_g[k]=theta_log_lik+beta_log_prior;      
     }
-    lse=stan_log_sum_exp(lwt_g);
+    lse=log_sum_exp(lwt_g);
     for(size_t k=0;k<1000;k++) {
       lwt_g[k]=exp(lwt_g[k]-lse);
 //      cout << "LWT: " << lwt_g[k] << '\n';

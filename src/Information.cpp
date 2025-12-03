@@ -57,17 +57,17 @@ void TreePrior::Print() const {
 // covariates). In other cases, it may be the number of unique values of a 
 // certain covariate.
 void Cutpoints::SetCutpoints(size_t _p, size_t n, double* X, int* number_of_cuts) {
-  
-  // Check if the cutpoints should be uniform over the observed range of the ECDF
-  uniform = true;
 
   // Set the number of covariates and resize the cutpoints matrix
   p = _p;
   values.resize(p);
 
-  if (uniform) {
+  // If no no. of cutpoints are specified, we use the emperical values
+  if (number_of_cuts != nullptr) {
+
     // Create a vector of the number of cuts for each covariate
-    std::vector<int> cuts(p, 100); // SHOULD BE *number_of_cuts REPLACE!!!!!
+    std::vector<int> cuts(p);
+    for (size_t i = 0; i < p; i++) cuts[i] = number_of_cuts[i];
 
     // Initialize vectors for the minimum and maximum values of each covariate
     std::vector<double> min_values(p, std::numeric_limits<double>::infinity());
@@ -100,6 +100,7 @@ void Cutpoints::SetCutpoints(size_t _p, size_t n, double* X, int* number_of_cuts
     }
 
   } else {
+    
     // If number_of_cuts is not specified, use unique sorted covariate values
     for (size_t i = 0; i < p; ++i) {
       // Extract observed values for the i-th variable

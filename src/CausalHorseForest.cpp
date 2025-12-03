@@ -18,7 +18,7 @@ Rcpp::List CausalHorseForest_cpp(
   SEXP nuSEXP, SEXP N_postSEXP, SEXP N_burnSEXP, SEXP delayed_proposalSEXP,
   SEXP store_parametersSEXP, SEXP max_stored_leavesSEXP,
   SEXP store_posterior_sample_controlSEXP, SEXP store_posterior_sample_treatSEXP, SEXP verboseSEXP
-) {     
+) {
 
   // Conversion of function arguments //
 
@@ -230,8 +230,10 @@ Rcpp::List CausalHorseForest_cpp(
   forest_control.SetTreePrior(base_control, power_control, param1_control, p_grow_control, p_prune_control);
   forest_control.SetUpForest(p_control, n, X_train_control, augmented_outcome_control, nullptr, omega_control); // Use augmented outcome for y
 
-  // Setup a vector to access the trees
-  std::vector<Tree>* trees_control = forest_control.GetTreesPointer();
+  // Setup a vector to access the tree
+  // This is only needed for the forestwide shrinkage update.
+  // Consider removing this if not needed elsewhere, or empty initialization.
+  // std::vector<Tree>* trees_control = forest_control.GetTreesPointer();
 
 
   // Set-up the forest for the treatment effect model // 
@@ -312,6 +314,7 @@ Rcpp::List CausalHorseForest_cpp(
       accepted_control
     );
 
+    /*
     // Update the forestwide shrinkage parameter of the prognostic forest, if applicable 
     UpdateForestwideShrinkage(
       prior_type_control,
@@ -321,6 +324,7 @@ Rcpp::List CausalHorseForest_cpp(
       forestwide_shrinkage_control, 
       param2_control
     );
+    */
 
     // Update the augmented outcome for the treatment effect model
     for (size_t k = 0; k < n; k++) {
@@ -386,7 +390,7 @@ Rcpp::List CausalHorseForest_cpp(
       random
     );
 
-
+    /*
     // Save the leaf node parameters and indices
     if (store_parameters && i >= N_burn) {
 
@@ -472,7 +476,7 @@ Rcpp::List CausalHorseForest_cpp(
         tree_counter_treat++;
       }
     }
-
+    */
 
     // Storing the posterior info after burn-in
     if (i >= N_burn) {

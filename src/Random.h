@@ -3,8 +3,6 @@
 
 #include "Prerequisites.h"
 
-double log_sum_exp(std::vector<double>& v);
-
 // Abstract RNG interface
 class Random {
 public:

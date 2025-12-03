@@ -1,7 +1,7 @@
 
 #include "StanTree.h"
 
-//--------------------
+
 // node id
 size_t StanTree::nid() const 
 {
@@ -9,7 +9,7 @@ size_t StanTree::nid() const
    if(this==p->l) return 2*(p->nid()); //if you are a left child
    else return 2*(p->nid())+1; //else you are a right child
 }
-//--------------------
+
 StanTree::StanTree_p StanTree::getptr(size_t nid)
 {
    if(this->nid() == nid) return this; //found it
@@ -20,7 +20,7 @@ StanTree::StanTree_p StanTree::getptr(size_t nid)
    if(rp) return rp; //found on right
    return 0; //never found it
 }
-//--------------------
+
 //add children to  bot node nid
 bool StanTree::birth(size_t nid, size_t split_var, size_t cut_val, double step_heightl, double step_heightr)
 {
@@ -47,21 +47,21 @@ bool StanTree::birth(size_t nid, size_t split_var, size_t cut_val, double step_h
 
    return true;
 }
-//--------------------
+
 //depth of node
 size_t StanTree::depth()
 {
    if(!p) return 0; //no parents
    else return (1+p->depth());
 }
-//--------------------
+
 //StanTree size
 size_t StanTree::StanTreesize()
 {
    if(l==0) return 1;  //if bottom node, StanTree size is 1
    else return (1+l->StanTreesize()+r->StanTreesize());
 }
-//--------------------
+
 //node type
 char StanTree::ntype()
 {
@@ -71,7 +71,7 @@ char StanTree::ntype()
    if(!(l->l) && !(r->l)) return 'n';
    return 'i';
 }
-//--------------------
+
 //print out StanTree(pc=true) or node(pc=false) information
 void StanTree::pr(bool pc) 
 {
@@ -100,7 +100,7 @@ void StanTree::pr(bool pc)
       }
    }
 }
-//--------------------
+
 //kill children of  nog node nid
 bool StanTree::death(size_t nid, double step_height)
 {
@@ -123,7 +123,7 @@ bool StanTree::death(size_t nid, double step_height)
       return false;
    }
 }
-//--------------------
+
 //is the node a nog node
 bool StanTree::isnog() 
 {
@@ -135,7 +135,7 @@ bool StanTree::isnog()
    }
    return isnog;
 }
-//--------------------
+
 size_t StanTree::nnogs() 
 {
    if(!l) return 0; //bottom node
@@ -145,7 +145,7 @@ size_t StanTree::nnogs()
       return 1;
    }
 }
-//--------------------
+
 size_t StanTree::nbots() 
 {
    if(l==0) { //if a bottom node
@@ -154,7 +154,7 @@ size_t StanTree::nbots()
       return l->nbots() + r->nbots();
    }
 }
-//--------------------
+
 //get bottom nodes
 void StanTree::getbots(npv& bv)
 {
@@ -165,7 +165,7 @@ void StanTree::getbots(npv& bv)
       bv.push_back(this);
    }
 }
-//--------------------
+
 //get nog nodes
 void StanTree::getnogs(npv& nv)
 {
@@ -178,7 +178,7 @@ void StanTree::getnogs(npv& nv)
       }
    }
 }
-//--------------------
+
 //get all nodes
 void StanTree::getnodes(npv& v)
 {
@@ -196,7 +196,7 @@ void StanTree::getnodes(cnpv& v)  const
       r->getnodes(v);
    }
 }
-//--------------------
+
 StanTree::StanTree_p StanTree::bn(double *x,xinfo& xi)
 {
    if(l==0) return this; //no children
@@ -206,7 +206,7 @@ StanTree::StanTree_p StanTree::bn(double *x,xinfo& xi)
       return r->bn(x,xi);
    }
 }
-//--------------------
+
 //find region for a given variable
 void StanTree::rg(size_t split_var, int* L, int* U)
 {
@@ -225,7 +225,7 @@ void StanTree::rg(size_t split_var, int* L, int* U)
       p->rg(split_var,L,U);
    }
 }
-//--------------------
+
 //cut back to one node
 void StanTree::tonull()
 {
@@ -246,7 +246,7 @@ void StanTree::tonull()
    split_var=0;cut_val=0;
    p=0;l=0;r=0;
 }
-//--------------------
+
 //copy StanTree StanTree o to StanTree n
 void StanTree::cp(StanTree_p n, StanTree_cp o)
 //assume n has no children (so we don't have to kill them)
@@ -270,7 +270,7 @@ void StanTree::cp(StanTree_p n, StanTree_cp o)
       cp(n->r,o->r);
    }
 }
-//--------------------------------------------------
+
 //operators
 StanTree& StanTree::operator=(const StanTree& rhs)
 {
@@ -280,7 +280,7 @@ StanTree& StanTree::operator=(const StanTree& rhs)
    }
    return *this;
 }
-//--------------------------------------------------
+
 //functions
 std::ostream& operator<<(std::ostream& os, const StanTree& t)
 {
@@ -341,7 +341,7 @@ std::istream& operator>>(std::istream& is, StanTree& t)
    }
    return is;
 }
-//--------------------
+
 //add children to bot node *np
 void StanTree::birthp(StanTree_p np,size_t split_var, size_t cut_val, double step_heightl, double step_heightr)
 {
@@ -355,7 +355,7 @@ void StanTree::birthp(StanTree_p np,size_t split_var, size_t cut_val, double ste
    l->p = np;
    r->p = np;
 }
-//--------------------
+
 //kill children of  nog node *nb
 void StanTree::deathp(StanTree_p nb, double step_height)
 {

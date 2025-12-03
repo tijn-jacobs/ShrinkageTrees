@@ -1,14 +1,11 @@
 
 #include "StanForest.h"
 
-//--------------------------------------------------
-//constructor
-StanForest::StanForest():m(200),t(m),pi(),p(0),n(0),x(0),y(0),xi(),allfit(0),r(0),ftemp(0),di(),dartOn(false) {}
+
+// Constructor
 StanForest::StanForest(size_t im):m(im),t(m),pi(),p(0),n(0),x(0),y(0),xi(),allfit(0),r(0),ftemp(0),di(),dartOn(false) {}
-StanForest::StanForest(const StanForest& ib):m(ib.m),t(m),pi(ib.pi),p(0),n(0),x(0),y(0),xi(),allfit(0),r(0),ftemp(0),di(),dartOn(false)
-{
-   this->t = ib.t;
-}
+
+// Destructor
 StanForest::~StanForest()
 {
    if(allfit) delete[] allfit;
@@ -16,8 +13,7 @@ StanForest::~StanForest()
    if(ftemp) delete[] ftemp;
 }
 
-//--------------------------------------------------
-//operators
+// Operators
 StanForest& StanForest::operator=(const StanForest& rhs)
 {
    if(&rhs != this) {
@@ -37,7 +33,7 @@ StanForest& StanForest::operator=(const StanForest& rhs)
    }
    return *this;
 }
-//--------------------------------------------------
+
 //get,set
 void StanForest::setm(size_t m)
 {
@@ -47,7 +43,7 @@ void StanForest::setm(size_t m)
    if(allfit && (xi.size()==p)) predict(p,n,x,allfit);
 }
 
-//--------------------------------------------------
+
 void StanForest::setxinfo(xinfo& _xi)
 {
    size_t p=_xi.size();
@@ -58,7 +54,7 @@ void StanForest::setxinfo(xinfo& _xi)
       for(size_t j=0;j<nc;j++) xi[i][j] = _xi[i][j];
    }
 }
-//--------------------------------------------------
+
 void StanForest::setdata(size_t p, size_t n, double *x, double *y, size_t numcut)
 {
   int* nc = new int[p];
@@ -70,7 +66,7 @@ void StanForest::setdata(size_t p, size_t n, double *x, double *y, size_t numcut
 void StanForest::setdata(size_t p, size_t n, double *x, double *y, int *nc)
 {
    this->p=p; this->n=n; this->x=x; this->y=y;
-   if(xi.size()==0) makexinfo(p,n,&x[0],xi,nc);
+   if(xi.size()==0) makexinfo(p,n,&x[0],xi,nc); // This should be always the case; CHECK!
 
    if(allfit) delete[] allfit;
    allfit = new double[n];
@@ -91,7 +87,7 @@ void StanForest::setdata(size_t p, size_t n, double *x, double *y, int *nc)
      pv.push_back(1/(double)p);
    }
 }
-//--------------------------------------------------
+
 void StanForest::predict(size_t p, size_t n, double *x, double *fp)
 //uses: m,t,xi
 {
@@ -105,29 +101,31 @@ void StanForest::predict(size_t p, size_t n, double *x, double *fp)
 
    delete[] fptemp;
 }
-//--------------------------------------------------
-void StanForest::draw(double sigma, Random& random)
+
+bool StanForest::draw(double sigma, Random& random)
 {
+  bool accept;
    for(size_t j=0;j<m;j++) {
       fit(t[j],xi,p,n,x,ftemp);
       for(size_t k=0;k<n;k++) {
          allfit[k] = allfit[k]-ftemp[k];
          r[k] = y[k]-allfit[k];
       }
-      bd(t[j],xi,di,pi,sigma,nv,pv,aug,random);
+      accept = bd(t[j],xi,di,pi,sigma,nv,pv,aug,random);
       drmu(t[j],xi,di,pi,sigma,random);
       fit(t[j],xi,p,n,x,ftemp);
       for(size_t k=0;k<n;k++) allfit[k] += ftemp[k];
    }
-   /*
+   
    if(dartOn) {
      draw_s(nv,lpv,theta,random);
      draw_theta0(const_theta,theta,lpv,a,b,rho,random);
      for(size_t j=0;j<p;j++) pv[j]=::exp(lpv[j]);
    }
-   */
+   
+   return accept;
 }
-//--------------------------------------------------
+
 //public functions
 void StanForest::pr() //print to screen
 {

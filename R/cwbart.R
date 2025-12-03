@@ -6,7 +6,7 @@ cwbart <- function(
     x.test = matrix(0.0, 0, 0),
     sparse = FALSE, theta = 0, omega = 1,
     a = 0.5, b = 1, augment = FALSE, rho = NULL,
-    xinfo = matrix(0.0, 0, 0), usequants = FALSE,
+    usequants = FALSE,
     cont = FALSE, rm.const = TRUE,
     sigest = NA, sigdf = 3, sigquant = .90,
     k = 2.0, power = 2.0, base = .95,
@@ -29,11 +29,10 @@ cwbart <- function(
         temp = bartModelMatrix(
             x.train, numcut,
             usequants = usequants,
-            cont = cont, xinfo = xinfo, rm.const = rm.const
+            cont = cont,  rm.const = rm.const
         )
         x.train = t(temp$X)
         numcut = temp$numcut
-        xinfo = temp$xinfo
 
         if (length(x.test) > 0) {
             x.test = bartModelMatrix(x.test)
@@ -109,7 +108,6 @@ cwbart <- function(
         iwSEXP = w,
         idart = sparse,
         itheta = theta,
-        iomega = omega,
         ia = a,
         ib = b,
         irho = rho,
@@ -118,8 +116,7 @@ cwbart <- function(
         inkeeptest = nkeeptest,
         inkeeptestme = nkeeptestmean,
         inkeeptreedraws = nkeeptreedraws,
-        inprintevery = printevery,
-        XinfoSEXP = xinfo
+        inprintevery = printevery
     )
 
     ## ------------------------

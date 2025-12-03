@@ -1,42 +1,6 @@
 #include "StanTreeFunctions.h"
 
-//--------------------------------------------------
-//write cutpoint information to screen
-void prxi(xinfo& xi)
-{
-   cout << "xinfo: \n";
-   for(size_t v=0;v!=xi.size();v++) {
-      cout << "v: " << v << std::endl;
-      for(size_t j=0;j!=xi[v].size();j++) cout << "j,xi[v][j]: " << j << ", " << xi[v][j] << std::endl;
-   }
-   cout << "\n\n";
-}
 
-//--------------------------------------------------
-//evalute StanTree tr on grid given by xi and write to os
-void grm(StanTree& tr, xinfo& xi, std::ostream& os)
-{
-   size_t p = xi.size();
-   if(p!=2) {
-      cout << "error in grm, p !=2\n";
-      return;
-   }
-   size_t n1 = xi[0].size();
-   size_t n2 = xi[1].size();
-   StanTree::StanTree_p bp; //pointer to bottom node
-   double *x = new double[2];
-   for(size_t i=0;i!=n1;i++) {
-      for(size_t j=0;j!=n2;j++) {
-         x[0] = xi[0][i];
-         x[1] = xi[1][j];
-         bp = tr.bn(x,xi);
-         os << x[0] << " " << x[1] << " " << bp->gettheta() << " " << bp->nid() << std::endl;
-      }
-   }
-   delete[] x;
-}
-
-//--------------------------------------------------
 //fit StanTree at matrix of x, matrix is stacked columns x[i,j] is *(x+p*i+j)
 void fit(StanTree& t, xinfo& xi, size_t p, size_t n, double *x,  double* fv)
 {
@@ -47,7 +11,6 @@ void fit(StanTree& t, xinfo& xi, size_t p, size_t n, double *x,  double* fv)
    }
 }
 
-//--------------------------------------------------
 //does this bottom node n have any variables it can split on.
 bool cansplit(StanTree::StanTree_p n, xinfo& xi)
 {
@@ -63,7 +26,7 @@ bool cansplit(StanTree::StanTree_p n, xinfo& xi)
    return v_found;
 }
 
-//--------------------------------------------------
+
 //find variables n can split on, put their indices in goodvars
 void getgoodvars(StanTree::StanTree_p n, xinfo& xi,  std::vector<size_t>& goodvars)
 {

@@ -9,20 +9,20 @@ bool bd(StanTree& x, xinfo& xi, dinfo& di, pinfo& pi, double sigma,
 
    if(random.uniform() < PBx) { //do birth or death
 
-      //--------------------------------------------------
+      
       //draw proposal
       StanTree::StanTree_p nx; //bottom node
       size_t v,c; //variable and cutpoint
       double pr; //part of metropolis ratio from proposal and prior
       bprop(x,xi,pi,goodbots,PBx,nx,v,c,pr,nv,pv,aug,random);
 
-      //--------------------------------------------------
+      
       //compute sufficient statistics
       size_t nr,nl; //counts in proposed bots
       double syl, syr; //sum of y in proposed bots
       getsuff(x,nx,v,c,xi,di,nl,syl,nr,syr);
 
-      //--------------------------------------------------
+      
       //compute alpha
       double alpha=0.0, lalpha=0.0;
       double lhl, lhr, lht;
@@ -36,7 +36,7 @@ bool bd(StanTree& x, xinfo& xi, dinfo& di, pinfo& pi, double sigma,
          lalpha = std::min(0.0,lalpha);
       }
 
-      //--------------------------------------------------
+      
       //try metrop
       double mul,mur; //means for new bottom nodes, left and right
       double uu = random.uniform();
@@ -51,19 +51,19 @@ bool bd(StanTree& x, xinfo& xi, dinfo& di, pinfo& pi, double sigma,
          return false;
       }
    } else {
-      //--------------------------------------------------
+      
       //draw proposal
       double pr;  //part of metropolis ratio from proposal and prior
       StanTree::StanTree_p nx; //nog node to death at
       dprop(x,xi,pi,goodbots,PBx,nx,pr,random);
 
-      //--------------------------------------------------
+      
       //compute sufficient statistics
       size_t nr,nl; //counts at bots of nx
       double syl, syr; //sum at bots of nx
       getsuff(x, nx->getl(), nx->getr(), xi, di, nl, syl, nr, syr);
 
-      //--------------------------------------------------
+      
       //compute alpha
       double lhl, lhr, lht;
       lhl = lh(nl,syl,sigma,pi.eta);
@@ -73,7 +73,7 @@ bool bd(StanTree& x, xinfo& xi, dinfo& di, pinfo& pi, double sigma,
       double lalpha = log(pr) + (lht - lhl - lhr) - log(sigma);
       lalpha = std::min(0.0,lalpha);
 
-      //--------------------------------------------------
+      
       //try metrop
       double mu;
       if(log(random.uniform()) < lalpha) {

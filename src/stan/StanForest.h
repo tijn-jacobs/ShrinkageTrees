@@ -12,20 +12,20 @@
 
 class StanForest {
 public:
-   //------------------------------
+   
    //friends
    friend bool bd(StanTree& x, xinfo& xi, dinfo& di, pinfo& pi, double sigma,
 		  std::vector<size_t>& nv, std::vector<double>& pv, bool aug, Random& random);
-   //------------------------------
+   
    //constructor/destructor
-   StanForest();
+   // StanForest();
    StanForest(size_t m);
-   StanForest(const StanForest&);
+   // StanForest(const StanForest&);
    ~StanForest();
-   //------------------------------
+   
    //operators
    StanForest& operator=(const StanForest&);
-   //------------------------------
+   
    //get,set
    size_t getm() {return m;}
    void setm(size_t m);
@@ -35,14 +35,14 @@ public:
    void setprior(double base, double power, double eta)
       {pi.base=base; pi.power = power; pi.eta=eta;}
    void setdart(double _a, double _b, double _rho, bool _aug, bool _dart, 
-		double _theta=0., double _omega=1.) {
+		double _theta=0.) {
      this->a=_a; this->b=_b; this->rho=_rho; this->aug=_aug; 
-     this->dart=_dart; this->omega=_omega; 
+     this->dart=_dart;  
      if(_theta==0.){
        this->const_theta=false;
        this->theta=1.;
      }
-     else{
+     else {
        this->const_theta=true;
        this->theta=_theta;
      }
@@ -54,7 +54,7 @@ public:
    std::vector<size_t>& getnv() {return nv;}
    std::vector<double>& getpv() {return pv;}
    double gettheta() {return theta;}
-   //------------------------------
+   
    //public methods
    void birth(size_t i, size_t nid,size_t v, size_t c, double ml, double mr)
          {t[i].birth(nid,v,c,ml,mr);}
@@ -63,9 +63,10 @@ public:
    void pr();
    void tonull() {for(size_t i=0;i!=t.size();i++) t[i].tonull();}
    void predict(size_t p, size_t n, double *x, double *fp);
-   void draw(double sigma, Random& random);
+   bool draw(double sigma, Random& random);
 //   void draw_s(Random& random);
    double f(size_t i) {return allfit[i];}
+   double* GetAllFit() { return allfit; }
 protected:
    size_t m;  //number of StanTrees
    std::vector<StanTree> t; //the StanTrees
@@ -80,7 +81,7 @@ protected:
    double *ftemp;
    dinfo di;
    bool dart,dartOn,aug,const_theta;
-   double a,b,rho,theta,omega;
+   double a,b,rho,theta;
    std::vector<size_t> nv;
    std::vector<double> pv, lpv;
 };

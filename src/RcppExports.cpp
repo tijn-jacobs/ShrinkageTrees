@@ -109,8 +109,8 @@ BEGIN_RCPP
 END_RCPP
 }
 // cwbart
-Rcpp::List cwbart(SEXP ntrain, SEXP ip, SEXP inp, SEXP ixSEXP, SEXP iySEXP, SEXP ixpSEXP, SEXP im, SEXP inc, SEXP ind, SEXP iburn, SEXP ipower, SEXP ibase, SEXP itau, SEXP inu, SEXP ilambda, SEXP isigest, SEXP iwSEXP, SEXP idart, SEXP itheta, SEXP iomega, SEXP ia, SEXP ib, SEXP irho, SEXP iaug, SEXP inkeeptrain, SEXP inkeeptest, SEXP inkeeptestme, SEXP inkeeptreedraws, SEXP inprintevery, SEXP XinfoSEXP);
-RcppExport SEXP _ShrinkageTrees_cwbart(SEXP ntrainSEXP, SEXP ipSEXP, SEXP inpSEXP, SEXP ixSEXPSEXP, SEXP iySEXPSEXP, SEXP ixpSEXPSEXP, SEXP imSEXP, SEXP incSEXP, SEXP indSEXP, SEXP iburnSEXP, SEXP ipowerSEXP, SEXP ibaseSEXP, SEXP itauSEXP, SEXP inuSEXP, SEXP ilambdaSEXP, SEXP isigestSEXP, SEXP iwSEXPSEXP, SEXP idartSEXP, SEXP ithetaSEXP, SEXP iomegaSEXP, SEXP iaSEXP, SEXP ibSEXP, SEXP irhoSEXP, SEXP iaugSEXP, SEXP inkeeptrainSEXP, SEXP inkeeptestSEXP, SEXP inkeeptestmeSEXP, SEXP inkeeptreedrawsSEXP, SEXP inprinteverySEXP, SEXP XinfoSEXPSEXP) {
+Rcpp::List cwbart(SEXP ntrain, SEXP ip, SEXP inp, SEXP ixSEXP, SEXP iySEXP, SEXP ixpSEXP, SEXP im, SEXP inc, SEXP ind, SEXP iburn, SEXP ipower, SEXP ibase, SEXP itau, SEXP inu, SEXP ilambda, SEXP isigest, SEXP iwSEXP, SEXP idart, SEXP itheta, SEXP ia, SEXP ib, SEXP irho, SEXP iaug, SEXP inkeeptrain, SEXP inkeeptest, SEXP inkeeptestme, SEXP inkeeptreedraws, SEXP inprintevery);
+RcppExport SEXP _ShrinkageTrees_cwbart(SEXP ntrainSEXP, SEXP ipSEXP, SEXP inpSEXP, SEXP ixSEXPSEXP, SEXP iySEXPSEXP, SEXP ixpSEXPSEXP, SEXP imSEXP, SEXP incSEXP, SEXP indSEXP, SEXP iburnSEXP, SEXP ipowerSEXP, SEXP ibaseSEXP, SEXP itauSEXP, SEXP inuSEXP, SEXP ilambdaSEXP, SEXP isigestSEXP, SEXP iwSEXPSEXP, SEXP idartSEXP, SEXP ithetaSEXP, SEXP iaSEXP, SEXP ibSEXP, SEXP irhoSEXP, SEXP iaugSEXP, SEXP inkeeptrainSEXP, SEXP inkeeptestSEXP, SEXP inkeeptestmeSEXP, SEXP inkeeptreedrawsSEXP, SEXP inprinteverySEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -133,7 +133,6 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< SEXP >::type iwSEXP(iwSEXPSEXP);
     Rcpp::traits::input_parameter< SEXP >::type idart(idartSEXP);
     Rcpp::traits::input_parameter< SEXP >::type itheta(ithetaSEXP);
-    Rcpp::traits::input_parameter< SEXP >::type iomega(iomegaSEXP);
     Rcpp::traits::input_parameter< SEXP >::type ia(iaSEXP);
     Rcpp::traits::input_parameter< SEXP >::type ib(ibSEXP);
     Rcpp::traits::input_parameter< SEXP >::type irho(irhoSEXP);
@@ -143,8 +142,7 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< SEXP >::type inkeeptestme(inkeeptestmeSEXP);
     Rcpp::traits::input_parameter< SEXP >::type inkeeptreedraws(inkeeptreedrawsSEXP);
     Rcpp::traits::input_parameter< SEXP >::type inprintevery(inprinteverySEXP);
-    Rcpp::traits::input_parameter< SEXP >::type XinfoSEXP(XinfoSEXPSEXP);
-    rcpp_result_gen = Rcpp::wrap(cwbart(ntrain, ip, inp, ixSEXP, iySEXP, ixpSEXP, im, inc, ind, iburn, ipower, ibase, itau, inu, ilambda, isigest, iwSEXP, idart, itheta, iomega, ia, ib, irho, iaug, inkeeptrain, inkeeptest, inkeeptestme, inkeeptreedraws, inprintevery, XinfoSEXP));
+    rcpp_result_gen = Rcpp::wrap(cwbart(ntrain, ip, inp, ixSEXP, iySEXP, ixpSEXP, im, inc, ind, iburn, ipower, ibase, itau, inu, ilambda, isigest, iwSEXP, idart, itheta, ia, ib, irho, iaug, inkeeptrain, inkeeptest, inkeeptestme, inkeeptreedraws, inprintevery));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -184,7 +182,7 @@ END_RCPP
 static const R_CallMethodDef CallEntries[] = {
     {"_ShrinkageTrees_CausalHorseForest_cpp", (DL_FUNC) &_ShrinkageTrees_CausalHorseForest_cpp, 45},
     {"_ShrinkageTrees_HorseTrees_cpp", (DL_FUNC) &_ShrinkageTrees_HorseTrees_cpp, 33},
-    {"_ShrinkageTrees_cwbart", (DL_FUNC) &_ShrinkageTrees_cwbart, 30},
+    {"_ShrinkageTrees_cwbart", (DL_FUNC) &_ShrinkageTrees_cwbart, 28},
     {"_ShrinkageTrees_probitHorseTrees_cpp", (DL_FUNC) &_ShrinkageTrees_probitHorseTrees_cpp, 22},
     {NULL, NULL, 0}
 };
