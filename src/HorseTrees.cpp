@@ -139,8 +139,9 @@ Rcpp::List HorseTrees_cpp(
   // Initialize the scale mixture prior on the step heights in the leaves
   ScaleMixture scale_mixture(prior, param1, param2);
   
-  // Build the forest
-  ForestEngine forest(ForestEngineType::stan_forest_type, number_of_trees);
+  // Build the forest%random.inv_gamma
+  ForestEngine forest(ForestEngineType::forest_type, number_of_trees);
+  // Forest forest(ForestEngineType::forest_type, number_of_trees);
   forest.SetTreePrior(base, power, param1, p_grow, p_prune, a_dirichlet, b_dirichlet, p, false, dirichlet_bool, alpha_dirichlet); // In case of NON-RJ; param1 = step height variance
   forest.SetUpForest(p, n, X_train, y, nullptr, omega);
 
@@ -198,7 +199,13 @@ Rcpp::List HorseTrees_cpp(
   int time1 = time(&time_stamp);
   
   for (size_t i = 0; i < total; i++) {
-    
+
+    if(i == (N_burn/2) && dirichlet_bool) {
+      forest.StartDirichlet();
+      cout << "\nDirichlet prior on variable selection started at iteration " << i << ".\n";
+    }
+
+  
     if(print_progress){
       // Progress bar
       float progress = static_cast<float>(i) / static_cast<float>(total);
