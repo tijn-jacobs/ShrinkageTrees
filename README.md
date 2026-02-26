@@ -1,47 +1,3 @@
-
-
-
-
-This package provides functions for fitting Horseshoe Trees, Causal Horseshoe Forests, and their more general counterparts: Shrinkage Trees and Causal Shrinkage Forests.  
-
-These models allow for global-local shrinkage priors on tree step heights, enabling adaptive modeling in high-dimensional settings.
-
-The functions can be used for:
-
-1) High-dimensional prediction  
-2) High-dimensional causal inference 
-3) Estimaton of heterogeneous (conditional average) treatment effects
-
-Supported outcome types: continuous, binary, and **right-censored survival times**.
-
-
-The mathematical background and theoretical foundation for these models is described in the preprint *Horseshoe Forests for High-Dimensional Causal Survival Analysis* by T. Jacobs, W.N. van Wieringen, and S.L. van der Pas ([arXiv:2507.22004](https://arxiv.org/abs/2507.22004)).
-
-
-## ✨ Features
-
-- Horseshoe, forest-wide horseshoe, empirical Bayes Horseshoe, and half-Cauchy priors
-- Flexible tree-based non-linear modeling of the ATE and CATE
-- Supports survival data with right-censoring (accelerated failure time model)
-- Efficient C++ backend via Rcpp
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 # ShrinkageTrees <img src="https://img.shields.io/badge/R%3E%3D-4.2-blue" alt="R >= 4.2"> ![License: MIT](https://img.shields.io/badge/license-MIT-green) ![Lifecycle: maturing](https://img.shields.io/badge/lifecycle-maturing-blue) [![](https://cranlogs.r-pkg.org/badges/grand-total/ShrinkageTrees)](https://cran.r-project.org/package=ShrinkageTrees)
  <img src="sticker/ShrinkageTrees_hex.png" align="right" width="150"/>
 
@@ -49,11 +5,23 @@ The mathematical background and theoretical foundation for these models is descr
 
 ## Overview
 
-**ShrinkageTrees** provides a unified framework for survival analysis using Bayesian regression tree ensembles with a particular focus on **causal inference and high-dimensional data**.
+**ShrinkageTrees** provides a unified framework for survival analysis using Bayesian regression tree ensembles, with a particular focus on **causal inference and high-dimensional data**.
 
-The package implements multiple well-known Bayesian tree models — including BART, DART, and BCF — all adapted to right-censored data via accelerated failure time (AFT) models.
+The package implements Horseshoe Trees, Causal Horseshoe Forests, and their more general counterparts — Shrinkage Trees and Causal Shrinkage Forests — alongside well-known Bayesian tree models such as BART, DART, and BCF. All models are adapted to right-censored data via accelerated failure time (AFT) formulations.
 
-Its central methodological innovation is the  **Horseshoe regularisation mechanism applied directly to tree step heights**, enabling adaptive global–local shrinkage in high-dimensional settings.
+Its central methodological innovation is the **Horseshoe regularisation mechanism applied directly to tree step heights**, enabling adaptive global–local shrinkage in high-dimensional settings. In addition to classical BART priors, the package supports:
+
+- Horseshoe priors  
+- Forest-wide Horseshoe shrinkage  
+- Empirical Bayes Horseshoe calibration  
+- Half-Cauchy priors  
+- Dirichlet splitting priors (DART)  
+
+These models enable flexible non-linear modeling for:
+
+1) High-dimensional prediction  
+2) High-dimensional causal inference  
+3) Estimation of heterogeneous (conditional average) treatment effects (CATE)  
 
 Supported outcome types:
 
@@ -61,6 +29,7 @@ Supported outcome types:
 - Binary outcomes  
 - **Right-censored survival times (AFT framework)**  
 
+All models are implemented with an efficient C++ backend via **Rcpp**, allowing scalable MCMC sampling in high-dimensional settings.
 
 
 ## ⭐ Core Contribution: Horseshoe Trees
@@ -112,7 +81,7 @@ ShrinkageTrees supports multiple regularisation mechanisms:
   Structural sparsity induced via a Dirichlet prior on splitting proportions.
 
 - **Horseshoe shrinkage on step heights**  
-  Global–local shrinkage applied directly to leaf parameters (main innovation).
+  Global–local shrinkage applied directly to leaf parameters.
 
 
 ## 📦 Installation
