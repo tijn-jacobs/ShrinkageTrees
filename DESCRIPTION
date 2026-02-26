@@ -1,6 +1,6 @@
 Package: ShrinkageTrees
 Type: Package
-Title: Regression Trees with Shrinkage Priors
+Title: Bayesian Tree Ensembles for Survival Analysis and Causal Inference
 Version: 1.2.0
 Date: 2026-02-26 
 Authors@R: c(person("Tijn", "Jacobs", role = c("aut", "cre"), 
