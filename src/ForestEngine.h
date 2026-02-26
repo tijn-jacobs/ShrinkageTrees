@@ -72,7 +72,7 @@ struct ForestEngine {
         sigma, scale_mixture, reversible, delayed, rng, accepted
       );
     } else {
-      stan_forest->draw(sigma, rng);  // StanForest does not use scale mixture
+      stan_forest->draw(sigma, rng, accepted);  // StanForest does not use scale mixture
       // optionally: fill accepted[] = ??? (Stan doesn't use it)
     }
   }
@@ -115,8 +115,16 @@ struct ForestEngine {
     }
   }
 
+  void UpdateGlobalScaleParameters(string prior_type,
+                                   double global_parameter,
+                                   double& storage_eta, // Store the updated eta at this location
+                                   Random& random) {
+    if (type == ForestEngineType::forest_type) {
+      return;
+    } else {
+      return stan_forest->UpdateGlobalScaleParameters(prior_type, global_parameter, storage_eta, random);   // correct Stan version
+    }
+  }
 };
-
-
 
 #endif

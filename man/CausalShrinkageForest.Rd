@@ -19,14 +19,22 @@ CausalShrinkageForest(
   number_of_trees_treat = 200,
   prior_type_control = "horseshoe",
   prior_type_treat = "horseshoe",
-  local_hp_control,
-  local_hp_treat,
+  local_hp_control = NULL,
+  local_hp_treat = NULL,
   global_hp_control = NULL,
   global_hp_treat = NULL,
-  power = 2,
-  base = 0.95,
-  p_grow = 0.4,
-  p_prune = 0.4,
+  a_dirichlet_control = 0.5,
+  a_dirichlet_treat = 0.5,
+  b_dirichlet_control = 1,
+  b_dirichlet_treat = 1,
+  rho_dirichlet_control = NULL,
+  rho_dirichlet_treat = NULL,
+  power_control = 2,
+  power_treat = 2,
+  base_control = 0.95,
+  base_treat = 0.95,
+  p_grow = 0.5,
+  p_prune = 0.5,
   nu = 3,
   q = 0.9,
   sigma = NULL,
@@ -34,7 +42,6 @@ CausalShrinkageForest(
   N_burn = 5000,
   delayed_proposal = 5,
   store_posterior_sample = FALSE,
-  seed = NULL,
   verbose = TRUE
 )
 }
@@ -87,13 +94,41 @@ priors; ignored for \code{"half-cauchy"}.}
 
 \item{global_hp_treat}{Global hyperparameter for treatment forest.}
 
-\item{power}{Power parameter for tree structure prior. Default is 2.0.}
+\item{a_dirichlet_control}{First shape parameter of the Beta prior used in the
+Dirichlet–Sparse splitting rule for the control forest. Together with
+\code{b_dirichlet_control}, it controls the expected sparsity level.}
 
-\item{base}{Base parameter for tree structure prior. Default is 0.95.}
+\item{a_dirichlet_treat}{First shape parameter of the Beta prior used in the
+Dirichlet–Sparse splitting rule for the treatment forest.}
 
-\item{p_grow}{Probability of proposing a grow move. Default is 0.4.}
+\item{b_dirichlet_control}{Second shape parameter of the Beta prior for the
+sparsity level in the control forest. Larger values shrink splitting
+probabilities more strongly toward uniform sparsity.}
 
-\item{p_prune}{Probability of proposing a prune move. Default is 0.4.}
+\item{b_dirichlet_treat}{Second shape parameter of the Beta prior governing
+sparsity in the treatment forest.}
+
+\item{rho_dirichlet_control}{Sparsity hyperparameter for the control forest.
+Represents the \emph{expected number of active predictors}. If left NULL, it
+defaults to the number of covariates in the control forest.}
+
+\item{rho_dirichlet_treat}{Sparsity hyperparameter for the treatment forest,
+interpreted as the expected number of active predictors. Defaults to the
+number of covariates in the treatment forest if not specified.}
+
+\item{power_control}{Power parameter for the control forest tree structure prior splitting probability.}
+
+\item{power_treat}{Power parameter for the treatment forest tree structure prior splitting probability.}
+
+\item{base_control}{Base parameter for the control forest tree structure prior splitting probability.}
+
+\item{base_treat}{Base parameter for the treatment forest tree structure prior splitting probability.}
+
+\item{p_grow}{Probability of proposing a grow move. Default is 0.5. These are fixed at 0.5 for prior_type
+\code{"standard"} and \code{"dirichlet"}.}
+
+\item{p_prune}{Probability of proposing a prune move. Default is 0.5. These are fixed at 0.5 for prior_type
+\code{"standard"} and \code{"dirichlet"}.}
 
 \item{nu}{Degrees of freedom for the error variance prior. Default is 3.}
 
@@ -109,8 +144,6 @@ priors; ignored for \code{"half-cauchy"}.}
 
 \item{store_posterior_sample}{Logical; whether to store posterior samples of predictions.
 Default is \code{FALSE}.}
-
-\item{seed}{Random seed for reproducibility. Default is \code{NULL}.}
 
 \item{verbose}{Logical; whether to print verbose output. Default is \code{TRUE}.}
 }
@@ -148,7 +181,9 @@ The Causal Shrinkage Forest model decomposes the outcome into a prognostic
 (control) and a treatment effect part. Each part is modeled by its own
 shrinkage tree ensemble, with separate flexible global-local shrinkage
 priors. It is particularly useful for estimating heterogeneous treatment
-effects in high-dimensional settings.
+effects in high-dimensional settings. Further
+methodological details on the Horseshoe Forest framework can be found in
+Jacobs, van Wieringen & van der Pas (2025).
 
 The \code{horseshoe} prior is the fully Bayesian global-local shrinkage
 prior, where both the global and local shrinkage parameters are assigned
@@ -170,6 +205,12 @@ not estimated by the software.
 The \code{half-cauchy} prior considers only local shrinkage and does not
 include a global shrinkage component. It places a half-Cauchy prior on each
 local shrinkage parameter with scale hyperparameter \code{local_hp}.
+
+The \code{dirichlet} prior implements the Dirichlet–Sparse splitting rule of
+Linero (2018), in which splitting probabilities follow a Dirichlet prior
+whose concentration is controlled by a Beta sparsity parameter
+(\code{a_dirichlet}, \code{b_dirichlet}) and an expected sparsity level
+\code{rho_dirichlet}.
 }
 \examples{
 # Example: Continuous outcome, homogenuous treatment effect, two priors
@@ -198,8 +239,7 @@ fit_horseshoe <- CausalShrinkageForest(y = y,
                                        N_post = 10,
                                        N_burn = 5,
                                        store_posterior_sample = TRUE,
-                                       verbose = FALSE,
-                                       seed = 1
+                                       verbose = FALSE
 )
 
 # Fit a Causal Shrinkage Forest with half-cauchy prior
@@ -217,8 +257,7 @@ fit_halfcauchy <- CausalShrinkageForest(y = y,
                                         N_post = 10,
                                         N_burn = 5,
                                         store_posterior_sample = TRUE,
-                                        verbose = FALSE,
-                                        seed = 1
+                                        verbose = FALSE
 )
 
 # Posterior mean CATEs
@@ -234,6 +273,18 @@ ATE_horseshoe <- mean(post_ATE_horseshoe)
 ATE_halfcauchy <- mean(post_ATE_halfcauchy)
 
 
+}
+\references{
+Jacobs, T., van Wieringen, W. N., & van der Pas, S. L. (2025).
+\emph{Horseshoe Forests for High-Dimensional Causal Survival Analysis.}
+arXiv:2507.22004. https://doi.org/10.48550/arXiv.2507.22004
+
+Chipman, H. A., George, E. I., & McCulloch, R. E. (2010).
+\emph{BART: Bayesian additive regression trees.} Annals of Applied Statistics.
+
+Linero, A. R. (2018). \emph{Bayesian regression trees for high-dimensional
+prediction and variable selection.} Journal of the American Statistical
+Association.
 }
 \seealso{
 \code{\link{CausalHorseForest}}, \code{\link{ShrinkageTrees}},

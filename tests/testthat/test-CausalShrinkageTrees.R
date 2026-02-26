@@ -9,6 +9,7 @@ test_that("CausalShrinkageForest works for continuous outcome", {
   y <- X[, 1] + (0.5 - treatment) * tau + rnorm(n)
   
   # Fit the model
+  set.seed(1)
   fit <- CausalShrinkageForest(
     y = y,
     X_train_control = X_control,
@@ -26,8 +27,7 @@ test_that("CausalShrinkageForest works for continuous outcome", {
     N_post = 10,
     N_burn = 5,
     store_posterior_sample = TRUE,
-    verbose = FALSE,
-    seed = 1
+    verbose = FALSE
   )
   
   # Basic checks
@@ -56,6 +56,7 @@ test_that("CausalShrinkageForest works for continuous outcome", {
   expect_true(sd(fit$train_predictions_treat) > 0)
   
   # Check reproducibility
+  set.seed(1)
   fit2 <- CausalShrinkageForest(
     y = y,
     X_train_control = X_control,
@@ -73,8 +74,7 @@ test_that("CausalShrinkageForest works for continuous outcome", {
     N_post = 10,
     N_burn = 5,
     store_posterior_sample = TRUE,
-    verbose = FALSE,
-    seed = 1
+    verbose = FALSE
   )
   expect_equal(fit$train_predictions, fit2$train_predictions)
 })
@@ -98,6 +98,7 @@ test_that("CausalShrinkageForest works for right-censored survival outcome", {
   status <- as.integer(true_time <= censor_time)
   
   # Fit the model
+  set.seed(1)
   fit <- CausalShrinkageForest(
     y = time_obs,
     status = status,
@@ -117,8 +118,7 @@ test_that("CausalShrinkageForest works for right-censored survival outcome", {
     N_post = 10,
     N_burn = 5,
     store_posterior_sample = TRUE,
-    verbose = FALSE,
-    seed = 1
+    verbose = FALSE
   )
   
   # Basic checks
@@ -147,6 +147,7 @@ test_that("CausalShrinkageForest works for right-censored survival outcome", {
   expect_true(sd(fit$train_predictions_treat) > 0)
   
   # Check reproducibility
+  set.seed(1)
   fit2 <- CausalShrinkageForest(
     y = time_obs,
     status = status,
@@ -166,8 +167,7 @@ test_that("CausalShrinkageForest works for right-censored survival outcome", {
     N_post = 10,
     N_burn = 5,
     store_posterior_sample = TRUE,
-    verbose = FALSE,
-    seed = 1
+    verbose = FALSE
   )
   expect_equal(fit$train_predictions, fit2$train_predictions)
 })
@@ -182,7 +182,8 @@ test_that("CausalShrinkageForest works for continuous outcome with half-cauchy p
   treatment <- rbinom(n, 1, X[, 1])
   tau <- 2
   y <- X[, 1] + (0.5 - treatment) * tau + rnorm(n)
-  
+
+  set.seed(1)
   fit <- CausalShrinkageForest(
     y = y,
     X_train_control = X_control,
@@ -198,8 +199,7 @@ test_that("CausalShrinkageForest works for continuous outcome with half-cauchy p
     N_post = 10,
     N_burn = 5,
     store_posterior_sample = TRUE,
-    verbose = FALSE,
-    seed = 1
+    verbose = FALSE
   )
   
   expect_type(fit, "list")
@@ -225,6 +225,7 @@ test_that("CausalShrinkageForest works for continuous outcome with horseshoe_fw 
   tau <- 2
   y <- X[, 1] + (0.5 - treatment) * tau + rnorm(n)
   
+  set.seed(1)
   fit <- CausalShrinkageForest(
     y = y,
     X_train_control = X_control,
@@ -242,8 +243,7 @@ test_that("CausalShrinkageForest works for continuous outcome with horseshoe_fw 
     N_post = 10,
     N_burn = 5,
     store_posterior_sample = TRUE,
-    verbose = FALSE,
-    seed = 1
+    verbose = FALSE
   )
   
   expect_type(fit, "list")

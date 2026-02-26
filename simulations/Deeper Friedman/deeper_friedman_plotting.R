@@ -6,7 +6,7 @@ library(patchwork)
 library(grid)
 
 # Define base path
-base_dir <- "~/GitHub/ShrinkageTrees/simulations/Deeper Friedman"
+base_dir <- "~/Library/CloudStorage/OneDrive-VrijeUniversiteitAmsterdam/Documents/GitHub/ShrinkageTrees/simulations/Deeper Friedman"
 
 # Load simulation result files
 low_LD     <- readRDS(file.path(base_dir, "sim_deeper_friedman2_low_LD_output.RDS"))

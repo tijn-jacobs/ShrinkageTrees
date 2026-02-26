@@ -63,10 +63,15 @@ public:
    void pr();
    void tonull() {for(size_t i=0;i!=t.size();i++) t[i].tonull();}
    void predict(size_t p, size_t n, double *x, double *fp);
-   bool draw(double sigma, Random& random);
-//   void draw_s(Random& random);
+   bool draw(double sigma, Random& random, bool* accept);
    double f(size_t i) {return allfit[i];}
    double* GetAllFit() { return allfit; }
+  void UpdateGlobalScaleParameters(string prior_type,
+                                            double global_parameter,
+                                            double& storage_eta, // Store the updated eta at this location
+                                            Random& random);
+  void UpdateHalfCauchyScale(double global_parameter, double& storage_eta, Random& random);
+
 protected:
    size_t m;  //number of StanTrees
    std::vector<StanTree> t; //the StanTrees

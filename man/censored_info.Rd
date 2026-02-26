@@ -15,6 +15,8 @@ censored_info(y, status)
 A list with elements:
 \item{mu}{Estimated mean of survival times.}
 \item{sd}{Estimated standard deviation of survival times.}
+\item{min}{Estimated minimum of survival times.}
+\item{max}{Estimated maximum of survival times.}
 }
 \description{
 Estimates the mean and standard deviation for right-censored survival data.

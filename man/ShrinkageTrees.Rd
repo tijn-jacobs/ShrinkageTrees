@@ -15,14 +15,13 @@ ShrinkageTrees(
   prior_type = "horseshoe",
   local_hp = NULL,
   global_hp = NULL,
+  a_dirichlet = 0.5,
+  b_dirichlet = 1,
+  rho_dirichlet = NULL,
   power = 2,
   base = 0.95,
   p_grow = 0.4,
   p_prune = 0.4,
-  dirichlet = FALSE,
-  alpha_dirichlet = NULL,
-  a_dirichlet = 0.5,
-  b_dirichlet = 1,
   nu = 3,
   q = 0.9,
   sigma = NULL,
@@ -30,7 +29,6 @@ ShrinkageTrees(
   N_burn = 1000,
   delayed_proposal = 5,
   store_posterior_sample = TRUE,
-  seed = NULL,
   verbose = TRUE
 )
 }
@@ -58,7 +56,8 @@ or \code{"log"} (already log-transformed). Only used when
 \item{number_of_trees}{Number of trees in the ensemble. Default is 200.}
 
 \item{prior_type}{Type of prior on the step heights. Options include
-\code{"horseshoe"}, \code{"horseshoe_fw"}, \code{"horseshoe_EB"}, \code{"half-cauchy"}, and \code{"standard"}.}
+\code{"horseshoe"}, \code{"horseshoe_fw"}, \code{"horseshoe_EB"}, \code{"half-cauchy"},
+\code{"standard"} and \code{"dirichlet"}.}
 
 \item{local_hp}{Local hyperparameter controlling shrinkage on individual
 step heights. Should typically be set smaller than 1 / sqrt(number_of_trees).
@@ -68,6 +67,17 @@ Required for \code{prior_type = "standard"}.}
 Must be specified for Horseshoe-type priors; ignored for
 \code{prior_type = "half-cauchy"} or \code{"standard"}.}
 
+\item{a_dirichlet}{First shape parameter of the Beta prior used in the
+Dirichlet–Sparse splitting rule. Together with \code{b_dirichlet_control}, it
+controls the expected sparsity level. Only when "prior_type = "dirichlet"`.}
+
+\item{b_dirichlet}{Second shape parameter of the Beta prior for the
+sparsity level. Larger values shrink splitting probabilities more strongly
+toward uniform sparsity.  Only when "prior_type = "dirichlet"`.}
+
+\item{rho_dirichlet}{Sparsity hyperparameter. If left NULL, it defaults to
+the number of covariates in the control forest.  Only when "prior_type = "dirichlet"`.}
+
 \item{power}{Power parameter for the tree structure prior. Default is 2.0.}
 
 \item{base}{Base parameter for the tree structure prior. Default is 0.95.}
@@ -75,21 +85,6 @@ Must be specified for Horseshoe-type priors; ignored for
 \item{p_grow}{Probability of proposing a grow move. Default is 0.4.}
 
 \item{p_prune}{Probability of proposing a prune move. Default is 0.4.}
-
-\item{dirichlet}{Logical; whether to enable the Dirichlet prior
-on variable inclusion probabilities. Default is FALSE.}
-
-\item{alpha_dirichlet}{Optional fixed concentration parameter for the
-Dirichlet prior. If NULL, it will be learned adaptively using a Beta
-hyperprior controlled by \code{a_dirichlet} and \code{b_dirichlet}.}
-
-\item{a_dirichlet}{Numeric; shape parameter 'a' of the Beta prior for the
-transformed Dirichlet concentration parameter when
-\code{alpha_dirichlet = NULL}. Default is 0.5.}
-
-\item{b_dirichlet}{Numeric; shape parameter 'b' of the Beta prior for the
-transformed Dirichlet concentration parameter when
-\code{alpha_dirichlet = NULL}. Default is 1.0.}
 
 \item{nu}{Degrees of freedom for the error distribution prior. Default is 3.}
 
@@ -107,8 +102,6 @@ for reversible updates. Default is 5.}
 
 \item{store_posterior_sample}{Logical; whether to store posterior samples for
 each iteration. Default is TRUE.}
-
-\item{seed}{Random seed for reproducibility.}
 
 \item{verbose}{Logical; whether to print verbose output. Default is TRUE.}
 }
@@ -147,8 +140,9 @@ different global-local shrinkage priors on the step heights.
 \details{
 This function is a flexible generalization of \code{HorseTrees}.
 Instead of using a single Horseshoe prior, it allows specifying different
-global-local shrinkage configurations for the tree step heights.
-Currently, four priors have been implemented.
+global–local shrinkage configurations for the tree step heights. Further
+methodological details on the Horseshoe Forest framework can be found in
+Jacobs, van Wieringen & van der Pas (2025).
 
 The \code{horseshoe} prior is the fully Bayesian global-local shrinkage
 prior, where both the global and local shrinkage parameters are assigned
@@ -170,6 +164,18 @@ not estimated by the software.
 The \code{half-cauchy} prior considers only local shrinkage and does not
 include a global shrinkage component. It places a half-Cauchy prior on each
 local shrinkage parameter with scale hyperparameter \code{local_hp}.
+
+The \code{standard} prior (Chipman, George & McCulloch, 2010) corresponds to
+the classical BART specification, where step heights are given a normal
+prior with variance scaled by the number of trees. This prior does not
+introduce a global shrinkage parameter and does not use global–local
+structure.
+
+The \code{dirichlet} prior implements the Dirichlet–Sparse splitting rule of
+Linero (2018), in which splitting probabilities follow a Dirichlet prior
+whose concentration is controlled by a Beta sparsity parameter
+(\code{a_dirichlet}, \code{b_dirichlet}) and an expected sparsity level
+\code{rho_dirichlet}.
 }
 \examples{
 # Example: Continuous outcome with ShrinkageTrees, two priors
@@ -191,8 +197,7 @@ fit_horseshoe <- ShrinkageTrees(y = y,
                                 N_post = 10,
                                 N_burn = 5,
                                 store_posterior_sample = TRUE,
-                                verbose = FALSE,
-                                seed = 1)
+                                verbose = FALSE)
 
 # Fit ShrinkageTrees with half-Cauchy prior
 fit_halfcauchy <- ShrinkageTrees(y = y,
@@ -205,8 +210,7 @@ fit_halfcauchy <- ShrinkageTrees(y = y,
                                  N_post = 10,
                                  N_burn = 5,
                                  store_posterior_sample = TRUE,
-                                 verbose = FALSE,
-                                 seed = 1)
+                                 verbose = FALSE)
 
 # Posterior mean predictions
 pred_horseshoe <- colMeans(fit_horseshoe$train_predictions_sample)
@@ -220,6 +224,17 @@ post_mean_halfcauchy <- rowMeans(fit_halfcauchy$train_predictions_sample)
 mean_pred_horseshoe <- mean(post_mean_horseshoe)
 mean_pred_halfcauchy <- mean(post_mean_halfcauchy)
 
+}
+\references{
+Jacobs, T., van Wieringen, W. N., & van der Pas, S. L. (2025).
+\emph{Horseshoe Forests for High-Dimensional Causal Survival Analysis.}
+arXiv:2507.22004. https://doi.org/10.48550/arXiv.2507.22004
+Chipman, H. A., George, E. I., & McCulloch, R. E. (2010).
+\emph{BART: Bayesian additive regression trees.} Annals of Applied Statistics.
+
+Linero, A. R. (2018). \emph{Bayesian regression trees for high-dimensional
+prediction and variable selection.} Journal of the American Statistical
+Association.
 }
 \seealso{
 \code{\link{HorseTrees}}, \code{\link{CausalHorseForest}}, \code{\link{CausalShrinkageForest}}

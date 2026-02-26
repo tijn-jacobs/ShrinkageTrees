@@ -22,10 +22,9 @@ Rcpp::List HorseTrees_cpp(
   SEXP nuSEXP,     
   SEXP lambdaSEXP,
   SEXP dirichlet_boolSEXP,
-  SEXP alpha_dirichletSEXP,
-  SEXP const_alphaSEXP,
   SEXP a_dirichletSEXP,
-  SEXP b_dirichletSEXP,     
+  SEXP b_dirichletSEXP, 
+  SEXP rho_dirichletSEXP,     
   SEXP sigmaSEXP,
   SEXP sigma_knownSEXP,     
   SEXP omegaSEXP,
@@ -66,10 +65,9 @@ Rcpp::List HorseTrees_cpp(
   double nu = Rcpp::as<double>(nuSEXP);   
   double lambda = Rcpp::as<double>(lambdaSEXP);  
   bool dirichlet_bool = Rcpp::as<bool>(dirichlet_boolSEXP);
-  double alpha_dirichlet = Rcpp::as<double>(alpha_dirichletSEXP);
-  bool const_alpha = Rcpp::as<bool>(const_alphaSEXP);
   double a_dirichlet = Rcpp::as<double>(a_dirichletSEXP);
   double b_dirichlet = Rcpp::as<double>(b_dirichletSEXP); 
+  double rho_dirichlet = Rcpp::as<double>(rho_dirichletSEXP);
   double sigma = Rcpp::as<double>(sigmaSEXP);
   bool sigma_known = Rcpp::as<bool>(sigma_knownSEXP);
   double omega = Rcpp::as<double>(omegaSEXP);
@@ -110,6 +108,7 @@ Rcpp::List HorseTrees_cpp(
   Rcpp::NumericMatrix store_split_probs;
   Rcpp::NumericMatrix store_split_counts;
 
+  double alpha_dirichlet = 1.0;
   if (dirichlet_bool) {
     store_alpha_dirichlet = Rcpp::NumericVector(N_post);
     store_split_probs     = Rcpp::NumericMatrix(N_post, p);
@@ -132,29 +131,34 @@ Rcpp::List HorseTrees_cpp(
     prior = PriorType::HalfCauchy;
   } else if (prior_type == "horseshoe_fw") {
     prior = PriorType::Horseshoe_fw;
+  } else if (prior_type == "dirichlet") {
+    prior = PriorType::FixedVariance; // <- This should be an empty prior!!!
   } else {
-    Rcpp::stop("Invalid prior type provided. Choose one of: 'horseshoe', 'fixed', 'halfcauchy', 'horseshoe_fw', 'standard'.");
+    Rcpp::stop("Invalid prior type provided. Choose one of: 'horseshoe', 'fixed', 'halfcauchy', 'horseshoe_fw', 'standard', 'dirichlet.");
   }
   
   // Initialize the scale mixture prior on the step heights in the leaves
   ScaleMixture scale_mixture(prior, param1, param2);
   
-  // Build the forest%random.inv_gamma
-  ForestEngine forest(ForestEngineType::forest_type, number_of_trees);
-  // Forest forest(ForestEngineType::forest_type, number_of_trees);
-  forest.SetTreePrior(base, power, param1, p_grow, p_prune, a_dirichlet, b_dirichlet, p, false, dirichlet_bool, alpha_dirichlet); // In case of NON-RJ; param1 = step height variance
+  // Build the forest
+  ForestEngineType engine_type;
+  if (reversible) {
+    engine_type = ForestEngineType::forest_type;
+  } else {
+    engine_type = ForestEngineType::stan_forest_type;
+  }
+  ForestEngine forest(engine_type, number_of_trees);
+  forest.SetTreePrior(base, power, param1, p_grow, p_prune, a_dirichlet, b_dirichlet, rho_dirichlet, false, dirichlet_bool, alpha_dirichlet); // In case of NON-RJ; param1 = step height variance
   forest.SetUpForest(p, n, X_train, y, nullptr, omega);
 
   
   for (size_t i = 0; i < n; i++) train_predictions_mean[i] = 0.0;
   for (size_t i = 0; i < n_test; i++) test_predictions_mean[i] = 0.0;
   
-  //-----------------------------------------------------------
   
   // Temporary storage
-  double* testpred = (n_test) ? new double[n_test] : nullptr;
+  double* test_predictions = (n_test) ? new double[n_test] : nullptr;
   
-  //-----------------------------------------------------------
   // MCMC
   if(print_progress) Rcpp::Rcout << "\nProgress of the MCMC sampler:\n\n";
 
@@ -202,7 +206,6 @@ Rcpp::List HorseTrees_cpp(
 
     if(i == (N_burn/2) && dirichlet_bool) {
       forest.StartDirichlet();
-      cout << "\nDirichlet prior on variable selection started at iteration " << i << ".\n";
     }
 
   
@@ -337,20 +340,20 @@ Rcpp::List HorseTrees_cpp(
 
       // Predict test set
       if (n_test > 0) {
-        forest.Predict(p, n_test, X_test, testpred);
+        forest.Predict(p, n_test, X_test, test_predictions);
       }
 
       // Store posterior sample of test predictions
       if (store_posterior_sample && n_test > 0) {
         for (size_t k = 0; k < n_test; k++) {
-          test_predictions_sample(i - N_burn, k) = testpred[k];
+          test_predictions_sample(i - N_burn, k) = test_predictions[k];
         }
       }
 
       // Store posterior mean of test predictions
       if (n_test > 0) {
         for (size_t k = 0; k < n_test; k++) {
-          test_predictions_mean[k] += testpred[k];
+          test_predictions_mean[k] += test_predictions[k];
         }
       }
 
@@ -421,7 +424,7 @@ Rcpp::List HorseTrees_cpp(
   results["store_split_counts"] = store_split_counts;
 
   
-  if (testpred) delete[] testpred;
+  if (test_predictions) delete[] test_predictions;
   delete[] accepted;
 
   return results;

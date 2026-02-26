@@ -20,7 +20,8 @@
 #' `outcome_type = "right-censored"`.
 #' @param number_of_trees Number of trees in the ensemble. Default is 200.
 #' @param prior_type Type of prior on the step heights. Options include
-#' `"horseshoe"`, `"horseshoe_fw"`, `"horseshoe_EB"`, `"half-cauchy"`, and `"standard"`.
+#' `"horseshoe"`, `"horseshoe_fw"`, `"horseshoe_EB"`, `"half-cauchy"`, 
+#' `"standard"` and `"dirichlet"`.
 #' @param local_hp Local hyperparameter controlling shrinkage on individual
 #' step heights. Should typically be set smaller than 1 / sqrt(number_of_trees).
 #' Required for `prior_type = "standard"`.
@@ -31,17 +32,14 @@
 #' @param base Base parameter for the tree structure prior. Default is 0.95.
 #' @param p_grow Probability of proposing a grow move. Default is 0.4.
 #' @param p_prune Probability of proposing a prune move. Default is 0.4.
-#' @param dirichlet Logical; whether to enable the Dirichlet prior
-#' on variable inclusion probabilities. Default is FALSE.
-#' @param alpha_dirichlet Optional fixed concentration parameter for the
-#' Dirichlet prior. If NULL, it will be learned adaptively using a Beta
-#' hyperprior controlled by \code{a_dirichlet} and \code{b_dirichlet}.
-#' @param a_dirichlet Numeric; shape parameter 'a' of the Beta prior for the
-#' transformed Dirichlet concentration parameter when 
-#' \code{alpha_dirichlet = NULL}. Default is 0.5.
-#' @param b_dirichlet Numeric; shape parameter 'b' of the Beta prior for the
-#' transformed Dirichlet concentration parameter when 
-#' \code{alpha_dirichlet = NULL}. Default is 1.0.
+#' @param a_dirichlet First shape parameter of the Beta prior used in the
+#' Dirichlet–Sparse splitting rule. Together with `b_dirichlet_control`, it 
+#' controls the expected sparsity level. Only when "prior_type = "dirichlet"`.
+#' @param b_dirichlet Second shape parameter of the Beta prior for the 
+#' sparsity level. Larger values shrink splitting probabilities more strongly 
+#' toward uniform sparsity.  Only when "prior_type = "dirichlet"`.
+#' @param rho_dirichlet Sparsity hyperparameter. If left NULL, it defaults to 
+#' the number of covariates in the control forest.  Only when "prior_type = "dirichlet"`.
 #' @param nu Degrees of freedom for the error distribution prior. Default is 3.
 #' @param q Quantile hyperparameter for the error variance prior. Default is 0.90.
 #' @param sigma Optional known value for error standard deviation. If NULL,
@@ -52,7 +50,6 @@
 #' for reversible updates. Default is 5.
 #' @param store_posterior_sample Logical; whether to store posterior samples for
 #' each iteration. Default is TRUE.
-#' @param seed Random seed for reproducibility.
 #' @param verbose Logical; whether to print verbose output. Default is TRUE.
 #'
 #' @return A named list with the following elements:
@@ -82,10 +79,11 @@
 #' }
 #'
 #' @details
-#' This function is a flexible generalization of \code{HorseTrees}.
+#' This function is a flexible generalization of \code{HorseTrees}. 
 #' Instead of using a single Horseshoe prior, it allows specifying different
-#' global-local shrinkage configurations for the tree step heights. 
-#' Currently, four priors have been implemented. 
+#' global–local shrinkage configurations for the tree step heights. Further
+#' methodological details on the Horseshoe Forest framework can be found in 
+#' Jacobs, van Wieringen & van der Pas (2025).
 #'
 #' The \code{horseshoe} prior is the fully Bayesian global-local shrinkage
 #' prior, where both the global and local shrinkage parameters are assigned
@@ -108,6 +106,29 @@
 #' include a global shrinkage component. It places a half-Cauchy prior on each
 #' local shrinkage parameter with scale hyperparameter \code{local_hp}.
 #' 
+#' The \code{standard} prior (Chipman, George & McCulloch, 2010) corresponds to
+#' the classical BART specification, where step heights are given a normal 
+#' prior with variance scaled by the number of trees. This prior does not
+#' introduce a global shrinkage parameter and does not use global–local 
+#' structure.
+#'
+#' The \code{dirichlet} prior implements the Dirichlet–Sparse splitting rule of 
+#' Linero (2018), in which splitting probabilities follow a Dirichlet prior 
+#' whose concentration is controlled by a Beta sparsity parameter 
+#' (\code{a_dirichlet}, \code{b_dirichlet}) and an expected sparsity level 
+#' \code{rho_dirichlet}. 
+#'
+#' @references
+#' Jacobs, T., van Wieringen, W. N., & van der Pas, S. L. (2025).  
+#' *Horseshoe Forests for High-Dimensional Causal Survival Analysis.*  
+#' arXiv:2507.22004. https://doi.org/10.48550/arXiv.2507.22004
+#' Chipman, H. A., George, E. I., & McCulloch, R. E. (2010). 
+#' *BART: Bayesian additive regression trees.* Annals of Applied Statistics.
+#'
+#' Linero, A. R. (2018). *Bayesian regression trees for high-dimensional 
+#' prediction and variable selection.* Journal of the American Statistical 
+#' Association.
+#' 
 #' @examples
 #' # Example: Continuous outcome with ShrinkageTrees, two priors
 #' n <- 50
@@ -128,8 +149,7 @@
 #'                                 N_post = 10,
 #'                                 N_burn = 5,
 #'                                 store_posterior_sample = TRUE,
-#'                                 verbose = FALSE,
-#'                                 seed = 1)
+#'                                 verbose = FALSE)
 #'
 #' # Fit ShrinkageTrees with half-Cauchy prior
 #' fit_halfcauchy <- ShrinkageTrees(y = y,
@@ -142,8 +162,7 @@
 #'                                  N_post = 10,
 #'                                  N_burn = 5,
 #'                                  store_posterior_sample = TRUE,
-#'                                  verbose = FALSE,
-#'                                  seed = 1)
+#'                                  verbose = FALSE)
 #'
 #' # Posterior mean predictions
 #' pred_horseshoe <- colMeans(fit_horseshoe$train_predictions_sample)
@@ -174,14 +193,13 @@ ShrinkageTrees <- function(y,
                            prior_type = "horseshoe",
                            local_hp = NULL,
                            global_hp = NULL,
+                           a_dirichlet = 0.5,
+                           b_dirichlet = 1.0,
+                           rho_dirichlet = NULL,
                            power = 2.0,
                            base = 0.95,
                            p_grow = 0.4,
                            p_prune = 0.4,
-                           dirichlet = FALSE,
-                           alpha_dirichlet = NULL,
-                           a_dirichlet = 0.5,
-                           b_dirichlet = 1.0,
                            nu = 3,
                            q = 0.90,
                            sigma = NULL,
@@ -189,7 +207,6 @@ ShrinkageTrees <- function(y,
                            N_burn = 1000,
                            delayed_proposal = 5,
                            store_posterior_sample = TRUE,
-                           seed = NULL,
                            verbose = TRUE) {
 
 
@@ -202,9 +219,9 @@ ShrinkageTrees <- function(y,
   }
   
   # Check prior_type value
-  allowed_prior <- c("horseshoe", "horseshoe_fw", "horseshoe_EB", "half-cauchy", "standard")
+  allowed_prior <- c("horseshoe", "horseshoe_fw", "horseshoe_EB", "half-cauchy", "standard", "dirichlet")
   if (!prior_type %in% allowed_prior) {
-    stop("Invalid prior_type. Choose 'horseshoe', 'horseshoe_fw', 'horseshoe_EB', 'half-cauchy' or 'standard'.")
+    stop("Invalid prior_type. Choose 'horseshoe', 'horseshoe_fw', 'horseshoe_EB', 'half-cauchy', 'standard' or 'dirichlet.")
   }
   
   # Prior-specific checks
@@ -231,12 +248,12 @@ ShrinkageTrees <- function(y,
   reversible_flag <- TRUE
 
   # 'standard' BART prior: local-only shrinkage, no RJ moves
-  if (prior_type == "standard") {
+  if (prior_type %in% c("standard", "dirichlet")) {
     if (is.null(local_hp)) {
       stop("For prior_type = 'standard', you must provide local_hp.")
     }
     if (!is.null(global_hp)) {
-      warning("global_hp is ignored for 'standard' (BART-style prior).")
+      warning("global_hp is ignored for 'standard' or 'dirichet' prior.")
     }
 
     global_hp <- 1          # placeholder (ignored by C++)
@@ -300,18 +317,16 @@ ShrinkageTrees <- function(y,
   p_prune <- as.numeric(p_prune)[1]
   X_train <- as.numeric(t(X_train))
   
-  # Set a random seed if not provided
-  # By taking a random number, we ensure compatibility with set.seed()
-  if (is.null(seed)) seed <- as.integer(runif(1, 1, 1000000))
-
-  # Determine const_alpha based on whether alpha_dirichlet was provided
-  if (!is.null(alpha_dirichlet)) {
-    const_alpha <- TRUE
-  } else {
-    const_alpha <- FALSE
-    alpha_dirichlet <- 1.0  # default starting value when adaptive
+  # Default rho to number of features
+  if (is.null(rho_dirichlet)) {
+    rho_dirichlet <- p_features
   }
-  
+  if (prior_type == "dirichlet") { 
+    dirichlet <- TRUE 
+  } else { 
+    dirichlet <- FALSE 
+  }
+
   if (outcome_type == "right-censored") {
     
     # Convert y to numeric for C++ compatibility
@@ -332,6 +347,7 @@ ShrinkageTrees <- function(y,
     # Determine sigma (timescale parameter) and whether it is known
     if (is.null(sigma)) {
       sigma_hat <- cens_inf$sd
+      if (prior_type == "standard" || prior_type == "dirichlet") sigma_hat <- 1
       sigma_known <- FALSE
     } else {
       sigma_hat <- sigma
@@ -369,10 +385,9 @@ ShrinkageTrees <- function(y,
       nuSEXP = nu,
       lambdaSEXP = lambda,
       dirichlet_boolSEXP = dirichlet,
-      alpha_dirichletSEXP = alpha_dirichlet,
-      const_alphaSEXP = const_alpha,
       a_dirichletSEXP = a_dirichlet,
       b_dirichletSEXP = b_dirichlet,
+      rho_dirichletSEXP = rho_dirichlet,
       sigmaSEXP = sigma_hat,
       sigma_knownSEXP = sigma_known,
       omegaSEXP = 1,
@@ -453,6 +468,7 @@ ShrinkageTrees <- function(y,
     # Determine prior guess of sigma 
     if (is.null(sigma)) {
       sigma_hat <- sd(y)      # Estimate sigma from data
+      if (prior_type == "standard" || prior_type == "dirichlet") sigma_hat <- 1
       sigma_known <- FALSE
     } else {
       sigma_hat <- sigma      # Use provided sigma
@@ -466,7 +482,6 @@ ShrinkageTrees <- function(y,
     # Compute mean and standardize  the outcome
     y_mean <- mean(y)
     y <- y - y_mean
-    if (prior_type == "standard") sigma_hat <- 1
     y <- y / sigma_hat  # Standardize y
     
     fit <- HorseTrees_cpp(
@@ -489,10 +504,9 @@ ShrinkageTrees <- function(y,
       nuSEXP = nu,
       lambdaSEXP = lambda,
       dirichlet_boolSEXP = dirichlet,
-      alpha_dirichletSEXP = alpha_dirichlet,
-      const_alphaSEXP = const_alpha,
       a_dirichletSEXP = a_dirichlet,
       b_dirichletSEXP = b_dirichlet,
+      rho_dirichletSEXP = rho_dirichlet,
       sigmaSEXP = sigma_hat,
       sigma_knownSEXP = sigma_known,
       omegaSEXP = 1,

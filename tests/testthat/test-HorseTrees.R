@@ -6,6 +6,7 @@ test_that("HorseTrees for continuous outcome", {
   y <- X[, 1] + rnorm(50)
   
   # Fit the model
+  set.seed(1)
   fit <- HorseTrees(y = y, 
                     X_train = X,
                     X_test = X_test,
@@ -14,8 +15,7 @@ test_that("HorseTrees for continuous outcome", {
                     N_post = 10,
                     N_burn = 5,
                     store_posterior_sample = TRUE,
-                    verbose = FALSE,
-                    seed = 1)
+                    verbose = FALSE)
   
   # Basic checks
   expect_type(fit, "list")
@@ -45,9 +45,10 @@ test_that("HorseTrees for continuous outcome", {
   expect_true(sd(fit$test_predictions_sample) > 0)
   
   # Check reproducibility
+  set.seed(1)
   fit2 <- HorseTrees(y = y, X_train = X, outcome_type = "continuous", number_of_trees = 5, 
                      N_post = 10, N_burn = 5, store_posterior_sample = TRUE, 
-                     verbose = FALSE, seed = 1)
+                     verbose = FALSE)
   expect_equal(fit$train_predictions, fit2$train_predictions)
 })
 
@@ -60,6 +61,7 @@ test_that("HorseTrees for binary outcome", {
   y <- ifelse(X[, 1] + rnorm(50) > 0, 1, 0)
   
   # Fit the model
+  set.seed(1)
   fit <- HorseTrees(y = y, 
                     X_train = X,
                     X_test = X_test,
@@ -68,8 +70,7 @@ test_that("HorseTrees for binary outcome", {
                     N_post = 10,
                     N_burn = 5,
                     store_posterior_sample = TRUE,
-                    verbose = FALSE,
-                    seed = 1)
+                    verbose = FALSE)
   
   # Basic checks
   expect_type(fit, "list")
@@ -102,9 +103,10 @@ test_that("HorseTrees for binary outcome", {
   expect_true(sd(fit$test_predictions_sample) > 0)
   
   # Check reproducibility
+  set.seed(1)
   fit2 <- HorseTrees(y = y, X_train = X, outcome_type = "binary", number_of_trees = 5, 
                      N_post = 10, N_burn = 5, store_posterior_sample = TRUE, 
-                     verbose = FALSE, seed = 1)
+                     verbose = FALSE)
   expect_equal(fit$train_predictions, fit2$train_predictions)
 })
 
@@ -126,6 +128,7 @@ test_that("HorseTrees for right-censored survival outcome", {
   status <- as.numeric(true_time <= censor_time)
   
   # Fit the model
+  set.seed(1)
   fit <- HorseTrees(y = time_obs, 
                     X_train = X,
                     X_test = X_test,
@@ -135,8 +138,7 @@ test_that("HorseTrees for right-censored survival outcome", {
                     N_post = 10,
                     N_burn = 5,
                     store_posterior_sample = TRUE,
-                    verbose = FALSE,
-                    seed = 1)
+                    verbose = FALSE)
   
   # Basic checks
   expect_type(fit, "list")
@@ -167,9 +169,9 @@ test_that("HorseTrees for right-censored survival outcome", {
   expect_true(sd(fit$test_predictions_sample) > 0)
   
   # Check reproducibility
+  set.seed(1)
   fit2 <- HorseTrees(y = time_obs, X_train = X, outcome_type = "right-censored", 
                      status = status, number_of_trees = 5, N_post = 10, 
-                     N_burn = 5, store_posterior_sample = TRUE, verbose = FALSE, 
-                     seed = 1)
+                     N_burn = 5, store_posterior_sample = TRUE, verbose = FALSE)
   expect_equal(fit$train_predictions, fit2$train_predictions)
 })

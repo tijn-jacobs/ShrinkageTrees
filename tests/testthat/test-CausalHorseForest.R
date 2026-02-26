@@ -19,6 +19,7 @@ test_that("CausalHorseForest works for continuous outcome", {
   treatment_test <- rbinom(n, 1, 0.5)
   
   # Fit the model
+  set.seed(1)
   fit <- CausalHorseForest(
     y = y,
     X_train_control = X_control,
@@ -32,8 +33,7 @@ test_that("CausalHorseForest works for continuous outcome", {
     N_post = 10,
     N_burn = 5,
     store_posterior_sample = TRUE,
-    verbose = FALSE,
-    seed = 1
+    verbose = FALSE
   )
   
   # --- Basic list checks ---
@@ -85,6 +85,7 @@ test_that("CausalHorseForest works for continuous outcome", {
   expect_true(sd(fit$test_predictions_sample_treat) > 0)
   
   # --- Check reproducibility ---
+  set.seed(1)
   fit2 <- CausalHorseForest(
     y = y,
     X_train_control = X_control,
@@ -95,8 +96,7 @@ test_that("CausalHorseForest works for continuous outcome", {
     N_post = 10,
     N_burn = 5,
     store_posterior_sample = TRUE,
-    verbose = FALSE,
-    seed = 1
+    verbose = FALSE
   )
   expect_equal(fit$train_predictions, fit2$train_predictions)
 })
@@ -136,6 +136,7 @@ test_that("CausalHorseForest works for survival outcome", {
   treatment_test <- rbinom(n, 1, 0.5)
   
   # Fit the model
+  set.seed(1)
   fit <- CausalHorseForest(
     y = time,
     status = status,
@@ -150,8 +151,7 @@ test_that("CausalHorseForest works for survival outcome", {
     N_post = 10,
     N_burn = 5,
     store_posterior_sample = TRUE,
-    verbose = FALSE,
-    seed = 1
+    verbose = FALSE
   )
   
   # --- Basic list checks ---
@@ -203,6 +203,7 @@ test_that("CausalHorseForest works for survival outcome", {
   expect_true(sd(fit$test_predictions_sample_treat) > 0)
   
   # --- Check reproducibility ---
+  set.seed(1)
   fit2 <- CausalHorseForest(
     y = time,
     status = status,
@@ -214,8 +215,7 @@ test_that("CausalHorseForest works for survival outcome", {
     N_post = 10,
     N_burn = 5,
     store_posterior_sample = TRUE,
-    verbose = FALSE,
-    seed = 1
+    verbose = FALSE
   )
   expect_equal(fit$train_predictions, fit2$train_predictions)
 })

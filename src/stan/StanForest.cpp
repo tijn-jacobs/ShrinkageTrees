@@ -1,4 +1,3 @@
-
 #include "StanForest.h"
 
 
@@ -102,29 +101,39 @@ void StanForest::predict(size_t p, size_t n, double *x, double *fp)
    delete[] fptemp;
 }
 
-bool StanForest::draw(double sigma, Random& random)
-{
-  bool accept;
-   for(size_t j=0;j<m;j++) {
-      fit(t[j],xi,p,n,x,ftemp);
-      for(size_t k=0;k<n;k++) {
-         allfit[k] = allfit[k]-ftemp[k];
-         r[k] = y[k]-allfit[k];
+bool StanForest::draw(double sigma, Random& random, bool* accept) {
+   for(size_t j = 0; j < m; j++) {
+
+      // remove old contribution
+      fit(t[j], xi, p, n, x, ftemp);
+      for(size_t k = 0; k < n; k++) {
+         allfit[k] = allfit[k] - ftemp[k];
+         r[k] = y[k] - allfit[k];
       }
-      accept = bd(t[j],xi,di,pi,sigma,nv,pv,aug,random);
-      drmu(t[j],xi,di,pi,sigma,random);
-      fit(t[j],xi,p,n,x,ftemp);
-      for(size_t k=0;k<n;k++) allfit[k] += ftemp[k];
+
+      // store acceptance for this tree
+      accept[j] = bd(t[j], xi, di, pi, sigma, nv, pv, aug, random);
+
+      // draw new mu
+      drmu(t[j], xi, di, pi, sigma, random);
+
+      // add updated contribution
+      fit(t[j], xi, p, n, x, ftemp);
+      for(size_t k = 0; k < n; k++) {
+         allfit[k] += ftemp[k];
+      }
    }
    
    if(dartOn) {
-     draw_s(nv,lpv,theta,random);
-     draw_theta0(const_theta,theta,lpv,a,b,rho,random);
-     for(size_t j=0;j<p;j++) pv[j]=::exp(lpv[j]);
+     draw_s(nv, lpv, theta, random);
+     draw_theta0(const_theta, theta, lpv, a, b, rho, random);
+     for(size_t j = 0; j < p; j++)
+         pv[j] = ::exp(lpv[j]);
    }
-   
-   return accept;
+
+   return true;  // or return nothing if function is void
 }
+
 
 //public functions
 void StanForest::pr() //print to screen
@@ -145,3 +154,53 @@ void StanForest::pr() //print to screen
    if(p) cout << "data set: n,p: " << n << ", " << p << std::endl;
    else cout << "data not set\n";
 }
+
+void StanForest::UpdateGlobalScaleParameters(string prior_type,
+                                            double global_parameter,
+                                            double& storage_eta, // Store the updated eta at this location
+                                            Random& random) {
+
+  if (prior_type == "standard-halfcauchy") {
+    this->UpdateHalfCauchyScale(global_parameter, storage_eta, random);
+  } else if (prior_type == "standard-halfnormal") {
+    return;
+  } else { // Implement forest-wide horseshoe shrinkage update here
+    return;  
+  }  
+}
+
+
+void StanForest::UpdateHalfCauchyScale(double global_parameter, double& storage_eta, Random& random) {
+    
+  double sum_sq = 0.0;
+  double leaf_count = 0.0;
+
+  // Loop over all trees
+  for (size_t j = 0; j < m; j++) {
+
+      StanTree::npv leaves;
+      t[j].getbots(leaves); // bottom nodes
+
+      for (auto* leaf : leaves) {
+
+          double h = leaf->gettheta();  // leaf parameter (scalar)
+
+          sum_sq += (h * h) / (pi.eta * pi.eta);
+          leaf_count += 1.0;
+      }
+  }
+
+  double shape = 0.5 * (1.0 + leaf_count);
+  double rate  = 0.5 * (1.0 + sum_sq);
+
+  // Horseshoe auxiliary update
+  double aux = random.gamma(shape, 1.0) / rate;
+
+  // Update the global scale parameter
+  pi.eta = global_parameter / (std::sqrt(aux) * std::sqrt((double) m));
+  storage_eta = pi.eta;
+}
+
+
+
+

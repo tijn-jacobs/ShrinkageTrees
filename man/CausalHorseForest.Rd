@@ -28,7 +28,6 @@ CausalHorseForest(
   N_burn = 5000,
   delayed_proposal = 5,
   store_posterior_sample = FALSE,
-  seed = NULL,
   verbose = TRUE
 )
 }
@@ -92,8 +91,6 @@ Default is 5.}
 
 \item{store_posterior_sample}{Logical; whether to store posterior samples of
 predictions. Default is \code{FALSE}.}
-
-\item{seed}{Random seed for reproducibility. Default is \code{NULL}.}
 
 \item{verbose}{Logical; whether to print verbose output during sampling.
 Default is \code{TRUE}.}
@@ -160,8 +157,7 @@ fit <- CausalHorseForest(
   N_post = 10,
   N_burn = 5,
   store_posterior_sample = TRUE,
-  verbose = FALSE,
-  seed = 1
+  verbose = FALSE
 )
 
 \donttest{

@@ -1,23 +1,59 @@
 #include "CausalHorseForest.h"
+#include "ForestEngine.h"
 
 // [[Rcpp::export]]
 Rcpp::List CausalHorseForest_cpp(
-  SEXP nSEXP, SEXP p_treatSEXP, SEXP p_controlSEXP, SEXP X_train_treatSEXP,
-  SEXP X_train_controlSEXP, SEXP ySEXP, SEXP status_indicatorSEXP, SEXP is_survivalSEXP,
+  SEXP nSEXP, 
+  SEXP p_treatSEXP, 
+  SEXP p_controlSEXP, 
+  SEXP X_train_treatSEXP,
+  SEXP X_train_controlSEXP, 
+  SEXP ySEXP, 
+  SEXP status_indicatorSEXP, 
+  SEXP is_survivalSEXP,
   SEXP treatment_indicatorSEXP,
-  SEXP n_testSEXP, SEXP X_test_controlSEXP, SEXP X_test_treatSEXP, 
+  SEXP n_testSEXP, 
+  SEXP X_test_controlSEXP, 
+  SEXP X_test_treatSEXP, 
   SEXP treatment_indicator_testSEXP,
-  SEXP no_trees_treatSEXP, SEXP power_treatSEXP, SEXP base_treatSEXP,
-  SEXP p_grow_treatSEXP, SEXP p_prune_treatSEXP, SEXP omega_treatSEXP,
-  SEXP prior_type_treatSEXP, SEXP param1_treatSEXP, SEXP param2_treatSEXP,
-  SEXP reversible_treatSEXP, SEXP no_trees_controlSEXP,
-  SEXP power_controlSEXP, SEXP base_controlSEXP, SEXP p_grow_controlSEXP,
-  SEXP p_prune_controlSEXP, SEXP omega_controlSEXP, SEXP prior_type_controlSEXP,
-  SEXP param1_controlSEXP, SEXP param2_controlSEXP, SEXP reversible_controlSEXP,
-  SEXP sigma_knownSEXP, SEXP sigmaSEXP, SEXP lambdaSEXP,
-  SEXP nuSEXP, SEXP N_postSEXP, SEXP N_burnSEXP, SEXP delayed_proposalSEXP,
-  SEXP store_parametersSEXP, SEXP max_stored_leavesSEXP,
-  SEXP store_posterior_sample_controlSEXP, SEXP store_posterior_sample_treatSEXP, SEXP verboseSEXP
+  SEXP no_trees_treatSEXP, 
+  SEXP power_treatSEXP, 
+  SEXP base_treatSEXP,
+  SEXP p_grow_treatSEXP, 
+  SEXP p_prune_treatSEXP, 
+  SEXP omega_treatSEXP,
+  SEXP prior_type_treatSEXP, 
+  SEXP param1_treatSEXP, 
+  SEXP param2_treatSEXP,
+  SEXP reversible_treatSEXP, 
+  SEXP dirichlet_bool_treatSEXP,
+  SEXP a_dirichlet_treatSEXP,
+  SEXP b_dirichlet_treatSEXP, 
+  SEXP rho_dirichlet_treatSEXP,  
+  SEXP no_trees_controlSEXP,
+  SEXP power_controlSEXP, 
+  SEXP base_controlSEXP, 
+  SEXP p_grow_controlSEXP,
+  SEXP p_prune_controlSEXP, 
+  SEXP omega_controlSEXP, 
+  SEXP prior_type_controlSEXP,
+  SEXP param1_controlSEXP, 
+  SEXP param2_controlSEXP, 
+  SEXP reversible_controlSEXP,
+  SEXP dirichlet_bool_controlSEXP,
+  SEXP a_dirichlet_controlSEXP,
+  SEXP b_dirichlet_controlSEXP, 
+  SEXP rho_dirichlet_controlSEXP,  
+  SEXP sigma_knownSEXP, 
+  SEXP sigmaSEXP, 
+  SEXP lambdaSEXP,
+  SEXP nuSEXP, 
+  SEXP N_postSEXP, 
+  SEXP N_burnSEXP, 
+  SEXP delayed_proposalSEXP,
+  SEXP store_posterior_sample_controlSEXP, 
+  SEXP store_posterior_sample_treatSEXP, 
+  SEXP verboseSEXP
 ) {
 
   // Conversion of function arguments //
@@ -60,6 +96,10 @@ Rcpp::List CausalHorseForest_cpp(
   double param1_treat = Rcpp::as<double>(param1_treatSEXP);
   double param2_treat = Rcpp::as<double>(param2_treatSEXP);
   bool reversible_treat = Rcpp::as<bool>(reversible_treatSEXP);
+  bool dirichlet_bool_treat = Rcpp::as<bool>(dirichlet_bool_treatSEXP);
+  double a_dirichlet_treat = Rcpp::as<double>(a_dirichlet_treatSEXP);
+  double b_dirichlet_treat = Rcpp::as<double>(b_dirichlet_treatSEXP); 
+  double rho_dirichlet_treat = Rcpp::as<double>(rho_dirichlet_treatSEXP);
 
   // Hyperparameters prognostic model
   size_t no_trees_control = Rcpp::as<size_t>(no_trees_controlSEXP);
@@ -72,6 +112,10 @@ Rcpp::List CausalHorseForest_cpp(
   double param1_control = Rcpp::as<double>(param1_controlSEXP);
   double param2_control = Rcpp::as<double>(param2_controlSEXP);
   bool reversible_control = Rcpp::as<bool>(reversible_controlSEXP);
+  bool dirichlet_bool_control = Rcpp::as<bool>(dirichlet_bool_controlSEXP);
+  double a_dirichlet_control = Rcpp::as<double>(a_dirichlet_controlSEXP);
+  double b_dirichlet_control = Rcpp::as<double>(b_dirichlet_controlSEXP); 
+  double rho_dirichlet_control = Rcpp::as<double>(rho_dirichlet_controlSEXP);
 
   // Hyperparameters error variance model
   bool sigma_known = Rcpp::as<bool>(sigma_knownSEXP);
@@ -85,8 +129,6 @@ Rcpp::List CausalHorseForest_cpp(
   size_t delayed_proposal = Rcpp::as<size_t>(delayed_proposalSEXP);
 
   // Storage parameters
-  bool store_parameters = Rcpp::as<bool>(store_parametersSEXP);
-  size_t max_stored_leaves = Rcpp::as<size_t>(max_stored_leavesSEXP);
   bool store_posterior_sample_control = Rcpp::as<bool>(store_posterior_sample_controlSEXP);
   bool store_posterior_sample_treat = Rcpp::as<bool>(store_posterior_sample_treatSEXP);
 
@@ -143,33 +185,6 @@ Rcpp::List CausalHorseForest_cpp(
   double sum_accept_treat = 0;
   double acceptance_ratio_treat;
 
-  // Declare storage for the tree topology parameters
-  Rcpp::NumericMatrix store_global_parameters_control;
-  Rcpp::NumericMatrix store_local_parameters_control;
-  Rcpp::IntegerMatrix store_local_indices_control;
-  Rcpp::NumericMatrix store_global_parameters_treat;
-  Rcpp::NumericMatrix store_local_parameters_treat;
-  Rcpp::IntegerMatrix store_local_indices_treat;
-
-  // Initialize storage for the tree topology parameters, if requested
-  if (store_parameters) {
-    store_global_parameters_control = Rcpp::NumericMatrix(N_post, no_trees_control);
-    store_local_parameters_control = Rcpp::NumericMatrix(N_post, max_stored_leaves * no_trees_control);
-    store_local_indices_control = Rcpp::IntegerMatrix(N_post, max_stored_leaves * no_trees_control);
-    store_global_parameters_treat = Rcpp::NumericMatrix(N_post, no_trees_treat);
-    store_local_parameters_treat = Rcpp::NumericMatrix(N_post, max_stored_leaves * no_trees_treat);
-    store_local_indices_treat = Rcpp::IntegerMatrix(N_post, max_stored_leaves * no_trees_treat);
-
-    // Initialize with -2 for debugging (optional)
-    store_global_parameters_control.fill(-2);
-    store_local_parameters_control.fill(-2);
-    store_local_indices_control.fill(-2);
-    store_global_parameters_treat.fill(-2);
-    store_local_parameters_treat.fill(-2);
-    store_local_indices_treat.fill(-2);
-  }
-
-
   // Allocate memory for the test predictions of both models
   double* testpred_treat = (n_test) ? new double[n_test] : nullptr;
   double* testpred_control = (n_test) ? new double[n_test] : nullptr;
@@ -207,6 +222,36 @@ Rcpp::List CausalHorseForest_cpp(
     store_forestwide_shrinkage_treat.fill(0);
   }
 
+  // Declare storage for Dirichlet prior on variable selection
+  Rcpp::NumericVector store_alpha_dirichlet_control;
+  Rcpp::NumericVector store_alpha_dirichlet_treat;
+  Rcpp::NumericMatrix store_split_probs_control;
+  Rcpp::NumericMatrix store_split_probs_treat;
+  Rcpp::NumericMatrix store_split_counts_control;
+  Rcpp::NumericMatrix store_split_counts_treat;
+
+  store_split_counts_control = Rcpp::NumericMatrix(N_post, p_control);
+  store_split_counts_treat = Rcpp::NumericMatrix(N_post, p_treat);
+  double alpha_dirichlet_control = 1.0;
+  double alpha_dirichlet_treat = 1.0;
+
+  if (dirichlet_bool_control) {
+    store_alpha_dirichlet_control = Rcpp::NumericVector(N_post);
+    store_split_probs_control     = Rcpp::NumericMatrix(N_post, p_control);
+  }
+  if (dirichlet_bool_treat) {
+    store_alpha_dirichlet_treat = Rcpp::NumericVector(N_post);
+    store_split_probs_treat     = Rcpp::NumericMatrix(N_post, p_treat);
+  }
+  
+  Rcpp::NumericVector store_global_parameters_treat;
+  Rcpp::NumericVector store_global_parameters_control;
+  if (prior_type_treat == "standard-halfcauchy") {
+    store_global_parameters_treat = Rcpp::NumericVector(N_post + N_burn);
+  }
+  if (prior_type_control == "standard-halfcauchy") {
+    store_global_parameters_control = Rcpp::NumericVector(N_post + N_burn);
+  }
 
   // Set-up the forest for the prognostic model // 
 
@@ -219,19 +264,31 @@ Rcpp::List CausalHorseForest_cpp(
     prior_control = PriorType::HalfCauchy;
   } else if (prior_type_control == "horseshoe_fw") {
     prior_control = PriorType::Horseshoe_fw;
+  } else if (prior_type_control == "dirichlet") {
+    prior_control = PriorType::FixedVariance; // make an empty one
+  } else if (prior_type_control == "standard-halfcauchy") {
+    prior_control = PriorType::FixedVariance; // make an empty one
+  } else if (prior_type_control == "standard-halfnormal") {
+    prior_control = PriorType::FixedVariance; // make an empty one
   } else {
-    Rcpp::stop("Invalid prior type for prognostic forest. Choose one of: 'horseshoe', 'fixed', 'halfcauchy', 'horseshoe_fw', 'standard'.");
+    Rcpp::stop("Invalid prior type for prognostic forest. Choose one of: 'horseshoe', 'fixed', 'halfcauchy', 'horseshoe_fw', 'standard'. 'standard-halfcauchy, 'standard-halfnormal'.");
   }
   // Initialize the scale mixture prior on the step heights in the leaves for the prognostic model
   ScaleMixture scale_mixture_control(prior_control, param1_control, param2_control);
 
   // Build the forest 
-  Forest forest_control(no_trees_control);
-  forest_control.SetTreePrior(base_control, power_control, param1_control, p_grow_control, p_prune_control);
+  ForestEngineType engine_type_control;
+  if (reversible_control) {
+    engine_type_control = ForestEngineType::forest_type;
+  } else {
+    engine_type_control = ForestEngineType::stan_forest_type;
+  }
+  ForestEngine forest_control(engine_type_control, no_trees_control);
+  forest_control.SetTreePrior(base_control, power_control, param1_control, p_grow_control, p_prune_control, a_dirichlet_control, b_dirichlet_control, rho_dirichlet_control, false, dirichlet_bool_control, alpha_dirichlet_control); // In case of NON-RJ; param1 = step height variance
   forest_control.SetUpForest(p_control, n, X_train_control, augmented_outcome_control, nullptr, omega_control); // Use augmented outcome for y
 
   // Setup a vector to access the tree
-  // This is only needed for the forestwide shrinkage update.
+  // This is only needed (!) for the forestwide shrinkage update.
   // Consider removing this if not needed elsewhere, or empty initialization.
   // std::vector<Tree>* trees_control = forest_control.GetTreesPointer();
 
@@ -247,6 +304,12 @@ Rcpp::List CausalHorseForest_cpp(
     prior_treat = PriorType::HalfCauchy;
   } else if (prior_type_treat == "horseshoe_fw") {
     prior_treat = PriorType::Horseshoe_fw;
+  } else if (prior_type_treat == "dirichlet") {
+    prior_treat = PriorType::FixedVariance; // make an empty one
+  } else if (prior_type_treat == "standard-halfcauchy") {
+    prior_treat = PriorType::FixedVariance; // make an empty one
+  } else if (prior_type_treat == "standard-halfnormal") {
+    prior_treat = PriorType::FixedVariance; // make an empty one
   } else {
     Rcpp::stop("Invalid prior type for treatment effect forest. Choose one of: 'horseshoe', 'fixed', 'halfcauchy', 'horseshoe_fw', 'standard'.");
   }
@@ -254,13 +317,19 @@ Rcpp::List CausalHorseForest_cpp(
   // Initialize the scale mixture prior on the step heights in the leaves for the prognostic model
   ScaleMixture scale_mixture_treat(prior_treat, param1_treat, param2_treat);
 
-  // Build the forest 
-  Forest forest_treat(no_trees_treat);
-  forest_treat.SetTreePrior(base_treat, power_treat, param1_treat, p_grow_treat, p_prune_treat);
+  // Build the forest
+  ForestEngineType engine_type_treat;
+  if (reversible_treat) {
+    engine_type_treat = ForestEngineType::forest_type;
+  } else {
+    engine_type_treat = ForestEngineType::stan_forest_type;
+  }
+  ForestEngine forest_treat(engine_type_treat, no_trees_treat);
+  forest_treat.SetTreePrior(base_treat, power_treat, param1_treat, p_grow_treat, p_prune_treat, a_dirichlet_treat, b_dirichlet_treat, rho_dirichlet_treat, false, dirichlet_bool_treat, alpha_dirichlet_treat); // In case of NON-RJ; param1 = step height variance
   forest_treat.SetUpForest(p_treat, n, X_train_treat, augmented_outcome_treat, nullptr, omega_treat); // Use augmented outcome for y
 
   // Setup a vector to access the trees
-  std::vector<Tree>* trees_treat = forest_treat.GetTreesPointer();
+  // std::vector<Tree>* trees_treat = forest_treat.GetTreesPointer();
 
   // Initialize the C-based random number generator
   RandomGenerator random;
@@ -304,6 +373,14 @@ Rcpp::List CausalHorseForest_cpp(
       Rcpp::Rcout.flush(); // Ensure the output is immediately written to the console
     }
 
+    // Initialize the Dirichlet prior on variable selection, if applicable
+    if(i == (N_burn/2) && dirichlet_bool_control) {
+      forest_control.StartDirichlet();
+    }
+    if(i == (N_burn/2) && dirichlet_bool_treat) {
+      forest_treat.StartDirichlet();
+    }
+
     // Update the prognostic forest 
     forest_control.UpdateForest(
       sigma, 
@@ -342,6 +419,7 @@ Rcpp::List CausalHorseForest_cpp(
       accepted_treat
     );
 
+    /*
     // Update the forestwide shrinkage parameter of the treatment effect forest, if applicable 
     UpdateForestwideShrinkage(
       prior_type_treat,
@@ -351,6 +429,7 @@ Rcpp::List CausalHorseForest_cpp(
       forestwide_shrinkage_treat, 
       param2_treat
     );
+    */
 
     // Update the augmented outcome for the prognostic model
     for (size_t k = 0; k < n; k++) {
@@ -362,6 +441,24 @@ Rcpp::List CausalHorseForest_cpp(
     for (size_t k = 0; k < n; k++) {
       double b = (treatment_indicator[k] == 1) ? 0.5 : -0.5;
       total_predictions[k] = forest_control.GetPredictions()[k] + b*forest_treat.GetPredictions()[k];
+    }
+
+    // Perform updates of the global eta parameters for both forest if STANDARD-HALFCAUCHY
+    if (prior_type_treat == "standard-halfcauchy") {
+      forest_treat.UpdateGlobalScaleParameters(
+        prior_type_treat,
+        param1_treat,
+        store_global_parameters_treat[i],
+        random
+      );
+    }
+    if (prior_type_control == "standard-halfcauchy") {
+      forest_control.UpdateGlobalScaleParameters(
+        prior_type_control,
+        param1_control,
+        store_global_parameters_control[i],
+        random
+      );
     }
 
     // Update sigma (outer Gibbs step), if applicable
@@ -389,94 +486,6 @@ Rcpp::List CausalHorseForest_cpp(
       n, 
       random
     );
-
-    /*
-    // Save the leaf node parameters and indices
-    if (store_parameters && i >= N_burn) {
-
-      // Keep track of the trees in the prognostic forest
-      size_t tree_counter_control = 0;
-
-      // Iterate through the trees in the prognostic forest
-      for (Tree& tree : *trees_control) {
-
-        // Collect all leaf nodes
-        std::vector<Tree*> leaf_vector;
-        tree.CollectLeaves(leaf_vector);
-
-        // Iterate through the collected leaf nodes
-        for (size_t leaf_index = 0; leaf_index < leaf_vector.size(); ++leaf_index) {
-          Tree* leaf = leaf_vector[leaf_index];
-
-          int split_var_int = - 1;
-
-          // Get the single parameter for the current leaf
-          double parameter = leaf->GetParameters(1);
-          if (leaf->GetParent()) {
-            split_var_int = static_cast<int>(leaf->GetParent()->GetSplitVar());
-          } 
-
-          // Compute the column index for this leaf
-          size_t col_index = tree_counter_control * max_stored_leaves + leaf_index;
-
-          // Ensure col_index does not exceed matrix bounds
-          if (col_index < static_cast<size_t>(store_local_parameters_control.ncol())) {
-            store_local_parameters_control(i - N_burn, col_index) = parameter;
-            store_local_indices_control(i - N_burn, col_index) = split_var_int;
-          } else {
-            Rcpp::stop("Index out of bounds while storing leaf parameters of the prognostic forest.");
-          }
-        }
-
-        // Retrieve the global parameters from the root node and store it
-        store_global_parameters_control(i - N_burn, tree_counter_control) = tree.GetGlobalParameters(0);
-
-        // Keep track of the trees
-        tree_counter_control++;
-      }
-
-      // Keep track of the trees in the treatment effect forest
-      size_t tree_counter_treat = 0;
-
-      // Iterate through the trees in the treatment effect forest
-      for (Tree& tree : *trees_treat) {
-
-        // Collect all leaf nodes
-        std::vector<Tree*> leaf_vector;
-        tree.CollectLeaves(leaf_vector);
-
-        // Iterate through the collected leaf nodes
-        for (size_t leaf_index = 0; leaf_index < leaf_vector.size(); ++leaf_index) {
-          Tree* leaf = leaf_vector[leaf_index];
-
-          int split_var_int = - 1;
-
-          // Get the single parameter for the current leaf
-          double parameter = leaf->GetParameters(1); 
-          if (leaf->GetParent()) {
-            split_var_int = static_cast<int>(leaf->GetParent()->GetSplitVar());
-          } 
-
-          // Compute the column index for this leaf
-          size_t col_index = tree_counter_treat * max_stored_leaves + leaf_index;
-
-          // Ensure col_index does not exceed matrix bounds
-          if (col_index < static_cast<size_t>(store_local_parameters_treat.ncol())) {
-            store_local_parameters_treat(i - N_burn, col_index) = parameter;
-            store_local_indices_treat(i - N_burn, col_index) = split_var_int;
-          } else {
-            Rcpp::stop("Index out of bounds while storing leaf parameters of the treatment effect forest.");
-          }
-        }
-
-        // Retrieve the global parameters from the root node and store it
-        store_global_parameters_treat(i - N_burn, tree_counter_treat) = tree.GetGlobalParameters(0);
-
-        // Keep track of the trees
-        tree_counter_treat++;
-      }
-    }
-    */
 
     // Storing the posterior info after burn-in
     if (i >= N_burn) {
@@ -540,6 +549,26 @@ Rcpp::List CausalHorseForest_cpp(
       for (size_t j = 0; j < no_trees_treat; j++) {
         sum_accept_treat += accepted_treat[j];
       }
+
+      // Store the tree topology parameters of the prognostic model
+      if (dirichlet_bool_control) {
+        const std::vector<double>& probs_control = forest_control.GetVariableInclusionProb();
+        for (size_t j = 0; j < p_control; ++j) {
+          store_split_probs_control(i - N_burn, j) = probs_control[j];
+        }
+      }
+      const std::vector<size_t>& counts_control = forest_control.GetVariableInclusionCount();
+      for (size_t j = 0; j < p_control; ++j) store_split_counts_control(i - N_burn, j) = counts_control[j];
+
+      // Store the tree topology parameters of the treatment effect model
+      if (dirichlet_bool_treat) {
+        const std::vector<double>& probs_treat = forest_treat.GetVariableInclusionProb();
+        for (size_t j = 0; j < p_treat; ++j) {
+          store_split_probs_treat(i - N_burn, j) = probs_treat[j];
+        }
+      }
+      const std::vector<size_t>& counts_treat = forest_treat.GetVariableInclusionCount();
+      for (size_t j = 0; j < p_treat; ++j) store_split_counts_treat(i - N_burn, j) = counts_treat[j];
       
       // Store the forestwide shrinkage parameters, if applicable
       if(prior_type_control == "horseshoe_fw") {
@@ -607,22 +636,30 @@ Rcpp::List CausalHorseForest_cpp(
     results["test_predictions_sample_treat"] = test_predictions_sample_treat;
     results["train_predictions_sample_treat"] = train_predictions_sample_treat;
   } 
-  if (store_parameters) {
-    results["global_shrinkage_parameters_control"] = store_global_parameters_control;
-    results["local_shrinkage_parameters_control"] = store_local_parameters_control;
-    results["local_splitting_variables_control"] = store_local_indices_control;
-    results["global_shrinkage_parameters_treat"] = store_global_parameters_treat;
-    results["local_shrinkage_parameters_treat"] = store_local_parameters_treat;
-    results["local_splitting_variables_treat"] = store_local_indices_treat;
-  }
   if (prior_type_control == "horseshoe_fw") {
     results["forestwide_shrinkage_control"] = store_forestwide_shrinkage_control;
   }
   if (prior_type_treat == "horseshoe_fw") {
     results["forestwide_shrinkage_treat"] = store_forestwide_shrinkage_treat;
   }
-
-
+  if (dirichlet_bool_control) {
+    results["alpha_dirichlet_control"] = store_alpha_dirichlet_control;
+    results["split_probs_control"] = store_split_probs_control; 
+  }
+  if (dirichlet_bool_treat) {
+    results["alpha_dirichlet_treat"] = store_alpha_dirichlet_treat;
+    results["split_probs_treat"] = store_split_probs_treat; 
+  }
+  results["split_counts_control"] = store_split_counts_control;
+  results["split_counts_treat"] = store_split_counts_treat;
+  
+  if (prior_type_treat == "standard-halfcauchy") {
+    results["global_parameters_treat"] = store_global_parameters_treat;
+  }
+  if (prior_type_control == "standard-halfcauchy") {
+    results["global_parameters_control"] = store_global_parameters_control;
+  }
+  
   // Clean up memory
   if (testpred_control) delete[] testpred_control;
   if (testpred_treat) delete[] testpred_treat;

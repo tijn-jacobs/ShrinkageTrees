@@ -1,3 +1,10 @@
+# ShrinkageTrees ??? (where should we continue numbering?)
+
+- A LOT!!
+- complete overhaul / revision of forest based not based on the reversible jump steps
+- Also added dirichlet implementation of the splitting probablities (as in linero ...)
+- Added four different aft fucntions for survival outcomes: aft....
+
 # ShrinkageTrees 1.1.0
 
 - Replaced the internal `std::map` structure with a more efficient vector-based lookup, improving overall computational speed by approximately 30%.

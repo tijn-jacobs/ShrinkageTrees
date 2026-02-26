@@ -35,10 +35,30 @@
 #' @param global_hp_control Global hyperparameter for control forest. Required for horseshoe-type
 #' priors; ignored for \code{"half-cauchy"}.
 #' @param global_hp_treat Global hyperparameter for treatment forest.
-#' @param power Power parameter for tree structure prior. Default is 2.0.
-#' @param base Base parameter for tree structure prior. Default is 0.95.
-#' @param p_grow Probability of proposing a grow move. Default is 0.4.
-#' @param p_prune Probability of proposing a prune move. Default is 0.4.
+#' @param a_dirichlet_control First shape parameter of the Beta prior used in the
+#' Dirichlet–Sparse splitting rule for the control forest. Together with 
+#' `b_dirichlet_control`, it controls the expected sparsity level.
+#' @param b_dirichlet_control Second shape parameter of the Beta prior for the 
+#' sparsity level in the control forest. Larger values shrink splitting 
+#' probabilities more strongly toward uniform sparsity.
+#' @param rho_dirichlet_control Sparsity hyperparameter for the control forest.
+#' Represents the *expected number of active predictors*. If left NULL, it 
+#' defaults to the number of covariates in the control forest.
+#' @param a_dirichlet_treat First shape parameter of the Beta prior used in the
+#' Dirichlet–Sparse splitting rule for the treatment forest.
+#' @param b_dirichlet_treat Second shape parameter of the Beta prior governing 
+#' sparsity in the treatment forest.
+#' @param rho_dirichlet_treat Sparsity hyperparameter for the treatment forest, 
+#' interpreted as the expected number of active predictors. Defaults to the 
+#' number of covariates in the treatment forest if not specified.
+#' @param power_control Power parameter for the control forest tree structure prior splitting probability.
+#' @param power_treat   Power parameter for the treatment forest tree structure prior splitting probability.
+#' @param base_control  Base parameter for the control forest tree structure prior splitting probability.
+#' @param base_treat    Base parameter for the treatment forest tree structure prior splitting probability.
+#' @param p_grow Probability of proposing a grow move. Default is 0.5. These are fixed at 0.5 for prior_type
+#' \code{"standard"} and \code{"dirichlet"}.
+#' @param p_prune Probability of proposing a prune move. Default is 0.5. These are fixed at 0.5 for prior_type 
+#' \code{"standard"} and \code{"dirichlet"}.
 #' @param nu Degrees of freedom for the error variance prior. Default is 3.
 #' @param q Quantile parameter for error variance prior. Default is 0.90.
 #' @param sigma Optional known standard deviation of the outcome. If NULL, estimated from data.
@@ -47,7 +67,6 @@
 #' @param delayed_proposal Number of delayed iterations before proposal updates. Default is 5.
 #' @param store_posterior_sample Logical; whether to store posterior samples of predictions. 
 #' Default is \code{FALSE}.
-#' @param seed Random seed for reproducibility. Default is \code{NULL}.
 #' @param verbose Logical; whether to print verbose output. Default is \code{TRUE}.
 #'
 #' @return A list containing:
@@ -77,8 +96,9 @@
 #' (control) and a treatment effect part. Each part is modeled by its own 
 #' shrinkage tree ensemble, with separate flexible global-local shrinkage 
 #' priors. It is particularly useful for estimating heterogeneous treatment 
-#' effects in high-dimensional settings.
-#'
+#' effects in high-dimensional settings. Further
+#' methodological details on the Horseshoe Forest framework can be found in 
+#' Jacobs, van Wieringen & van der Pas (2025).
 #'
 #' The \code{horseshoe} prior is the fully Bayesian global-local shrinkage
 #' prior, where both the global and local shrinkage parameters are assigned
@@ -100,6 +120,24 @@
 #' The \code{half-cauchy} prior considers only local shrinkage and does not
 #' include a global shrinkage component. It places a half-Cauchy prior on each
 #' local shrinkage parameter with scale hyperparameter \code{local_hp}.
+#' 
+#' The \code{dirichlet} prior implements the Dirichlet–Sparse splitting rule of 
+#' Linero (2018), in which splitting probabilities follow a Dirichlet prior 
+#' whose concentration is controlled by a Beta sparsity parameter 
+#' (\code{a_dirichlet}, \code{b_dirichlet}) and an expected sparsity level 
+#' \code{rho_dirichlet}.
+#'
+#' @references
+#' Jacobs, T., van Wieringen, W. N., & van der Pas, S. L. (2025).  
+#' *Horseshoe Forests for High-Dimensional Causal Survival Analysis.*  
+#' arXiv:2507.22004. https://doi.org/10.48550/arXiv.2507.22004
+#' 
+#' Chipman, H. A., George, E. I., & McCulloch, R. E. (2010). 
+#' *BART: Bayesian additive regression trees.* Annals of Applied Statistics.
+#'
+#' Linero, A. R. (2018). *Bayesian regression trees for high-dimensional 
+#' prediction and variable selection.* Journal of the American Statistical 
+#' Association.
 #' 
 #' @examples
 #' # Example: Continuous outcome, homogenuous treatment effect, two priors
@@ -128,8 +166,7 @@
 #'                                        N_post = 10,
 #'                                        N_burn = 5,
 #'                                        store_posterior_sample = TRUE,
-#'                                        verbose = FALSE,
-#'                                        seed = 1
+#'                                        verbose = FALSE
 #' )
 #' 
 #' # Fit a Causal Shrinkage Forest with half-cauchy prior
@@ -147,8 +184,7 @@
 #'                                         N_post = 10,
 #'                                         N_burn = 5,
 #'                                         store_posterior_sample = TRUE,
-#'                                         verbose = FALSE,
-#'                                         seed = 1
+#'                                         verbose = FALSE
 #' )
 #' 
 #' # Posterior mean CATEs
@@ -185,14 +221,22 @@ CausalShrinkageForest <- function(y,
                                   number_of_trees_treat = 200,
                                   prior_type_control = "horseshoe",
                                   prior_type_treat = "horseshoe",
-                                  local_hp_control,
-                                  local_hp_treat,
+                                  local_hp_control = NULL,
+                                  local_hp_treat = NULL,
                                   global_hp_control = NULL,
                                   global_hp_treat = NULL,
-                                  power = 2.0,
-                                  base = 0.95,
-                                  p_grow = 0.4,
-                                  p_prune = 0.4,
+                                  a_dirichlet_control = 0.5,
+                                  a_dirichlet_treat = 0.5,
+                                  b_dirichlet_control = 1.0, 
+                                  b_dirichlet_treat = 1.0,
+                                  rho_dirichlet_control = NULL,  
+                                  rho_dirichlet_treat = NULL,
+                                  power_control = 2.0,
+                                  power_treat = 2.0,
+                                  base_control = 0.95,
+                                  base_treat = 0.95,
+                                  p_grow = 0.5,
+                                  p_prune = 0.5,
                                   nu = 3,
                                   q = 0.90,
                                   sigma = NULL,
@@ -200,20 +244,20 @@ CausalShrinkageForest <- function(y,
                                   N_burn = 5000,
                                   delayed_proposal = 5,
                                   store_posterior_sample = FALSE,
-                                  seed = NULL,
                                   verbose = TRUE) {
 
   
   # Check prior_type value
-  allowed_prior <- c("horseshoe", "horseshoe_fw", "horseshoe_EB", "half-cauchy")
+  allowed_prior <- c("horseshoe", "horseshoe_fw", "horseshoe_EB", "half-cauchy",
+                     "standard", "dirichlet", "standard-halfcauchy", "dirichlet-halfcauchy")
   if (!prior_type_control %in% allowed_prior) {
     stop("Invalid prior_type_control Choose 'horseshoe', 'horseshoe_fw', 
-         'horseshoe_EB', or 'half-cauchy'.")
+         'horseshoe_EB', 'half-cauchy', 'standard', 'standard-halfnormal', 'standard-halfcauchy', 'dirichlet', or 'dirichlet-halfcauchy'.")
   }
   
   if (!prior_type_treat %in% allowed_prior) {
-    stop("Invalid prior_type_treat. Choose 'horseshoe', 'horseshoe_fw', 
-         'horseshoe_EB', or 'half-cauchy'.")
+    stop("Invalid prior_type_control Choose 'horseshoe', 'horseshoe_fw', 
+         'horseshoe_EB', 'half-cauchy', 'standard', 'standard-halfnormal', 'standard-halfcauchy', 'dirichlet',  or 'dirichlet-halfcauchy',.")
   }
   
   # Prior-specific checks
@@ -259,6 +303,83 @@ CausalShrinkageForest <- function(y,
   if (prior_type_control == "horseshoe_EB") prior_type_control <- "halfcauchy"
   if (prior_type_treat == "horseshoe_EB") prior_type_treat <- "halfcauchy"
   
+  reversible_flag_control <- TRUE
+  reversible_flag_treat <- TRUE
+
+  if (prior_type_control %in% c("standard", "dirichlet")) {
+    if (is.null(local_hp_control)) {
+      stop("For prior_type_control = 'standard' or 'dirichlet', you must provide local_hp.")
+    }
+    if (!is.null(global_hp_control)) {
+      warning("global_hp_control is ignored for 'standard' or 'dirichet' prior.")
+    }
+
+    global_hp_control <- 1          # placeholder (ignored by C++)
+    reversible_flag_control <- FALSE
+
+    if (delayed_proposal > 0) {
+      delayed_proposal <- 0
+    }
+  }
+
+  if (prior_type_control %in% c("dirichlet", "dirichlet-halfcauchy")) {
+    dirichlet_bool_control <- TRUE
+    if (prior_type_control == "dirichlet-halfcauchy") prior_type_control <- "standard-halfcauchy"
+  } else {
+    dirichlet_bool_control <- FALSE
+  }
+
+  if (prior_type_control %in% c("standard-halfcauchy", "dirichlet-halfcauchy")) {
+
+    if (!is.null(global_hp_control)) {
+      warning("global_hp_control is ignored for 'standard' or 'dirichet' prior.")
+    }
+
+    global_hp_control <- 1          # placeholder (ignored by C++)
+    reversible_flag_control <- FALSE
+
+    if (delayed_proposal > 0) {
+      delayed_proposal <- 0
+    }
+  }
+
+  if (prior_type_treat %in% c("standard", "dirichlet", "standard-halfcauchy")) {
+    if (is.null(local_hp_treat)) {
+      stop("For prior_type_treat = 'standard' or 'dirichlet', you must provide local_hp_treat.")
+    }
+    if (!is.null(global_hp_treat)) {
+      warning("global_hp_treat is ignored for 'standard' or 'dirichet' prior.")
+    }
+
+    global_hp_treat <- 1          # placeholder (ignored by C++)
+    reversible_flag_treat <- FALSE
+
+    if (delayed_proposal > 0) {
+      delayed_proposal <- 0
+    }
+  } 
+
+  if (prior_type_treat %in% c("dirichlet", "dirichlet-halfcauchy")) {
+    dirichlet_bool_treat <- TRUE
+    if (prior_type_treat == "dirichlet-halfcauchy") prior_type_treat <- "standard-halfcauchy"
+  } else {
+    dirichlet_bool_treat <- FALSE
+  }
+
+
+  if (prior_type_treat %in% c("standard-halfcauchy", "dirichlet-halfcauchy")) {
+    if (!is.null(global_hp_treat)) {
+      warning("global_hp_treat is ignored for 'standard' or 'dirichet' prior.")
+    }
+
+    global_hp_treat <- 1          # placeholder (ignored by C++)
+    reversible_flag_treat <- FALSE
+
+    if (delayed_proposal > 0) {
+      delayed_proposal <- 0
+    }
+  } 
+
   # Check outcome_type value
   allowed_types <- c("continuous", "right-censored")
   if (!outcome_type %in% allowed_types) {
@@ -330,17 +451,22 @@ CausalShrinkageForest <- function(y,
   # Force data types to be numeric and plain arrays
   N_post <- as.integer(N_post)[1]
   N_burn <- as.integer(N_burn)[1]
-  power <- as.numeric(power)[1]
-  base <- as.numeric(base)[1]
+  power_control <- as.numeric(power_control)[1]
+  power_treat <- as.numeric(power_treat)[1]
+  base_control <- as.numeric(base_control)[1]
+  base_treat <- as.numeric(base_treat)[1]
   p_grow <- as.numeric(p_grow)[1]
   p_prune <- as.numeric(p_prune)[1]
   X_train_treat <- as.numeric(t(X_train_treat))
   X_train_control <- as.numeric(t(X_train_control))
   
-  # Set a random seed if not provided
-  # By taking a random number, we ensure compatibility with set.seed()
-  if (is.null(seed)) seed <- as.integer(runif(1, 1, 1000000))
-  
+  # Default rho to number of features
+  if (is.null(rho_dirichlet_control)) {
+    rho_dirichlet_control <- p_control
+  }
+  if (is.null(rho_dirichlet_treat)) {
+    rho_dirichlet_treat <- p_treat
+  }
   
   if (outcome_type == "right-censored") {
     
@@ -366,6 +492,23 @@ CausalShrinkageForest <- function(y,
     } else {
       sigma_hat <- sigma
       sigma_known <- TRUE
+    }
+
+    # REFACTOR THIS CODE BELOW; make shorter
+    if (prior_type_control %in% c("standard-halfcauchy")) {
+      if (is.null(local_hp_control)) {
+        local_hp_control <- 2.0
+      } else {
+        local_hp_control <- local_hp_control / sigma_hat
+      }
+    }
+
+    if (prior_type_treat %in% c("standard-halfcauchy")) {
+      if (is.null(local_hp_treat)) {
+        local_hp_treat <- 2.0
+      } else {
+        local_hp_treat <- local_hp_treat / sigma_hat
+      }
     }
     
     # Standardize the centered data
@@ -394,25 +537,33 @@ CausalShrinkageForest <- function(y,
       X_test_treatSEXP = X_test_treat,
       treatment_indicator_testSEXP = treatment_indicator_test,
       no_trees_treatSEXP = number_of_trees_treat,
-      power_treatSEXP = power,
-      base_treatSEXP = base,
+      power_treatSEXP = power_treat,
+      base_treatSEXP = base_treat,
       p_grow_treatSEXP = p_grow,
       p_prune_treatSEXP = p_prune,
       omega_treatSEXP = 1/2,
       prior_type_treatSEXP = prior_type_treat,
       param1_treatSEXP = local_hp_treat,
       param2_treatSEXP = global_hp_treat,
-      reversible_treatSEXP = TRUE,
+      reversible_treatSEXP = reversible_flag_treat, 
+      dirichlet_bool_treatSEXP = dirichlet_bool_treat,
+      a_dirichlet_treatSEXP = a_dirichlet_treat,
+      b_dirichlet_treatSEXP = b_dirichlet_treat, 
+      rho_dirichlet_treatSEXP = rho_dirichlet_treat,  
       no_trees_controlSEXP = number_of_trees_control,
-      power_controlSEXP = power,
-      base_controlSEXP = base,
+      power_controlSEXP = power_control,
+      base_controlSEXP = base_control,
       p_grow_controlSEXP = p_grow,
       p_prune_controlSEXP = p_prune,
       omega_controlSEXP = 1/2,
       prior_type_controlSEXP = prior_type_control,
       param1_controlSEXP = local_hp_control,
       param2_controlSEXP = global_hp_control,
-      reversible_controlSEXP = TRUE,
+      reversible_controlSEXP = reversible_flag_control,
+      dirichlet_bool_controlSEXP = dirichlet_bool_control,
+      a_dirichlet_controlSEXP = a_dirichlet_control,
+      b_dirichlet_controlSEXP = b_dirichlet_control, 
+      rho_dirichlet_controlSEXP = rho_dirichlet_control,  
       sigma_knownSEXP = sigma_known,
       sigmaSEXP = sigma_hat,
       lambdaSEXP = lambda,
@@ -420,8 +571,6 @@ CausalShrinkageForest <- function(y,
       N_postSEXP = N_post,
       N_burnSEXP = N_burn,
       delayed_proposalSEXP = delayed_proposal,
-      store_parametersSEXP = FALSE,
-      max_stored_leavesSEXP = 1,
       store_posterior_sample_controlSEXP = store_posterior_sample,
       store_posterior_sample_treatSEXP = store_posterior_sample,
       verboseSEXP = verbose
@@ -501,6 +650,23 @@ CausalShrinkageForest <- function(y,
       sigma_hat <- sigma      # Use provided sigma
       sigma_known <- TRUE
     }
+
+    # REFACTOR THIS CODE BELOW; make shorter
+    if (prior_type_control %in% c("standard-halfcauchy")) {
+      if (is.null(local_hp_control)) {
+        local_hp_control <- 2.0
+      } else {
+        local_hp_control <- local_hp_control / sigma_hat
+      }
+    }
+
+    if (prior_type_treat %in% c("standard-halfcauchy")) {
+      if (is.null(local_hp_treat)) {
+        local_hp_treat <- 2.0
+      } else {
+        local_hp_treat <- local_hp_treat / sigma_hat
+      }
+    }
     
     # Compute hyperparameters of error variance prior
     qchi <- qchisq(1.0 - q, nu)
@@ -527,25 +693,33 @@ CausalShrinkageForest <- function(y,
       X_test_treatSEXP = X_test_treat,
       treatment_indicator_testSEXP = treatment_indicator_test,
       no_trees_treatSEXP = number_of_trees_treat,
-      power_treatSEXP = power,
-      base_treatSEXP = base,
+      power_treatSEXP = power_treat,
+      base_treatSEXP = base_treat,
       p_grow_treatSEXP = p_grow,
       p_prune_treatSEXP = p_prune,
       omega_treatSEXP = 1/2,
       prior_type_treatSEXP = prior_type_treat,
       param1_treatSEXP = local_hp_treat,
       param2_treatSEXP = global_hp_treat,
-      reversible_treatSEXP = TRUE,
+      reversible_treatSEXP = reversible_flag_treat, 
+      dirichlet_bool_treatSEXP = dirichlet_bool_treat,
+      a_dirichlet_treatSEXP = a_dirichlet_treat,
+      b_dirichlet_treatSEXP = b_dirichlet_treat, 
+      rho_dirichlet_treatSEXP = rho_dirichlet_treat,  
       no_trees_controlSEXP = number_of_trees_control,
-      power_controlSEXP = power,
-      base_controlSEXP = base,
+      power_controlSEXP = power_control,
+      base_controlSEXP = base_control,
       p_grow_controlSEXP = p_grow,
       p_prune_controlSEXP = p_prune,
       omega_controlSEXP = 1/2,
       prior_type_controlSEXP = prior_type_control,
       param1_controlSEXP = local_hp_control,
       param2_controlSEXP = global_hp_control,
-      reversible_controlSEXP = TRUE,
+      reversible_controlSEXP = reversible_flag_control,
+      dirichlet_bool_controlSEXP = dirichlet_bool_control,
+      a_dirichlet_controlSEXP = a_dirichlet_control,
+      b_dirichlet_controlSEXP = b_dirichlet_control, 
+      rho_dirichlet_controlSEXP = rho_dirichlet_control,
       sigma_knownSEXP = sigma_known,
       sigmaSEXP = sigma_hat,
       lambdaSEXP = lambda,
@@ -553,8 +727,6 @@ CausalShrinkageForest <- function(y,
       N_postSEXP = N_post,
       N_burnSEXP = N_burn,
       delayed_proposalSEXP = delayed_proposal,
-      store_parametersSEXP = FALSE,
-      max_stored_leavesSEXP = 1,
       store_posterior_sample_controlSEXP = store_posterior_sample,
       store_posterior_sample_treatSEXP = store_posterior_sample,
       verboseSEXP = verbose

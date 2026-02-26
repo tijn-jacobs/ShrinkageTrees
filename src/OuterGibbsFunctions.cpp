@@ -238,4 +238,3 @@ void UpdateForestwideShrinkage(
   }
 }
 
-

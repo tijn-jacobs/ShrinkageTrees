@@ -43,7 +43,6 @@
 #'  Default is 5.
 #' @param store_posterior_sample Logical; whether to store posterior samples of 
 #' predictions. Default is \code{FALSE}.
-#' @param seed Random seed for reproducibility. Default is \code{NULL}.
 #' @param verbose Logical; whether to print verbose output during sampling. 
 #' Default is \code{TRUE}.
 #'
@@ -101,8 +100,7 @@
 #'   N_post = 10,
 #'   N_burn = 5,
 #'   store_posterior_sample = TRUE,
-#'   verbose = FALSE,
-#'   seed = 1
+#'   verbose = FALSE
 #' )
 #'
 #' \donttest{
@@ -275,7 +273,6 @@ CausalHorseForest <- function(y,
                               N_burn = 5000,
                               delayed_proposal = 5,
                               store_posterior_sample = FALSE,
-                              seed = NULL,
                               verbose = TRUE) {
    
   # Check outcome_type value
@@ -358,11 +355,6 @@ CausalHorseForest <- function(y,
   X_train_treat <- as.numeric(t(X_train_treat))
   X_train_control <- as.numeric(t(X_train_control))
   
-  # Set a random seed if not provided
-  # By taking a random number, we ensure compatibility with set.seed()
-  if (is.null(seed)) seed <- as.integer(runif(1, 1, 1000000))
-  
-  
   if (outcome_type == "right-censored") {
     
     # Convert y to numeric for C++ compatibility
@@ -424,6 +416,10 @@ CausalHorseForest <- function(y,
       param1_treatSEXP = k / sqrt(number_of_trees),
       param2_treatSEXP = k / sqrt(number_of_trees),
       reversible_treatSEXP = TRUE,
+      dirichlet_bool_treatSEXP = FALSE,
+      a_dirichlet_treatSEXP = 1.0,
+      b_dirichlet_treatSEXP = 1.0, 
+      rho_dirichlet_treatSEXP = 1.0,  
       no_trees_controlSEXP = number_of_trees,
       power_controlSEXP = power,
       base_controlSEXP = base,
@@ -434,6 +430,10 @@ CausalHorseForest <- function(y,
       param1_controlSEXP = k / sqrt(number_of_trees),
       param2_controlSEXP = k / sqrt(number_of_trees),
       reversible_controlSEXP = TRUE,
+      dirichlet_bool_controlSEXP = FALSE,
+      a_dirichlet_controlSEXP = 1.0,
+      b_dirichlet_controlSEXP = 1.0, 
+      rho_dirichlet_controlSEXP = 1.0,  
       sigma_knownSEXP = sigma_known,
       sigmaSEXP = sigma_hat,
       lambdaSEXP = lambda,
@@ -441,8 +441,6 @@ CausalHorseForest <- function(y,
       N_postSEXP = N_post,
       N_burnSEXP = N_burn,
       delayed_proposalSEXP = delayed_proposal,
-      store_parametersSEXP = FALSE,
-      max_stored_leavesSEXP = 1,
       store_posterior_sample_controlSEXP = store_posterior_sample,
       store_posterior_sample_treatSEXP = store_posterior_sample,
       verboseSEXP = verbose
@@ -557,6 +555,10 @@ CausalHorseForest <- function(y,
       param1_treatSEXP = k / sqrt(number_of_trees),
       param2_treatSEXP = k / sqrt(number_of_trees),
       reversible_treatSEXP = TRUE,
+      dirichlet_bool_treatSEXP = FALSE,
+      a_dirichlet_treatSEXP = 1.0,
+      b_dirichlet_treatSEXP = 1.0,
+      rho_dirichlet_treatSEXP = 1.0,
       no_trees_controlSEXP = number_of_trees,
       power_controlSEXP = power,
       base_controlSEXP = base,
@@ -567,6 +569,10 @@ CausalHorseForest <- function(y,
       param1_controlSEXP = k / sqrt(number_of_trees),
       param2_controlSEXP = k / sqrt(number_of_trees),
       reversible_controlSEXP = TRUE,
+      dirichlet_bool_controlSEXP = FALSE,
+      a_dirichlet_controlSEXP = 1.0,
+      b_dirichlet_controlSEXP = 1.0,
+      rho_dirichlet_controlSEXP = 1.0,
       sigma_knownSEXP = sigma_known,
       sigmaSEXP = sigma_hat,
       lambdaSEXP = lambda,
@@ -574,8 +580,6 @@ CausalHorseForest <- function(y,
       N_postSEXP = N_post,
       N_burnSEXP = N_burn,
       delayed_proposalSEXP = delayed_proposal,
-      store_parametersSEXP = FALSE,
-      max_stored_leavesSEXP = 1,
       store_posterior_sample_controlSEXP = store_posterior_sample,
       store_posterior_sample_treatSEXP = store_posterior_sample,
       verboseSEXP = verbose

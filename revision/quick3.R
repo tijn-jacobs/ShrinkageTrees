@@ -1,0 +1,334 @@
+library(ShrinkageTrees)
+library(foreach)
+library(doParallel)
+
+source("evaluation_functions.R")
+
+
+data_gen <- function(n_train, p_feat, sigma, s_prog, s_treat, cens_scale, linear = NULL) {
+  X_train <- matrix(runif(n_train * p_feat), n_train, p_feat)
+
+  # Propensity & treatment
+  propensity <- pnorm(-0.5 + 0.4 * X_train[, 1])
+  treatment  <- rbinom(n_train, 1, propensity)
+
+  # Prognostic component
+  beta_prog <- rnorm(p_feat, 0, 1) * sort(rbinom(p_feat, 1, s_prog), TRUE)
+  mu <- as.numeric(beta_prog %*% t(X_train))
+
+  # Baseline nonlinear tau (Friedman-type)
+  tau <- 10 * sin(pi * X_train[, 1] * X_train[, 2]) +
+    20 * (X_train[, 3] - 0.5)^2 +
+    10 * X_train[, 4] +
+    5  * X_train[, 5]
+
+  # Analytic ATE for the baseline part (same as your original)
+  base_ate <- 10 * 0.5246745 + 20 * 1/12 + 10 * 1/2 + 5 * 1/2
+
+  ## Add sparse extra main & interaction terms to tau
+  m_extra <- max(1, round(p_feat * s_treat))  # total extra terms
+
+  # Choose split between main and interaction terms (can adjust)
+  m_main <- min(p_feat, floor(m_extra / 2))
+  m_int2 <- m_extra - m_main
+
+  extra_ate <- 0  # analytic contribution to E[tau(X)] from extra terms
+
+  # Main effects
+  if (m_main > 0) {
+    idx_main   <- sample.int(p_feat, m_main)
+    beta_main  <- rnorm(m_main, mean = 0, sd = 1)
+
+    # Add to tau
+    tau <- tau + as.numeric(X_train[, idx_main, drop = FALSE] %*% beta_main)
+
+    # For X_j ~ Uniform(0,1), E[X_j] = 1/2
+    extra_ate <- extra_ate + sum(beta_main) * 1/2
+  }
+
+  # Pairwise interactions
+  if (m_int2 > 0) {
+    # Draw m_int2 random pairs (j, k)
+    pair_idx <- replicate(m_int2, sample.int(p_feat, 2), simplify = TRUE)  # 2 x m_int2
+    beta_int <- rnorm(m_int2, mean = 0, sd = 1)
+
+    for (k in seq_len(m_int2)) {
+      j1 <- pair_idx[1, k]
+      j2 <- pair_idx[2, k]
+      tau <- tau + beta_int[k] * (X_train[, j1] * X_train[, j2])
+    }
+
+    # For independent X_j, X_k ~ U(0,1): E[X_j X_k] = 1/4
+    extra_ate <- extra_ate + sum(beta_int) * 1/4
+  }
+
+  # Total analytic ATE before standardisation
+  true_ate_raw <- base_ate + extra_ate
+
+  ## Generate event times and censoring
+
+  true_event_times <- mu + (treatment - 0.5) * tau
+  uncensored_event_times <- true_event_times + rnorm(n_train, 0, sigma)
+
+  sd_un <- sd(uncensored_event_times)
+  uncensored_event_times <- uncensored_event_times / sd_un
+  true_event_times       <- true_event_times / sd_un
+
+  # Exponential censoring on log scale
+  C <- log(rexp(n_train, cens_scale)) + min(uncensored_event_times)
+  follow_up <- pmin(uncensored_event_times, C)
+  status    <- as.numeric(uncensored_event_times <= C)
+
+  return(list(
+    X_train               = X_train,
+    treatment             = treatment,
+    propensity            = propensity,
+    follow_up             = as.numeric(follow_up),
+    status                = status,
+    true_event_times      = as.numeric(true_event_times),
+    uncensored_event_times = as.numeric(uncensored_event_times),
+    true_cate             = as.vector(tau) / sd_un,
+    true_ate              = true_ate_raw / sd_un,
+    sample_ate            = mean(tau) / sd_un,
+    obs_sigma             = sigma / sd_un
+  ))
+}
+
+
+find_cens_scale <- function(p,
+                            n_train,
+                            sigma,
+                            s_prog,
+                            s_treat,
+                            target_cens,
+                            M = 1000,
+                            verbose = FALSE) {
+
+  # Inner function: return absolute difference between actual and target censoring
+  estimate_cens_diff <- function(cens_scale) {
+    rates <- replicate(M, {
+      dt <- data_gen(n_train, p, sigma, s_prog, s_treat, cens_scale, linear = NULL)
+      mean(1 - dt$status)
+    })
+    diff <- abs(mean(rates) - target_cens)
+    if (verbose) cat("cens_scale =", round(cens_scale, 4),
+                     "| estimated cens =", round(mean(rates), 3), "\n")
+    return(diff)
+  }
+
+  # Optimize over a reasonable range
+  opt_result <- optimize(estimate_cens_diff, interval = c(0.001, 2), tol = 1e-3)
+
+  return(opt_result$minimum)
+}
+
+
+# Retrieve command-line arguments
+args <- commandArgs(trailingOnly = TRUE)
+
+if (length(args) > 0) {
+  num_cores <- as.integer(args[1]) - 1
+} else {
+  num_cores <- parallel::detectCores() - 1
+}
+
+registerDoParallel(cores = num_cores)
+
+cat("Number of cores being used (1 free):", num_cores, "\n")
+cat("SIMULATION: quick3\n")
+
+M <- num_cores
+n_train <- 250
+sigma <- 1
+s_prog <- 0.1
+s_treat <- 0.1
+N_post <- 3000
+N_burn <- 2000
+
+p_vals <- round(seq(10, 5000, length.out = 25)) # Important to set number of p's!!!
+# cens_scales_medium <- foreach(p = p_vals, .combine = c) %dopar% {
+#   find_cens_scale(
+#     p            = p,
+#     n_train      = n_train,
+#     sigma        = sigma,
+#     s_prog       = s_prog,
+#     s_treat      = s_treat,
+#     target_cens  = 0.35,
+#     M            = 500,
+#     verbose      = FALSE
+#   )
+# }
+cens_scales_medium <- c(
+  0.05785024, 0.05052594, 0.04355119, 0.03968475, 0.03674417,
+  0.03413043, 0.03331892, 0.03130208, 0.03361590, 0.03182981,
+  0.02729808, 0.03076610, 0.02816196, 0.02639373, 0.02765140,
+  0.02808721, 0.02763251, 0.02617638, 0.02600725, 0.02680368,
+  0.02729808, 0.02729808, 0.02555026, 0.02688391, 0.02481142
+)
+
+
+param_grid_for_CV <- expand.grid(
+  k = c(0.05, 0.1, 0.25, 0.5, 0.75, 1)
+)
+
+
+cat("\nStarting with medium censoring scenario\n\n")
+results_medium <- run_simulations_over_p(
+  p_values = p_vals,
+  cens_scales = cens_scales_medium,
+  M = M,
+  n_train = n_train,
+  sigma = sigma,
+  s_prog = s_prog,
+  s_treat = s_treat,
+  param_grid = param_grid_for_CV,
+  k = 0.1, # Redundant
+  N_post = N_post,
+  N_burn = N_burn
+)
+
+combined_results <- list(results_medium = results_medium)
+
+
+# Define output file path
+# (! NAME MUST BE FILENAME_output.rds !)
+output_file <- file.path(Sys.getenv("TMPDIR"), "quick3_output.rds")
+
+# Print message
+cat("Saving all settings results to:", output_file, "\n")
+
+# Save the combined list
+saveRDS(combined_results, file = output_file)
+
+# Confirm successful save
+cat("All results successfully saved in one file.\n")
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+medium <- readRDS("/Users/tijnjacobs/Library/CloudStorage/OneDrive-VrijeUniversiteitAmsterdam/Documents/GitHub/ShrinkageTrees/simulations revision/quick3_output.rds")
+medium <- medium$results_medium
+
+
+
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+library(patchwork)
+
+#==================================================
+# 1. Data Voorbereiding
+#==================================================
+# (Ervan uitgaande dat 'medium' al in je environment staat)
+
+# Hernoem functies voor uniformiteit
+rename_methods <- function(x) {
+  recode(x,
+         "IndivAFT"    = "AFT_BART",
+         "BCF_AFT"     = "AFT_BCF",
+         "DART_AFT"    = "AFT_DART",
+         "S_BCF_AFT"   = "AFT_S_BCF",
+         "CHF (k=0.1)" = "CHF",
+         "CHF_CV"      = "CHF_CV")
+}
+
+# Definieer de metrics die we nodig hebben voor CATE
+cate_metrics <- c("CATE_RPEHE", "CATE_coverage", "CATE_CI_Length", "CATE_Detection_Power")
+
+# Maak de samenvatting per methode en aantal features
+sum_cate <- medium %>%
+  mutate(Method = rename_methods(Method)) %>%
+  group_by(Method, p_feat) %>%
+  summarise(across(all_of(cate_metrics), mean, na.rm = TRUE),
+            .groups = "drop")
+
+#==================================================
+# 2. Styling Instellingen
+#==================================================
+method_colors <- c(
+  "AFT_BART"  = "#1f78b4",
+  "AFT_BCF"   = "#33a02c",
+  "AFT_DART"  = "#e31a1c",
+  "AFT_S_BCF" = "#ff7f00",
+  "CHF"       = "#6a3d9a",
+  "CHF_CV"    = "#cab2d6"
+)
+
+smooth_fun <- geom_smooth(
+  se = FALSE,
+  method = "loess",
+  span = 1,
+  linewidth = 1
+)
+
+common_theme <- theme_minimal(base_size = 14) +
+  theme(
+    legend.position = "none",
+    text = element_text(family = "Times New Roman"),
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    panel.grid.minor = element_blank()
+  )
+
+#==================================================
+# 3. Individuele Plots (Alleen CATE)
+#==================================================
+
+# A) CATE RMSE (RPEHE)
+p1 <- ggplot(sum_cate, aes(x = p_feat, y = CATE_RPEHE, color = Method)) +
+  smooth_fun +
+  scale_x_continuous(limits = c(0, 5000)) +
+  scale_color_manual(values = method_colors) +
+  labs(x = "Number of covariates", y = "RMSE", title = "CATE RMSE (RPEHE)") +
+  common_theme
+
+# B) CATE Coverage
+p2 <- ggplot(sum_cate, aes(x = p_feat, y = CATE_coverage, color = Method)) +
+  smooth_fun +
+  geom_hline(yintercept = 0.95, linetype = "dotted", color = "black") + # Target lijn
+  scale_x_continuous(limits = c(0, 5000)) +
+  scale_color_manual(values = method_colors) +
+  coord_cartesian(ylim = c(0, 1)) +
+  labs(x = "Number of covariates", y = "Coverage", title = "CATE Coverage") +
+  common_theme
+
+# C) CATE CI Length
+p3 <- ggplot(sum_cate, aes(x = p_feat, y = CATE_CI_Length, color = Method)) +
+  smooth_fun +
+  scale_x_continuous(limits = c(0, 5000)) +
+  scale_color_manual(values = method_colors) +
+  labs(x = "Number of covariates", y = "CI Length", title = "CATE Credible Interval Length") +
+  common_theme
+
+# D) CATE Detection Power
+p4 <- ggplot(sum_cate, aes(x = p_feat, y = CATE_Detection_Power, color = Method)) +
+  smooth_fun +
+  scale_x_continuous(limits = c(0, 5000)) +
+  scale_color_manual(values = method_colors) +
+  coord_cartesian(ylim = c(0, 1)) +
+  labs(x = "Number of covariates", y = "Power", title = "CATE Detection Power") +
+  common_theme +
+  theme(legend.position = "right") # Toon de legenda alleen bij de laatste plot
+
+#==================================================
+# 4. Samenvoegen
+#==================================================
+combined_plot <- (p1 + p2) / (p3 + p4) + 
+  plot_annotation(
+    title = "CATE Performance Metrics Across High-Dimensional Covariates",
+    subtitle = "Analysis based on 0 to 5000 features",
+    theme = theme(plot.title = element_text(family = "Times New Roman", face = "bold", size = 18))
+  )
+
+combined_plot
