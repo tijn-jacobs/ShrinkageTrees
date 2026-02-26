@@ -1,8 +1,6 @@
 # ShrinkageTrees <img src="https://img.shields.io/badge/R%3E%3D-4.2-blue" alt="R >= 4.2"> ![License: MIT](https://img.shields.io/badge/license-MIT-green) ![Lifecycle: maturing](https://img.shields.io/badge/lifecycle-maturing-blue) [![](https://cranlogs.r-pkg.org/badges/grand-total/ShrinkageTrees)](https://cran.r-project.org/package=ShrinkageTrees)
  <img src="sticker/ShrinkageTrees_hex.png" align="right" width="150"/>
 
-
-
 ## Overview
 
 **ShrinkageTrees** provides a unified framework for survival analysis using Bayesian regression tree ensembles, with a particular focus on **causal inference and high-dimensional data**.
@@ -82,6 +80,9 @@ ShrinkageTrees supports multiple regularisation mechanisms:
 
 - **Horseshoe shrinkage on step heights**  
   Global–local shrinkage applied directly to leaf parameters.
+
+- **Alternative shrinkage priors on step heights**  
+  Including global Cauchy and forest-wide shrinkage formulations for flexible control of overall regularisation strength.
 
 
 ## 📦 Installation
