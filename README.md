@@ -114,27 +114,6 @@ ShrinkageTrees supports multiple regularisation mechanisms:
 - **Horseshoe shrinkage on step heights**  
   Global–local shrinkage applied directly to leaf parameters (main innovation).
 
-- **Forest-wide shrinkage**  
-  Shared global shrinkage parameter across trees.
-
-- **Empirical Bayes shrinkage**  
-  Data-driven calibration of shrinkage strength.
-
-Regularisation may act on:
-
-- The **tree structure** (which variables are used for splitting), or  
-- The **leaf magnitudes** (how large regional effects are allowed to be).
-
-This separation allows precise control of model complexity in high-dimensional settings.
-
-
-
-
-
-
-
-
-
 
 ## 📦 Installation
 
