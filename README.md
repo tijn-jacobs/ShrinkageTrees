@@ -15,7 +15,7 @@ Its central methodological innovation is the **Horseshoe regularisation mechanis
 - Half-Cauchy priors  
 - Dirichlet splitting priors (DART)  
 
-These models enable flexible non-linear modeling for:
+These models enable flexible non-linear modelling for:
 
 1) High-dimensional prediction  
 2) High-dimensional causal inference  
@@ -27,14 +27,14 @@ Supported outcome types:
 - Binary outcomes  
 - **Right-censored survival times (AFT framework)**  
 
-All models are implemented with an efficient C++ backend via **Rcpp**, allowing scalable MCMC sampling in high-dimensional settings.
+All models are implemented with an efficient C++ backend via Rcpp, allowing scalable MCMC sampling in high-dimensional settings.
 
 
 ## ⭐ Core Contribution: Horseshoe Trees
 
-Traditional BART or DART regularise model complexity through constraints on the **tree structure** (e.g., depth or splitting probabilities).
+Traditional BART and DART primarily regularise model complexity through the **tree structure (e.g., depth constraints or splitting probabilities).
 
-ShrinkageTrees instead introduces **global–local shrinkage directly on the leaf (step height) parameters** via the Horseshoe prior.
+ShrinkageTrees instead introduces global–local shrinkage directly on the leaf (step height) parameters via the Horseshoe prior.
 
 A global parameter controls overall shrinkage, while local parameters allow strong signals to escape shrinkage. Small effects are aggressively shrunk toward zero, whereas large effects are preserved due to the heavy-tailed prior.
 
@@ -65,8 +65,7 @@ ShrinkageTrees implements a modular family of Bayesian tree models:
 - **BCF** — Bayesian Causal Forest for right-censored AFT models  
 - **Shrinkage BCF** — Combined structural and magnitude shrinkage  
 
-All causal models support right right-censored survival data and heterogeneous treatment effects (CATE) estimation.
-
+All causal models support right-censored survival data and heterogeneous treatment effect (CATE) estimation.
 
 ## 🌲 Tree Regularisation Strategies
 
@@ -192,8 +191,6 @@ within a single coherent Bayesian tree framework.
 - For survival-specific Bayesian tree functions, see: `?SurvivalBART`, `?SurvivalDART`, `?SurvivalBCF`, and `?SurvivalShrinkageBCF`.
 - Examples and parameter descriptions can be found in each function’s documentation.
 
-
-Each function includes detailed parameter descriptions and examples.
 
 ## 🤝 Contributing
 

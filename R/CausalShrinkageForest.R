@@ -311,7 +311,7 @@ CausalShrinkageForest <- function(y,
       stop("For prior_type_control = 'standard' or 'dirichlet', you must provide local_hp.")
     }
     if (!is.null(global_hp_control)) {
-      warning("global_hp_control is ignored for 'standard' or 'dirichet' prior.")
+      warning("global_hp_control is ignored for 'standard' or 'dirichlet' prior.")
     }
 
     global_hp_control <- 1          # placeholder (ignored by C++)
@@ -332,7 +332,7 @@ CausalShrinkageForest <- function(y,
   if (prior_type_control %in% c("standard-halfcauchy", "dirichlet-halfcauchy")) {
 
     if (!is.null(global_hp_control)) {
-      warning("global_hp_control is ignored for 'standard' or 'dirichet' prior.")
+      warning("global_hp_control is ignored for 'standard' or 'dirichlet' prior.")
     }
 
     global_hp_control <- 1          # placeholder (ignored by C++)
@@ -348,7 +348,7 @@ CausalShrinkageForest <- function(y,
       stop("For prior_type_treat = 'standard' or 'dirichlet', you must provide local_hp_treat.")
     }
     if (!is.null(global_hp_treat)) {
-      warning("global_hp_treat is ignored for 'standard' or 'dirichet' prior.")
+      warning("global_hp_treat is ignored for 'standard' or 'dirichlet' prior.")
     }
 
     global_hp_treat <- 1          # placeholder (ignored by C++)
@@ -369,7 +369,7 @@ CausalShrinkageForest <- function(y,
 
   if (prior_type_treat %in% c("standard-halfcauchy", "dirichlet-halfcauchy")) {
     if (!is.null(global_hp_treat)) {
-      warning("global_hp_treat is ignored for 'standard' or 'dirichet' prior.")
+      warning("global_hp_treat is ignored for 'standard' or 'dirichlet' prior.")
     }
 
     global_hp_treat <- 1          # placeholder (ignored by C++)

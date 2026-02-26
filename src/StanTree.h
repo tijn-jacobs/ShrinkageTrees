@@ -1,7 +1,7 @@
 #ifndef GUARD_StanTree_h
 #define GUARD_StanTree_h
 
-#include "../Prerequisites.h"
+#include "Prerequisites.h"
 
 
 //xinfo xi, then xi[v][c] is the c^{th} cutpoint for variable v.

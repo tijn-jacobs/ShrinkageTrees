@@ -2,7 +2,7 @@
 % Please edit documentation in R/SurvivalWrappers.R
 \name{SurvivalShrinkageBCF}
 \alias{SurvivalShrinkageBCF}
-\title{SurvivalShrinkageBCF (BCF + Dirichlet Sparsity)}
+\title{SurvivalShrinkageBCF (Shrinkage Bayesian Causal Forest for survival data)}
 \usage{
 SurvivalShrinkageBCF(
   time,
@@ -13,27 +13,105 @@ SurvivalShrinkageBCF(
   propensity = NULL,
   a_dir = 0.5,
   b_dir = 1,
+  number_of_trees_control = 200,
+  number_of_trees_treat = 50,
+  power_control = 2,
+  base_control = 0.95,
+  power_treat = 3,
+  base_treat = 0.25,
   N_post = 1000,
   N_burn = 1000,
-  verbose = TRUE
+  verbose = TRUE,
+  ...
 )
 }
 \arguments{
-\item{status}{Event indicator (1 = event, 0 = censored). Required for survival.}
+\item{time}{Outcome vector of right-censored (non-negative) survival times.}
 
-\item{X_train}{Design matrix for training.}
+\item{status}{Event indicator (1 = event, 0 = censored).}
 
-\item{N_post}{Number of posterior samples to draw.}
+\item{X_train}{Design matrix for training data.}
+
+\item{treatment}{Treatment indicator (0/1) for training data.}
+
+\item{timescale}{Either \code{"time"} (log-transform internally) or
+\code{"log"} (already log-transformed).}
+
+\item{propensity}{Optional vector of propensity scores. If provided,
+it is appended to the control forest design matrix.}
+
+\item{a_dir}{First shape parameter of the Beta prior controlling the
+sparsity level in the Dirichlet splitting rule.}
+
+\item{b_dir}{Second shape parameter of the Beta prior controlling the
+sparsity level in the Dirichlet splitting rule.}
+
+\item{number_of_trees_control}{Number of trees in the control forest.
+Default is 200.}
+
+\item{number_of_trees_treat}{Number of trees in the treatment forest.
+Default is 50.}
+
+\item{power_control, base_control}{Tree-structure prior parameters for the
+control forest.}
+
+\item{power_treat, base_treat}{Tree-structure prior parameters for the
+treatment forest.}
+
+\item{N_post}{Number of posterior samples to store.}
 
 \item{N_burn}{Number of burn-in iterations.}
 
-\item{verbose}{Print sampling progress.}
+\item{verbose}{Logical; print sampling progress.}
 
-\item{prior_mu, prior_tau}{Prior types for control & treatment forests.}
+\item{...}{Additional arguments passed to \code{\link{CausalShrinkageForest}}
+to override default hyperparameters.}
+}
+\value{
+An object of class \code{CausalShrinkageForest}, containing posterior mean
+predictions, posterior samples (if stored), and estimated heterogeneous
+treatment effects. See \code{\link{CausalShrinkageForest}} for full details
+of returned components.
 }
 \description{
-This model generalizes BCF by including:
-\itemize{
-\item Dirichlet splitting priors for sparsity (optional).
+Fits a survival version of a Bayesian Causal Forest (BCF) under an
+accelerated failure time (AFT) model, combining Dirichlet splitting
+priors with global–local shrinkage.
 }
+\details{
+This wrapper extends \code{\link{SurvivalBCF}} by incorporating
+Dirichlet sparsity in both the prognostic (control) and treatment
+forests, while applying additional shrinkage to the control forest
+via a half-Cauchy prior.
+
+The SurvivalShrinkageBCF model decomposes the outcome as
+\deqn{
+  \log T = \mu(x) + a \cdot \tau(x) + \varepsilon,
+}
+where \eqn{\mu(x)} represents the prognostic (control) component and
+\eqn{\tau(x)} the heterogeneous treatment effect.
+
+In contrast to \code{SurvivalBCF}, this function:
+\itemize{
+\item Applies a Dirichlet splitting prior to both forests, inducing
+structural sparsity in variable selection.
+\item Combines Dirichlet sparsity with additional half-Cauchy shrinkage
+in the control forest.
+}
+
+The Dirichlet prior follows the sparse splitting framework of Linero (2018),
+where splitting probabilities are governed by a Beta–Dirichlet hierarchy.
+The sparsity level is controlled by \code{a_dir} and \code{b_dir}.
+
+Survival outcomes are modeled using an AFT formulation with right-censoring
+handled via data augmentation.
+}
+\references{
+Caron, A., Baio, G., & Manolopoulou, I. (2022).
+Shrinkage Bayesian Causal Forests for Heterogeneous Treatment Effects Estimation.
+Journal of Computational and Graphical Statistics, 31(4), 1202–1214.
+https://doi.org/10.1080/10618600.2022.2067549
+}
+\seealso{
+\code{\link{SurvivalBCF}}, \code{\link{CausalShrinkageForest}}
 }

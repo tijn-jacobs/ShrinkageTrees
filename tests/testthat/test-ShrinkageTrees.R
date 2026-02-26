@@ -417,3 +417,34 @@ test_that("ShrinkageTrees (half-cauchy) works for continuous outcome", {
   expect_equal(fit$train_predictions, fit2$train_predictions)
 })
 
+test_that("ShrinkageTrees errors on invalid outcome_type", {
+  X <- matrix(rnorm(20 * 2), ncol = 2)
+  y <- rnorm(20)
+  
+  expect_error(
+    ShrinkageTrees(
+      y = y,
+      X_train = X,
+      outcome_type = "invalid"
+    )
+  )
+})
+
+test_that("X_test defaults correctly", {
+  X <- matrix(rnorm(40), ncol = 2)
+  y <- rnorm(20)
+  
+  fit <- ShrinkageTrees(
+    y = y,
+    X_train = X,
+    outcome_type = "continuous",
+    number_of_trees = 5,
+    prior_type = "standard",
+    local_hp = 0.1,
+    N_post = 5,
+    N_burn = 2,
+    verbose = FALSE
+  )
+  
+  expect_length(fit$test_predictions, 1)
+})

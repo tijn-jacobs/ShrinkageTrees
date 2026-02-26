@@ -1,7 +1,7 @@
 
 #ifndef GUARD_info_h
 #define GUARD_info_h
-#include "../Prerequisites.h"
+#include "Prerequisites.h"
 
 //data
 class dinfo {

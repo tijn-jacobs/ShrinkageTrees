@@ -13,8 +13,7 @@
 #'   \item{min}{Estimated minimum of survival times.}
 #'   \item{max}{Estimated maximum of survival times.}
 #' 
-#' 
-#' @export
+#' @importFrom stats dnorm pnorm
 censored_info <- function(y, status) {
   
   if (requireNamespace("survival", quietly = TRUE)) {

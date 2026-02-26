@@ -14,44 +14,55 @@ SurvivalBART(
   k = 2,
   N_post = 1000,
   N_burn = 1000,
-  verbose = TRUE
+  verbose = TRUE,
+  ...
 )
 }
 \arguments{
-\item{status}{Event indicator (1 = event, 0 = censored). Required for survival.}
+\item{time}{Outcome vector of right-censored (non-negative) survival times.}
 
-\item{X_train}{Design matrix for training.}
+\item{status}{Event indicator (1 = event, 0 = censored).}
 
-\item{X_test}{Optional test matrix (defaults to column means of X_train).}
+\item{X_train}{Design matrix for training data.}
 
-\item{number_of_trees}{Number of trees (default 200).}
+\item{X_test}{Optional test matrix. If NULL, predictions are computed at
+the column means of \code{X_train}.}
 
-\item{k}{Hyperparameter for the prior variance of the step heights.}
+\item{timescale}{Either \code{"time"} (log-transform internally) or
+\code{"log"} (already log-transformed).}
 
-\item{N_post}{Number of posterior samples to draw.}
+\item{number_of_trees}{Number of trees in the ensemble. Default is 200.}
+
+\item{k}{Scaling constant used to calibrate the prior variance of the
+step heights.}
+
+\item{N_post}{Number of posterior samples to store.}
 
 \item{N_burn}{Number of burn-in iterations.}
 
-\item{verbose}{Print sampling progress.}
+\item{verbose}{Logical; print sampling progress.}
 
-\item{y}{Outcome vector of right-censored (non-negative) survival times.}
+\item{...}{Additional arguments passed to \code{\link{ShrinkageTrees}}
+to override default hyperparameters.}
 }
 \description{
-Fits an Accelerated Failure Time (AFT) model using the original BART prior:
-We fit a BART model to f:
-log(y) = f(x) + ε.
+Fits an Accelerated Failure Time (AFT) model using the classical
+Bayesian Additive Regression Trees (BART) prior:
+\eqn{\log(Y) = f(x) + \varepsilon}.
 }
 \details{
-This function provides a simplified interface for fitting an AFT model with
-the classical BART prior using the internal \code{ShrinkageTrees} engine.
-Right-censored survival data are handled via data augmentation within the
-tree sampler.
+This function provides a survival-specific interface for classical BART
+under an AFT formulation for right-censored outcomes.
 
-Compared to the full \code{ShrinkageTrees} function, \code{SurvivalBART} fixes several hyperparameters.
-This wrapper is intended as a convenient survival-specific version of BART for
-users who do not need advanced shrinkage priors.
+Structural regularisation is induced through the standard Gaussian
+leaf prior and tree depth prior of Chipman, George & McCulloch (2010).
+
+Users requiring alternative shrinkage priors (e.g., Horseshoe or
+Dirichlet splitting priors) should use \code{\link{ShrinkageTrees}}
+directly.
 }
 \references{
 Chipman, H. A., George, E. I., & McCulloch, R. E. (2010).
-\emph{BART: Bayesian Additive Regression Trees.} Annals of Applied Statistics.
+Bayesian Additive Regression Trees.
+Annals of Applied Statistics.
 }

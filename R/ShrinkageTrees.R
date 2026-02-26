@@ -253,7 +253,7 @@ ShrinkageTrees <- function(y,
       stop("For prior_type = 'standard', you must provide local_hp.")
     }
     if (!is.null(global_hp)) {
-      warning("global_hp is ignored for 'standard' or 'dirichet' prior.")
+      warning("global_hp is ignored for 'standard' or 'dirichlet' prior.")
     }
 
     global_hp <- 1          # placeholder (ignored by C++)

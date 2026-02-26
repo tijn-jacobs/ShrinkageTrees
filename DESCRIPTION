@@ -1,15 +1,19 @@
 Package: ShrinkageTrees
 Type: Package
 Title: Regression Trees with Shrinkage Priors
-Version: 1.1.0
-Date: 2025-11-03 
+Version: 1.2.0
+Date: 2026-02-26 
 Authors@R: c(person("Tijn", "Jacobs", role = c("aut", "cre"), 
                     email = "t.jacobs@vu.nl", 
                     comment = c(ORCID = "0009-0003-6188-9296")))
 Maintainer: Tijn Jacobs <t.jacobs@vu.nl>
-Description: Bayesian regression tree models with shrinkage priors on 
-  step heights. Supports continuous, binary, and right-censored (survival) 
-  outcomes. Used for high-dimensional prediction and causal inference.
+Description: Bayesian regression tree ensembles for survival analysis and causal
+ inference. Implements BART, DART, Bayesian Causal 
+  Forests (BCF), and Horseshoe Forests models.
+  Supports right-censored survival outcomes 
+  via accelerated failure time (AFT) formulations. Designed for 
+  high-dimensional prediction and heterogeneous treatment effect 
+  estimation in causal inference.
 URL: https://github.com/tijn-jacobs/ShrinkageTrees
 BugReports: https://github.com/tijn-jacobs/ShrinkageTrees/issues
 License: MIT + file LICENSE

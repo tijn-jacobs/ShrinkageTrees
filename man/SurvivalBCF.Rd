@@ -2,7 +2,7 @@
 % Please edit documentation in R/SurvivalWrappers.R
 \name{SurvivalBCF}
 \alias{SurvivalBCF}
-\title{SurvivalBCF (Bayesian Causal Forest; Hahn et al. 2020)}
+\title{SurvivalBCF (Bayesian Causal Forest for survival data)}
 \usage{
 SurvivalBCF(
   time,
@@ -11,31 +11,75 @@ SurvivalBCF(
   treatment,
   timescale = "time",
   propensity = NULL,
+  number_of_trees_control = 200,
+  number_of_trees_treat = 50,
+  power_control = 2,
+  base_control = 0.95,
+  power_treat = 3,
+  base_treat = 0.25,
   N_post = 1000,
   N_burn = 1000,
-  verbose = TRUE
+  verbose = TRUE,
+  ...
 )
 }
 \arguments{
-\item{status}{Event indicator (1 = event, 0 = censored). Required for survival.}
+\item{time}{Outcome vector of right-censored (non-negative) survival times.}
 
-\item{X_train}{Design matrix for training.}
+\item{status}{Event indicator (1 = event, 0 = censored).}
 
-\item{N_post}{Number of posterior samples to draw.}
+\item{X_train}{Design matrix for training data.}
+
+\item{treatment}{Treatment indicator (0/1) for training data.}
+
+\item{timescale}{Either \code{"time"} (log-transform internally) or
+\code{"log"} (already log-transformed).}
+
+\item{propensity}{Optional vector of propensity scores. If provided,
+it is appended to the control forest design matrix.}
+
+\item{number_of_trees_control}{Number of trees in the control forest.
+Default is 200.}
+
+\item{number_of_trees_treat}{Number of trees in the treatment forest.
+Default is 50.}
+
+\item{power_control, base_control}{Tree-structure prior parameters for the
+control forest.}
+
+\item{power_treat, base_treat}{Tree-structure prior parameters for the
+treatment forest.}
+
+\item{N_post}{Number of posterior samples to store.}
 
 \item{N_burn}{Number of burn-in iterations.}
 
-\item{verbose}{Print sampling progress.}
+\item{verbose}{Logical; print sampling progress.}
 
-\item{W}{Treatment indicator (0/1) for training.}
-
-\item{number_of_trees_mu}{Trees for control forest.}
-
-\item{number_of_trees_tau}{Trees for treatment effect forest.}
-
-\item{k_mu, k_tau}{Leaf prior scales.}
+\item{...}{Additional arguments passed to \code{\link{CausalShrinkageForest}}
+to override default hyperparameters.}
 }
 \description{
-A simplified wrapper for fitting an AFT version of BCF:
-Y = f(x) + a * τ(x) + ε, with separate control/treatment forests.
+Fits an Accelerated Failure Time (AFT) version of Bayesian Causal Forest (BCF):
+\eqn{Y = \mu(x) + W \tau(x) + \varepsilon}, where separate forests are used
+for the prognostic (control) function \eqn{\mu(x)} and the treatment effect
+function \eqn{\tau(x)}.
+}
+\details{
+This wrapper provides a survival-specific implementation using classical
+BART-style priors for both forests.
+
+This function implements a simplified AFT-BCF model for right-censored
+survival outcomes. Structural regularisation is induced through classical
+BART priors on the tree structure and leaf parameters.
+
+Users requiring alternative shrinkage priors (e.g., Horseshoe or Dirichlet
+splitting priors) should use \code{\link{SurvivalShrinkageBCF}} or call
+\code{\link{CausalShrinkageForest}} directly.
+}
+\references{
+Hahn, P. R., Murray, J. S., & Carvalho, C. M. (2020).
+Bayesian regression tree models for causal inference:
+Regularization, confounding, and heterogeneous effects.
+Bayesian Analysis.
 }

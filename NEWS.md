@@ -1,9 +1,10 @@
-# ShrinkageTrees ??? (where should we continue numbering?)
+# ShrinkageTrees 1.2.0
 
-- A LOT!!
-- complete overhaul / revision of forest based not based on the reversible jump steps
-- Also added dirichlet implementation of the splitting probablities (as in linero ...)
-- Added four different aft fucntions for survival outcomes: aft....
+- Added `SurvivalBCF` wrapper for AFT-based Bayesian Causal Forests.
+- Added `SurvivalShrinkageBCF` with Dirichlet structural sparsity.
+- Added `SurvivalDART` for sparse high-dimensional survival modeling.
+- Added `SurvivalBART` for survival modeling using standard BART.
+- Unified survival wrappers with flexible argument forwarding via `...`.
 
 # ShrinkageTrees 1.1.0
 

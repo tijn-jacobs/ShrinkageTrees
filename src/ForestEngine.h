@@ -2,7 +2,7 @@
 #define GUARD_ForestEngine_h
 
 
-#include "stan/StanForest.h"
+#include "StanForest.h"
 
 
 // This class handles the translation from the StanForest implementation for 

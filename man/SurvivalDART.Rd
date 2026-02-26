@@ -17,34 +17,60 @@ SurvivalDART(
   k = 2,
   N_post = 1000,
   N_burn = 1000,
-  verbose = TRUE
+  verbose = TRUE,
+  ...
 )
 }
 \arguments{
-\item{status}{Event indicator (1 = event, 0 = censored). Required for survival.}
+\item{time}{Outcome vector of right-censored (non-negative) survival times.}
 
-\item{X_train}{Design matrix for training.}
+\item{status}{Event indicator (1 = event, 0 = censored).}
 
-\item{X_test}{Optional test matrix (defaults to column means of X_train).}
+\item{X_train}{Design matrix for training data.}
 
-\item{number_of_trees}{Number of trees (default 200).}
+\item{X_test}{Optional test matrix. If NULL, predictions are computed at
+the column means of \code{X_train}.}
 
-\item{a_dirichlet, b_dirichlet}{Beta hyperparameters for sparsity.}
+\item{timescale}{Either \code{"time"} (log-transform internally) or
+\code{"log"} (already log-transformed).}
 
-\item{rho_dirichlet}{Expected number of active predictors (default = ncol(X)).}
+\item{number_of_trees}{Number of trees in the ensemble. Default is 200.}
 
-\item{k}{Hyperparameter for the prior variance of the step heights.}
+\item{a_dirichlet, b_dirichlet}{Beta hyperparameters controlling sparsity
+in the Dirichlet splitting rule.}
 
-\item{N_post}{Number of posterior samples to draw.}
+\item{rho_dirichlet}{Expected number of active predictors. If NULL,
+defaults to the number of covariates in \code{X_train}.}
+
+\item{k}{Scaling constant used to calibrate the prior variance of the
+step heights.}
+
+\item{N_post}{Number of posterior samples to store.}
 
 \item{N_burn}{Number of burn-in iterations.}
 
-\item{verbose}{Print sampling progress.}
+\item{verbose}{Logical; print sampling progress.}
+
+\item{...}{Additional arguments passed to \code{\link{ShrinkageTrees}}
+to override default hyperparameters.}
 }
 \value{
-A fitted AFT-DART object.
+A fitted AFT-DART model object.
 }
 \description{
-Fits an AFT model using the Dirichlet splitting prior that encourages sparse
-feature selection via a Beta–Dirichlet hierarchy.
+Fits an Accelerated Failure Time (AFT) model using the Dirichlet splitting
+prior (DART), which induces structural sparsity through a Beta–Dirichlet
+hierarchy on splitting probabilities.
+}
+\details{
+This function provides a survival-specific wrapper for DART under an
+AFT formulation for right-censored outcomes.
+
+Structural regularisation is induced through a Dirichlet prior on
+splitting probabilities, encouraging sparse feature usage in
+high-dimensional settings.
+
+Users requiring alternative shrinkage priors on the leaf parameters
+(e.g., Horseshoe or half-Cauchy priors) should use
+\code{\link{ShrinkageTrees}} directly.
 }
