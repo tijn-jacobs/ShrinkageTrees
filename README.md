@@ -1,5 +1,4 @@
-# ShrinkageTrees <img src="https://img.shields.io/badge/R%3E%3D-4.2-blue" alt="R >= 4.2"> ![License: MIT](https://img.shields.io/badge/license-MIT-green) ![Lifecycle: maturing](https://img.shields.io/badge/lifecycle-maturing-blue) [![](https://cranlogs.r-pkg.org/badges/grand-total/ShrinkageTrees)](https://cran.r-project.org/package=ShrinkageTrees)
- <img src="sticker/ShrinkageTrees_hex.png" align="right" width="150"/>
+
 
 
 
@@ -26,23 +25,6 @@ The mathematical background and theoretical foundation for these models is descr
 - Supports survival data with right-censoring (accelerated failure time model)
 - Efficient C++ backend via Rcpp
 
-## 📦 Installation
-
-The released version of ShrinkageTrees can be installed from [CRAN](https://cran.r-project.org/package=ShrinkageTrees):
-
-```r
-install.packages("ShrinkageTrees")
-```
-
-You can install the development version from [GitHub](https://github.com/tijn-jacobs/ShrinkageTrees):
-
-```r
-# Install devtools if not already installed
-install.packages("devtools")
-devtools::install_github("tijn-jacobs/ShrinkageTrees")
-```
-
-
 
 
 
@@ -61,17 +43,17 @@ devtools::install_github("tijn-jacobs/ShrinkageTrees")
 
 
 # ShrinkageTrees <img src="https://img.shields.io/badge/R%3E%3D-4.2-blue" alt="R >= 4.2"> ![License: MIT](https://img.shields.io/badge/license-MIT-green) ![Lifecycle: maturing](https://img.shields.io/badge/lifecycle-maturing-blue) [![](https://cranlogs.r-pkg.org/badges/grand-total/ShrinkageTrees)](https://cran.r-project.org/package=ShrinkageTrees)
-<img src="sticker/ShrinkageTrees_hex.png" align="right" width="150"/>
+ <img src="sticker/ShrinkageTrees_hex.png" align="right" width="150"/>
 
----
+
 
 ## Overview
 
-**ShrinkageTrees** provides a unified framework for Bayesian regression tree ensembles with a particular focus on **high-dimensional survival analysis and causal inference**.
+**ShrinkageTrees** provides a unified framework for survival analysis using Bayesian regression tree ensembles with a particular focus on **causal inference and high-dimensional data**.
 
-The package implements multiple Bayesian tree models — including BART, DART, and BCF — all adapted to right-censored accelerated failure time (AFT) models.
+The package implements multiple well-known Bayesian tree models — including BART, DART, and BCF — all adapted to right-censored data via accelerated failure time (AFT) models.
 
-Its central methodological innovation is a novel **Horseshoe regularisation mechanism applied directly to tree step heights**, enabling adaptive global–local shrinkage in high-dimensional settings.
+Its central methodological innovation is the  **Horseshoe regularisation mechanism applied directly to tree step heights**, enabling adaptive global–local shrinkage in high-dimensional settings.
 
 Supported outcome types:
 
@@ -79,29 +61,17 @@ Supported outcome types:
 - Binary outcomes  
 - **Right-censored survival times (AFT framework)**  
 
----
 
-## ⭐ Core Contribution: Horseshoe-Regularised Trees
 
-Traditional BART regularises model complexity primarily through constraints on the **tree structure** (e.g., limiting depth or splitting probabilities).
+## ⭐ Core Contribution: Horseshoe Trees
 
-ShrinkageTrees introduces an alternative and complementary strategy:
+Traditional BART or DART regularise model complexity through constraints on the **tree structure** (e.g., depth or splitting probabilities).
 
-> Regularisation through **global–local shrinkage directly on the leaf (step height) parameters**.
+ShrinkageTrees instead introduces **global–local shrinkage directly on the leaf (step height) parameters** via the Horseshoe prior.
 
-Under the Horseshoe prior:
+A global parameter controls overall shrinkage, while local parameters allow strong signals to escape shrinkage. Small effects are aggressively shrunk toward zero, whereas large effects are preserved due to the heavy-tailed prior.
 
-- A global parameter controls overall shrinkage across the forest.
-- Local parameters allow individual leaf effects to escape shrinkage when supported by the data.
-- Small signals are strongly shrunk toward zero.
-- Large signals are preserved due to the heavy-tailed prior.
-
-This approach:
-
-- Retains all covariates (important for causal adjustment),
-- Reduces noise in high-dimensional settings,
-- Avoids hard variable exclusion,
-- Improves robustness in survival models with censoring.
+This strategy retains all covariates, reduces noise in high-dimensional settings, and improves robustness in causal models.
 
 This methodology is introduced in:
 
@@ -109,7 +79,7 @@ This methodology is introduced in:
 > T. Jacobs, W.N. van Wieringen, S.L. van der Pas  
 > https://arxiv.org/abs/2507.22004
 
----
+
 
 ## 🧠 Implemented Models
 
@@ -118,24 +88,18 @@ ShrinkageTrees implements a modular family of Bayesian tree models:
 ### Single-Forest Models
 
 - **HorseTrees** — BART with Horseshoe shrinkage on leaf parameters  
-- **DART (Survival)** — Dirichlet prior on splitting probabilities  
-- **Standard BART (Survival)** — Classical Gaussian leaf prior  
+- **DART** — Dirichlet prior on splitting probabilities  
+- **Standard BART** — Classical Gaussian leaf prior  
 
 ### Causal Models (BCF-style decomposition)
 
 - **CausalHorseForest** — Prognostic + treatment forests with Horseshoe shrinkage  
 - **CausalShrinkageForest** — General shrinkage framework  
-- **BCF (Survival)** — Bayesian Causal Forest for right-censored AFT models  
+- **BCF** — Bayesian Causal Forest for right-censored AFT models  
 - **Shrinkage BCF** — Combined structural and magnitude shrinkage  
 
-All causal models support:
+All causal models support right right-censored survival data and heterogeneous treatment effects (CATE) estimation.
 
-- Estimation of the ATE  
-- Estimation of heterogeneous treatment effects (CATE)  
-- Propensity score adjustment  
-- Right-censored survival outcomes  
-
----
 
 ## 🌲 Tree Regularisation Strategies
 
@@ -163,23 +127,30 @@ Regularisation may act on:
 
 This separation allows precise control of model complexity in high-dimensional settings.
 
----
+
+
+
+
+
+
+
+
 
 ## 📦 Installation
 
-Install from CRAN:
+The released version of ShrinkageTrees can be installed from [CRAN](https://cran.r-project.org/package=ShrinkageTrees):
 
 ```r
 install.packages("ShrinkageTrees")
 ```
 
-Install development version from GitHub:
+You can install the development version from [GitHub](https://github.com/tijn-jacobs/ShrinkageTrees):
 
 ```r
+# Install devtools if not already installed
 install.packages("devtools")
 devtools::install_github("tijn-jacobs/ShrinkageTrees")
 ```
-
 
 
 ## 🚀 Example
