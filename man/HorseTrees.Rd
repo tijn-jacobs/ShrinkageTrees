@@ -24,7 +24,7 @@ HorseTrees(
   N_burn = 1000,
   delayed_proposal = 5,
   store_posterior_sample = TRUE,
-  seed = NULL,
+  n_chains = 1,
   verbose = TRUE
 )
 }
@@ -84,7 +84,13 @@ for reversible updates. Default is 5.}
 \item{store_posterior_sample}{Logical; whether to store posterior samples for
 each iteration. Default is TRUE.}
 
-\item{seed}{Random seed for reproducibility.}
+\item{n_chains}{Number of independent MCMC chains to run. Default is
+\code{1} (standard single-chain behaviour). When \code{n_chains > 1} the
+chains are run in parallel via \code{parallel::mclapply} and their
+posterior samples are pooled into a single \code{ShrinkageTrees} object,
+so all existing \code{print}, \code{summary}, and \code{predict} methods
+work without modification. On Windows, \code{mclapply} falls back to
+sequential execution.}
 
 \item{verbose}{Logical; whether to print verbose output. Default is TRUE.}
 }

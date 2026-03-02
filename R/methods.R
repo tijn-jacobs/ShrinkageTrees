@@ -281,12 +281,24 @@ print.ShrinkageTrees <- function(x, ...) {
   cat(lbl("Number of trees:"), x$mcmc$number_of_trees, "\n", sep = "")
   cat(lbl("Training size (n):"), x$data_info$n_train, "\n", sep = "")
   cat(lbl("Number of features:"), x$data_info$p_features, "\n", sep = "")
-  cat(lbl("Posterior draws:"), x$mcmc$N_post,
-      " (burn-in ", x$mcmc$N_burn, ")\n", sep = "")
+  n_ch <- x$mcmc$n_chains
+  if (!is.null(n_ch) && n_ch > 1) {
+    cat(lbl("Chains:"),          n_ch,         "\n", sep = "")
+    cat(lbl("Draws per chain:"), x$mcmc$N_post,
+        " (burn-in ", x$mcmc$N_burn, ")\n", sep = "")
+  } else {
+    cat(lbl("Posterior draws:"), x$mcmc$N_post,
+        " (burn-in ", x$mcmc$N_burn, ")\n", sep = "")
+  }
 
-  if (!is.null(x$acceptance_ratio))
+  if (!is.null(x$chains)) {
+    cat(lbl("Acceptance ratio:"),
+        paste(round(x$chains$acceptance_ratios, 3), collapse = ", "),
+        " (per chain)\n", sep = "")
+  } else if (!is.null(x$acceptance_ratio)) {
     cat(lbl("Acceptance ratio:"), round(mean(x$acceptance_ratio), 3), "\n",
         sep = "")
+  }
 
   if (!x$preprocess$sigma_known && !is.null(x$sigma))
     cat(lbl("Posterior mean sigma:"), round(mean(x$sigma), 3), "\n", sep = "")
@@ -391,6 +403,8 @@ summary.ShrinkageTrees <- function(object, ...) {
     out$variable_importance <- .vi_from_counts(object$store_split_counts)
 
   out$acceptance_ratio <- object$acceptance_ratio
+  if (!is.null(object$chains))
+    out$chains <- object$chains
 
   class(out) <- "summary.ShrinkageTrees"
   out
@@ -419,10 +433,14 @@ print.summary.ShrinkageTrees <- function(x, n_vi = 10, ...) {
   cat("Outcome: ", .outcome_label(x$outcome_type, x$timescale),
       " | Prior: ", x$prior$prior_type_user,
       " | Trees: ", x$mcmc$number_of_trees, "\n", sep = "")
+  n_ch <- x$mcmc$n_chains
+  draws_str <- if (!is.null(n_ch) && n_ch > 1)
+    paste0(x$mcmc$N_post, " x ", n_ch, " chains (burn-in ", x$mcmc$N_burn, ")")
+  else
+    paste0(x$mcmc$N_post, " (burn-in ", x$mcmc$N_burn, ")")
   cat("Data:    n = ", x$data_info$n_train,
       ", p = ", x$data_info$p_features,
-      " | Draws: ", x$mcmc$N_post,
-      " (burn-in ", x$mcmc$N_burn, ")\n", sep = "")
+      " | Draws: ", draws_str, "\n", sep = "")
 
   if (!is.null(x$sigma)) {
     cat("\nPosterior sigma:\n")
@@ -448,9 +466,14 @@ print.summary.ShrinkageTrees <- function(x, n_vi = 10, ...) {
     cat(" ", paste(names(vi), round(vi, 3), sep = ": ", collapse = "   "), "\n")
   }
 
-  if (!is.null(x$acceptance_ratio))
+  if (!is.null(x$chains)) {
+    cat("\nMCMC acceptance ratio (per chain): ",
+        paste(round(x$chains$acceptance_ratios, 3), collapse = ", "), "\n",
+        sep = "")
+  } else if (!is.null(x$acceptance_ratio)) {
     cat("\nMCMC acceptance ratio: ", round(mean(x$acceptance_ratio), 3), "\n",
         sep = "")
+  }
 
   cat("\n")
   invisible(x)
@@ -529,6 +552,8 @@ summary.CausalShrinkageForest <- function(object, ...) {
     control = object$acceptance_ratio_control,
     treat   = object$acceptance_ratio_treat
   )
+  if (!is.null(object$chains))
+    out$acceptance_ratios$per_chain <- object$chains
 
   class(out) <- "summary.CausalShrinkageForest"
   out
@@ -560,11 +585,15 @@ print.summary.CausalShrinkageForest <- function(x, n_vi = 10, ...) {
       ", treatment = ", x$prior$treat$prior_type_user, "\n", sep = "")
   cat("Trees:   control = ", x$mcmc$number_of_trees_control,
       ", treatment = ", x$mcmc$number_of_trees_treat, "\n", sep = "")
+  n_ch <- x$mcmc$n_chains
+  draws_str <- if (!is.null(n_ch) && n_ch > 1)
+    paste0(x$mcmc$N_post, " x ", n_ch, " chains (burn-in ", x$mcmc$N_burn, ")")
+  else
+    paste0(x$mcmc$N_post, " (burn-in ", x$mcmc$N_burn, ")")
   cat("Data:    n = ", x$data_info$n_train,
       ", p_control = ", x$data_info$p_control,
       ", p_treat = ", x$data_info$p_treat,
-      " | Draws: ", x$mcmc$N_post,
-      " (burn-in ", x$mcmc$N_burn, ")\n", sep = "")
+      " | Draws: ", draws_str, "\n", sep = "")
 
   cat("\nTreatment effect (CATE):\n")
   te <- x$treatment_effect
@@ -606,9 +635,21 @@ print.summary.CausalShrinkageForest <- function(x, n_vi = 10, ...) {
     cat(" ", fmt_vi(x$variable_importance_treat), "\n")
   }
 
-  cat("\nMCMC acceptance ratios:",
-      " control = ", round(x$acceptance_ratios$control, 3),
-      ", treatment = ", round(x$acceptance_ratios$treat, 3), "\n", sep = "")
+  if (!is.null(x$acceptance_ratios$per_chain)) {
+    pc <- x$acceptance_ratios$per_chain
+    cat("\nMCMC acceptance ratios (per chain):\n")
+    cat("  control:   ",
+        paste(round(pc$acceptance_ratios_control, 3), collapse = ", "), "\n",
+        sep = "")
+    cat("  treatment: ",
+        paste(round(pc$acceptance_ratios_treat,   3), collapse = ", "), "\n",
+        sep = "")
+  } else {
+    cat("\nMCMC acceptance ratios:",
+        " control = ", round(mean(x$acceptance_ratios$control), 3),
+        ", treatment = ", round(mean(x$acceptance_ratios$treat), 3), "\n",
+        sep = "")
+  }
 
   cat("\n")
   invisible(x)
@@ -638,8 +679,15 @@ print.CausalShrinkageForest <- function(x, ...) {
   cat(lbl("Outcome type:"), .outcome_label(x$outcome_type, x$timescale),
       "\n", sep = "")
   cat(lbl("Training size (n):"), x$data_info$n_train, "\n", sep = "")
-  cat(lbl("Posterior draws:"), x$mcmc$N_post,
-      " (burn-in ", x$mcmc$N_burn, ")\n", sep = "")
+  n_ch <- x$mcmc$n_chains
+  if (!is.null(n_ch) && n_ch > 1) {
+    cat(lbl("Chains:"),          n_ch,          "\n", sep = "")
+    cat(lbl("Draws per chain:"), x$mcmc$N_post,
+        " (burn-in ", x$mcmc$N_burn, ")\n", sep = "")
+  } else {
+    cat(lbl("Posterior draws:"), x$mcmc$N_post,
+        " (burn-in ", x$mcmc$N_burn, ")\n", sep = "")
+  }
 
   if (!x$preprocess$sigma_known && !is.null(x$sigma))
     cat(lbl("Posterior mean sigma:"), round(mean(x$sigma), 3), "\n", sep = "")
@@ -663,8 +711,13 @@ print.CausalShrinkageForest <- function(x, ...) {
       col(x$data_info$p_control),
       col(x$data_info$p_treat), "\n", sep = "")
 
-  if (!is.null(x$acceptance_ratio_control) ||
-      !is.null(x$acceptance_ratio_treat)) {
+  if (!is.null(x$chains)) {
+    acc_c <- paste(round(x$chains$acceptance_ratios_control, 3), collapse = ", ")
+    acc_t <- paste(round(x$chains$acceptance_ratios_treat,   3), collapse = ", ")
+    cat(lbl("Acceptance ratio:"), col(acc_c), col(acc_t), "(per chain)\n",
+        sep = "")
+  } else if (!is.null(x$acceptance_ratio_control) ||
+             !is.null(x$acceptance_ratio_treat)) {
     acc_c <- if (!is.null(x$acceptance_ratio_control))
                round(mean(x$acceptance_ratio_control), 3) else "-"
     acc_t <- if (!is.null(x$acceptance_ratio_treat))

@@ -41,9 +41,16 @@
 #' @param N_burn Number of burn-in iterations. Default is 5000.
 #' @param delayed_proposal Number of delayed iterations before proposal updates.
 #'  Default is 5.
-#' @param store_posterior_sample Logical; whether to store posterior samples of 
+#' @param store_posterior_sample Logical; whether to store posterior samples of
 #' predictions. Default is \code{FALSE}.
-#' @param verbose Logical; whether to print verbose output during sampling. 
+#' @param n_chains Number of independent MCMC chains to run. Default is
+#'   \code{1} (standard single-chain behaviour). When \code{n_chains > 1} the
+#'   chains are run in parallel via \code{parallel::mclapply} and their
+#'   posterior samples are pooled into a single \code{CausalShrinkageForest}
+#'   object, so all existing \code{print} and \code{summary} methods work
+#'   without modification. On Windows, \code{mclapply} falls back to
+#'   sequential execution.
+#' @param verbose Logical; whether to print verbose output during sampling.
 #' Default is \code{TRUE}.
 #'
 #' @return An S3 object of class \code{"CausalShrinkageForest"} containing:
@@ -248,7 +255,8 @@
 #' 
 #' @importFrom Rcpp evalCpp
 #' @useDynLib ShrinkageTrees, .registration = TRUE
-#' @importFrom stats sd qchisq runif 
+#' @importFrom stats sd qchisq runif
+#' @importFrom parallel mclapply detectCores
 #' @export
 CausalHorseForest <- function(y,
                               status = NULL,
@@ -273,8 +281,56 @@ CausalHorseForest <- function(y,
                               N_burn = 5000,
                               delayed_proposal = 5,
                               store_posterior_sample = FALSE,
+                              n_chains = 1,
                               verbose = TRUE) {
-   
+
+  # ── Multi-chain dispatch ──────────────────────────────────────────────────
+  if (n_chains > 1) {
+    mc <- match.call()
+
+    chain_args <- list(
+      y                         = y,
+      status                    = status,
+      X_train_control           = X_train_control,
+      X_train_treat             = X_train_treat,
+      treatment_indicator_train = treatment_indicator_train,
+      X_test_control            = X_test_control,
+      X_test_treat              = X_test_treat,
+      treatment_indicator_test  = treatment_indicator_test,
+      outcome_type              = outcome_type,
+      timescale                 = timescale,
+      number_of_trees           = number_of_trees,
+      k                         = k,
+      power                     = power,
+      base                      = base,
+      p_grow                    = p_grow,
+      p_prune                   = p_prune,
+      nu                        = nu,
+      q                         = q,
+      sigma                     = sigma,
+      N_post                    = N_post,
+      N_burn                    = N_burn,
+      delayed_proposal          = delayed_proposal,
+      store_posterior_sample    = store_posterior_sample,
+      n_chains                  = 1,
+      verbose                   = FALSE
+    )
+
+    n_cores <- min(n_chains, parallel::detectCores(logical = FALSE))
+    if (verbose)
+      message("Running ", n_chains, " chains (", n_cores, " cores) ...")
+
+    chains <- parallel::mclapply(
+      seq_len(n_chains),
+      function(i) do.call(CausalHorseForest, chain_args),
+      mc.cores = n_cores
+    )
+
+    combined      <- .combine_causal_chains(chains)
+    combined$call <- mc
+    return(combined)
+  }
+
   # Check outcome_type value
   allowed_types <- c("continuous", "right-censored")
   if (!outcome_type %in% allowed_types) {

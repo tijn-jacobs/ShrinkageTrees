@@ -1,10 +1,37 @@
 # ShrinkageTrees x.x.x
 
+## Multi-chain MCMC (`n_chains`)
+
+All four primary model-fitting functions — `ShrinkageTrees`, `HorseTrees`,
+`CausalHorseForest`, and `CausalShrinkageForest` — now accept an `n_chains`
+argument (default `1`). When `n_chains > 1`:
+
+- Independent chains are dispatched in parallel using `parallel::mclapply`
+  (falls back to sequential execution on Windows).
+- The number of cores used is `min(n_chains, parallel::detectCores())`.
+- Posterior sample matrices from all chains are row-bound into a single matrix,
+  giving `N_post * n_chains` total draws.
+- Posterior means are recomputed from the pooled samples; sigma and acceptance
+  ratio vectors are concatenated across chains.
+- The returned object is a standard `ShrinkageTrees` or `CausalShrinkageForest`
+  instance, so all existing `print`, `summary`, and `predict` methods work
+  without modification.
+- The survival wrappers `SurvivalBART`, `SurvivalDART`, `SurvivalBCF`, and
+  `SurvivalShrinkageBCF` inherit `n_chains` support through `...`.
+- `print` and `summary` output adapts automatically: single-chain models show
+  _Posterior draws_, multi-chain models show _Chains_ and _Draws per chain_,
+  with per-chain acceptance ratios listed separately.
+
+## S3 classes and methods
+
 - Added S3 classes `ShrinkageTrees` and `CausalShrinkageForest` with constructors in `constructors.R`.
 - Added `print` methods for both classes, displaying model specification, MCMC settings, acceptance ratio, and posterior mean sigma.
 - Added `summary` methods for both classes, returning an inspectable object with posterior sigma (mean, SD, 95% CI), prediction summaries, variable importance (posterior inclusion probabilities), and — for causal models — ATE with credible interval (when `store_posterior_sample = TRUE`) and CATE heterogeneity.
 - Added `predict` method for `ShrinkageTrees`, enabling posterior predictive inference on new data by re-running the sampler with stored training data and hyperparameters. Returns a `ShrinkageTreesPrediction` object with posterior mean and credible interval bounds.
 - Added `print` and `summary` methods for `ShrinkageTreesPrediction`, showing a formatted head-style table and a min/quartile/max distribution summary respectively.
+
+## Other changes
+
 - Fixed a latent bug in `HorseTrees` and `ShrinkageTrees` where `sigma_hat`, `y_mean`, and `lambda` were not initialised in the binary (probit) branch.
 
 # ShrinkageTrees 1.2.0

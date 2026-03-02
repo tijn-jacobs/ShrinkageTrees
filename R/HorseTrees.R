@@ -100,7 +100,13 @@
 #' for reversible updates. Default is 5.
 #' @param store_posterior_sample Logical; whether to store posterior samples for
 #'  each iteration. Default is TRUE.
-#' @param seed Random seed for reproducibility.
+#' @param n_chains Number of independent MCMC chains to run. Default is
+#'   \code{1} (standard single-chain behaviour). When \code{n_chains > 1} the
+#'   chains are run in parallel via \code{parallel::mclapply} and their
+#'   posterior samples are pooled into a single \code{ShrinkageTrees} object,
+#'   so all existing \code{print}, \code{summary}, and \code{predict} methods
+#'   work without modification. On Windows, \code{mclapply} falls back to
+#'   sequential execution.
 #' @param verbose Logical; whether to print verbose output. Default is TRUE.
 #'
 #' @return A named list with the following elements:
@@ -133,7 +139,8 @@
 #' 
 #' @importFrom Rcpp evalCpp
 #' @useDynLib ShrinkageTrees, .registration = TRUE
-#' @importFrom stats sd qchisq qnorm pnorm runif
+#' @importFrom stats sd qchisq qnorm pnorm
+#' @importFrom parallel mclapply detectCores
 #' @export
 
 HorseTrees <- function(y,
@@ -151,13 +158,56 @@ HorseTrees <- function(y,
                        nu = 3,
                        q = 0.90,
                        sigma = NULL,
-                       N_post = 1000, 
+                       N_post = 1000,
                        N_burn = 1000,
                        delayed_proposal = 5,
-                       store_posterior_sample = TRUE, 
-                       seed = NULL,
-                       verbose = TRUE) { 
-  
+                       store_posterior_sample = TRUE,
+                       n_chains = 1,
+                       verbose = TRUE) {
+
+  # ── Multi-chain dispatch ──────────────────────────────────────────────────
+  if (n_chains > 1) {
+    mc <- match.call()
+
+    chain_args <- list(
+      y                      = y,
+      status                 = status,
+      X_train                = X_train,
+      X_test                 = X_test,
+      outcome_type           = outcome_type,
+      timescale              = timescale,
+      number_of_trees        = number_of_trees,
+      k                      = k,
+      power                  = power,
+      base                   = base,
+      p_grow                 = p_grow,
+      p_prune                = p_prune,
+      nu                     = nu,
+      q                      = q,
+      sigma                  = sigma,
+      N_post                 = N_post,
+      N_burn                 = N_burn,
+      delayed_proposal       = delayed_proposal,
+      store_posterior_sample = store_posterior_sample,
+      n_chains               = 1,
+      verbose                = FALSE
+    )
+
+    n_cores <- min(n_chains, parallel::detectCores(logical = FALSE))
+    if (verbose)
+      message("Running ", n_chains, " chains (", n_cores, " cores) ...")
+
+    chains <- parallel::mclapply(
+      seq_len(n_chains),
+      function(i) do.call(HorseTrees, chain_args),
+      mc.cores = n_cores
+    )
+
+    combined      <- .combine_chains(chains)
+    combined$call <- mc
+    return(combined)
+  }
+
   # Check outcome_type value
   allowed_types <- c("continuous", "binary", "right-censored")
   if (!outcome_type %in% allowed_types) {
@@ -218,9 +268,6 @@ HorseTrees <- function(y,
   p_prune <- as.numeric(p_prune)[1]
   X_train <- as.numeric(t(X_train))
   
-  # Set a random seed if not provided
-  # By taking a random number, we ensure compatibility with set.seed()
-  if (is.null(seed)) seed <- as.integer(runif(1, 1, 1000000))
 
   if (outcome_type == "right-censored") {
 

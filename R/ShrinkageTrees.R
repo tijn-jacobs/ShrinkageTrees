@@ -50,6 +50,13 @@
 #' for reversible updates. Default is 5.
 #' @param store_posterior_sample Logical; whether to store posterior samples for
 #' each iteration. Default is TRUE.
+#' @param n_chains Number of independent MCMC chains to run. Default is
+#'   \code{1} (standard single-chain behaviour). When \code{n_chains > 1} the
+#'   chains are run in parallel via \code{parallel::mclapply} and their
+#'   posterior samples are pooled into a single \code{ShrinkageTrees} object,
+#'   so all existing \code{print}, \code{summary}, and \code{predict} methods
+#'   work without modification. On Windows, \code{mclapply} falls back to
+#'   sequential execution.
 #' @param verbose Logical; whether to print verbose output. Default is TRUE.
 #'
 #' @return An S3 object of class "ShrinkageTrees" containing the following elements:
@@ -181,8 +188,8 @@
 #' @importFrom Rcpp evalCpp
 #' @useDynLib ShrinkageTrees, .registration = TRUE
 #' @importFrom stats sd qchisq qnorm pnorm runif
+#' @importFrom parallel mclapply detectCores
 #' @export
-
 ShrinkageTrees <- function(y,
                            status = NULL,
                            X_train,
@@ -207,7 +214,57 @@ ShrinkageTrees <- function(y,
                            N_burn = 1000,
                            delayed_proposal = 5,
                            store_posterior_sample = TRUE,
+                           n_chains = 1,
                            verbose = TRUE) {
+
+  # ── Multi-chain dispatch ──────────────────────────────────────────────────
+  if (n_chains > 1) {
+    mc <- match.call()
+
+    # Collect all evaluated arguments for the per-chain calls
+    chain_args <- list(
+      y                      = y,
+      status                 = status,
+      X_train                = X_train,
+      X_test                 = X_test,
+      outcome_type           = outcome_type,
+      timescale              = timescale,
+      number_of_trees        = number_of_trees,
+      prior_type             = prior_type,
+      local_hp               = local_hp,
+      global_hp              = global_hp,
+      a_dirichlet            = a_dirichlet,
+      b_dirichlet            = b_dirichlet,
+      rho_dirichlet          = rho_dirichlet,
+      power                  = power,
+      base                   = base,
+      p_grow                 = p_grow,
+      p_prune                = p_prune,
+      nu                     = nu,
+      q                      = q,
+      sigma                  = sigma,
+      N_post                 = N_post,
+      N_burn                 = N_burn,
+      delayed_proposal       = delayed_proposal,
+      store_posterior_sample = store_posterior_sample,
+      n_chains               = 1,
+      verbose                = FALSE
+    )
+
+    n_cores <- min(n_chains, parallel::detectCores(logical = FALSE))
+    if (verbose)
+      message("Running ", n_chains, " chains (", n_cores, " cores) ...")
+
+    chains <- parallel::mclapply(
+      seq_len(n_chains),
+      function(i) do.call(ShrinkageTrees, chain_args),
+      mc.cores = n_cores
+    )
+
+    combined       <- .combine_chains(chains)
+    combined$call  <- mc
+    return(combined)
+  }
 
 
   
