@@ -549,7 +549,7 @@ summary.CausalShrinkageForest <- function(object, ...) {
 #' @seealso \code{\link{summary.CausalShrinkageForest}}
 #' @export
 print.summary.CausalShrinkageForest <- function(x, n_vi = 10, ...) {
-
+#TESTEST
   cat("\n")
   cat("CausalShrinkageForest model summary\n")
   cat("=====================================\n")
