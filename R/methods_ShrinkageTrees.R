@@ -15,6 +15,7 @@ print.ShrinkageTrees <- function(x, ...) {
   )
 
   cat("Outcome type:      ", outcome_label, "\n", sep = "")
+<<<<<<< Updated upstream
   cat("Prior:             ", x$prior$prior_type_user, "\n", sep = "")
   cat("Number of trees:   ", x$mcmc$number_of_trees, "\n", sep = "")
   cat("Training size (n): ", x$data_info$n_train, "\n", sep = "")
@@ -74,6 +75,23 @@ print.CausalShrinkageForest <- function(x, ...) {
   if (!x$preprocess$sigma_known && !is.null(x$sigma)) {
     cat("Posterior mean sigma: ",
         round(mean(x$sigma), 3), "\n", sep = "")
+=======
+  cat("Prior:             ", x$prior_type_user, "\n", sep = "")
+  cat("Number of trees:   ", x$number_of_trees, "\n", sep = "")
+  cat("Training size (n): ", x$n_train, "\n", sep = "")
+  cat("Number of features:", x$p_features, "\n", sep = "")
+  cat("Posterior draws:   ", x$N_post,
+      " (burn-in ", x$N_burn, ")\n", sep = "")
+
+  if (!is.null(x$fit$acceptance_ratio)) {
+    cat("Acceptance ratio:  ",
+        round(mean(x$fit$acceptance_ratio), 3), "\n", sep = "")
+  }
+
+  if (!x$sigma_known && !is.null(x$fit$sigma)) {
+    cat("Posterior mean sigma:",
+        round(mean(x$fit$sigma), 3), "\n", sep = "")
+>>>>>>> Stashed changes
   }
 
   invisible(x)
