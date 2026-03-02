@@ -1,3 +1,12 @@
+# ShrinkageTrees x.x.x
+
+- Added S3 classes `ShrinkageTrees` and `CausalShrinkageForest` with constructors in `constructors.R`.
+- Added `print` methods for both classes, displaying model specification, MCMC settings, acceptance ratio, and posterior mean sigma.
+- Added `summary` methods for both classes, returning an inspectable object with posterior sigma (mean, SD, 95% CI), prediction summaries, variable importance (posterior inclusion probabilities), and — for causal models — ATE with credible interval (when `store_posterior_sample = TRUE`) and CATE heterogeneity.
+- Added `predict` method for `ShrinkageTrees`, enabling posterior predictive inference on new data by re-running the sampler with stored training data and hyperparameters. Returns a `ShrinkageTreesPrediction` object with posterior mean and credible interval bounds.
+- Added `print` and `summary` methods for `ShrinkageTreesPrediction`, showing a formatted head-style table and a min/quartile/max distribution summary respectively.
+- Fixed a latent bug in `HorseTrees` and `ShrinkageTrees` where `sigma_hat`, `y_mean`, and `lambda` were not initialised in the binary (probit) branch.
+
 # ShrinkageTrees 1.2.0
 
 - Added `SurvivalBCF` wrapper for AFT-based Bayesian Causal Forests.
@@ -19,26 +28,28 @@
 
 # ShrinkageTrees 1.0.2
 
-- Improved handling of censored survival outcomes in the back-end 
-  (preparatory changes for interval censoring support).  
+- Improved handling of censored survival outcomes in the back-end
+  (preparatory changes for interval censoring support).
 - Minor internal refactoring; no changes to the user-facing API.
 
 # ShrinkageTrees 1.0.1
 
-- Fixed bugs in the demo script  
-- Added a `CONTRIBUTING.md` file with guidelines for contributors  
-- Corrected minor typos in the source code (non-functional changes) 
+- Fixed bugs in the demo script
+- Added a `CONTRIBUTING.md` file with guidelines for contributors
+- Corrected minor typos in the source code (non-functional changes)
 
 # ShrinkageTrees 1.0.0
 
 🎉 First CRAN release of **ShrinkageTrees**!
 
 This package provides Bayesian regression tree models with shrinkage priors, supporting:
+
 - Continuous outcomes
 - Binary outcomes
 - Right-censored survival data
 
 It includes four core functions:
+
 - `HorseTrees()`: fits a single regression tree with a standard Horseshoe prior.
 - `ShrinkageTrees()`: fits a single tree with customizable shrinkage priors.
 - `CausalHorseForest()`: fits a causal forest using the standard Horseshoe prior.

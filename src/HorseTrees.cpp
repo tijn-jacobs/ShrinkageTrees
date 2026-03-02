@@ -208,7 +208,6 @@ Rcpp::List HorseTrees_cpp(
       forest.StartDirichlet();
     }
 
-  
     if(print_progress){
       // Progress bar
       float progress = static_cast<float>(i) / static_cast<float>(total);
@@ -222,7 +221,6 @@ Rcpp::List HorseTrees_cpp(
       Rcpp::Rcout << "| " << int(progress * 100.0) << " %\r";
       Rcpp::Rcout.flush();
     }
-
 
     // Update the forest (outer Gibbs step)
     forest.UpdateForest(

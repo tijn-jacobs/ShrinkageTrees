@@ -223,7 +223,7 @@ HorseTrees <- function(y,
   if (is.null(seed)) seed <- as.integer(runif(1, 1, 1000000))
 
   if (outcome_type == "right-censored") {
-    
+
     # Convert y to numeric for C++ compatibility
     y <- as.numeric(y)
 
@@ -231,6 +231,9 @@ HorseTrees <- function(y,
     if (timescale == "time") {
       y <- log(y)
     }
+
+    # Save y before centering/standardizing (for predict())
+    y_train_raw <- y
 
     # Obtain estimated mean and standard deviation using censored_info()
     cens_inf <- censored_info(y, status)
@@ -313,8 +316,12 @@ HorseTrees <- function(y,
   # If binary
   } else if (outcome_type == "binary") {
     y <- as.numeric(y)
+    y_train_raw      <- y
     latent_threshold <- qnorm(mean(y))
-    sigma_known <- FALSE
+    sigma_hat        <- 1
+    sigma_known      <- TRUE
+    y_mean           <- 0
+    lambda           <- 0   # unused for probit
     fit <- probitHorseTrees_cpp(
       nSEXP = n_train,
       pSEXP = p_features,
@@ -353,6 +360,9 @@ HorseTrees <- function(y,
 
     # Force outcome to plain numeric vector
     y <- as.numeric(y)
+
+    # Save y before centering/standardizing (for predict())
+    y_train_raw <- y
 
     # Create dummy status vector (not used for continuous)
     status <- rep(1, n_train)
@@ -425,22 +435,41 @@ HorseTrees <- function(y,
     } 
 
     obj <- NewShrinkageTrees(
-    fit = fit,
-    call = match.call(),
-    outcome_type = outcome_type,
-    timescale = timescale,
-    prior_type_user = "horseshoe",
-    prior_type_cpp = "horseshoe",
-    n_train = n_train,
-    p_features = p_features,
-    n_test = n_test,
-    number_of_trees = number_of_trees,
-    N_post = N_post,
-    N_burn = N_burn,
+    fit              = fit,
+    call             = match.call(),
+    outcome_type     = outcome_type,
+    timescale        = timescale,
+    prior_type_user  = "horseshoe",
+    prior_type_cpp   = "horseshoe",
+    n_train          = n_train,
+    p_features       = p_features,
+    n_test           = n_test,
+    test_provided    = !is.null(X_test),
+    number_of_trees  = number_of_trees,
+    N_post           = N_post,
+    N_burn           = N_burn,
     store_posterior_sample = store_posterior_sample,
-    sigma_hat = sigma_hat,
-    sigma_known = sigma_known,
-    y_mean = y_mean
+    sigma_hat        = sigma_hat,
+    sigma_known      = sigma_known,
+    y_mean           = y_mean,
+    y_train          = y_train_raw,
+    X_train          = X_train,
+    status_train     = if (outcome_type == "right-censored") status else NULL,
+    power            = power,
+    base             = base,
+    p_grow           = p_grow,
+    p_prune          = p_prune,
+    delayed_proposal = delayed_proposal,
+    reversible       = TRUE,
+    param1           = k / sqrt(number_of_trees),
+    param2           = k / sqrt(number_of_trees),
+    omega            = 1,
+    a_dirichlet      = 1,
+    b_dirichlet      = 1,
+    rho_dirichlet    = 1,
+    nu               = nu,
+    lambda           = lambda,
+    latent_threshold = if (outcome_type == "binary") latent_threshold else NULL
   )
 
   return(obj)
