@@ -12,27 +12,6 @@ StanForest::~StanForest()
    if(ftemp) delete[] ftemp;
 }
 
-// Operators
-StanForest& StanForest::operator=(const StanForest& rhs)
-{
-   if(&rhs != this) {
-
-      this->t = rhs.t;
-      this->m = t.size();
-
-      this->pi = rhs.pi;
-
-      p=0;n=0;x=0;y=0;
-      xi.clear();
-
-      if(allfit) {delete[] allfit; allfit=0;}
-      if(r) {delete[] r; r=0;}
-      if(ftemp) {delete[] ftemp; ftemp=0;}
-
-   }
-   return *this;
-}
-
 //get,set
 void StanForest::setm(size_t m)
 {
@@ -54,15 +33,17 @@ void StanForest::setxinfo(xinfo& _xi)
    }
 }
 
-void StanForest::setdata(size_t p, size_t n, double *x, double *y, size_t numcut)
-{
+void StanForest::SetData(size_t p, size_t n, double *x, double *y, size_t numcut) {
+
   int* nc = new int[p];
-  for(size_t i=0; i<p; ++i) nc[i]=numcut;
-  this->setdata(p, n, x, y, nc);
+  for(size_t i=0; i<p; ++i) {
+    nc[i]=numcut;
+  } 
+  this->SetData(p, n, x, y, nc);
   delete [] nc;
 }
 
-void StanForest::setdata(size_t p, size_t n, double *x, double *y, int *nc)
+void StanForest::SetData(size_t p, size_t n, double *x, double *y, int *nc)
 {
    this->p=p; this->n=n; this->x=x; this->y=y;
    if(xi.size()==0) makexinfo(p,n,&x[0],xi,nc); // This should be always the case; CHECK!
@@ -140,8 +121,6 @@ void StanForest::pr() //print to screen
 {
    cout << "*****StanForest object:\n";
    cout << "m: " << m << std::endl;
-   cout << "t[0]:\n " << t[0] << std::endl;
-   cout << "t[m-1]:\n " << t[m-1] << std::endl;
    cout << "prior and mcmc info:\n";
    if(dart){
      cout << "*****dart prior (On):\n";

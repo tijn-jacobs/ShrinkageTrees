@@ -35,7 +35,7 @@ Rcpp::List HorseTrees_cpp(
   SEXP store_parametersSEXP,
   SEXP store_posterior_sampleSEXP,
   SEXP verboseSEXP
-) {     
+) {
   
   // Explicit conversion of SEXP to appropriate C++ types using Rcpp::as   
   size_t n = Rcpp::as<size_t>(nSEXP);   

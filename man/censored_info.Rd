@@ -20,6 +20,6 @@ A list with elements:
 }
 \description{
 Estimates the mean and standard deviation for right-censored survival data.
-Uses the \code{afthd} package if available (placeholder), else \code{survival}, and
+Uses the \code{survival} package if available (placeholder),
 otherwise falls back to the naive mean among observed events.
 }

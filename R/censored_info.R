@@ -1,8 +1,7 @@
 #' Compute mean estimate for censored data
 #'
 #' Estimates the mean and standard deviation for right-censored survival data.
-#' Uses the `afthd` package if available (placeholder), else `survival`, and 
-#' otherwise falls back to the naive mean among observed events.
+#' Uses the `survival` package if available, otherwise falls back to the naive mean among observed events.
 #'
 #' @param y Numeric vector of (log-transformed) survival times.
 #' @param status Numeric vector; event indicator (1 = event, 0 = censored).

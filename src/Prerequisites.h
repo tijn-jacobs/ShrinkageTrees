@@ -23,6 +23,10 @@
 #include <memory>      // For dynamic memory management (e.g., std::shared_ptr)
 #include <limits>      // for std::numeric_limits<size_t>::max()
 
+// New dependencies
+#include <cstdint>   // for uint8_t (integers 0 to 255)
+#include <algorithm> // for std::find
+
 #include "Rcpp.h"
 
 double log_sum_exp(std::vector<double>& v);

@@ -23,14 +23,12 @@ public:
    // StanForest(const StanForest&);
    ~StanForest();
    
-   //operators
-   StanForest& operator=(const StanForest&);
    
    //get,set
    size_t getm() {return m;}
    void setm(size_t m);
-   void setdata(size_t p, size_t n, double *x, double *y, size_t nc=100);
-   void setdata(size_t p, size_t n, double *x, double *y, int* nc);
+   void SetData(size_t p, size_t n, double *x, double *y, size_t nc=100);
+   void SetData(size_t p, size_t n, double *x, double *y, int* nc);
    void setpi(pinfo& pi) {this->pi = pi;}
    void setprior(double base, double power, double eta)
       {pi.base=base; pi.power = power; pi.eta=eta;}

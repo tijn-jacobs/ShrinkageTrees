@@ -49,7 +49,7 @@ struct ForestEngine {
     if (type == ForestEngineType::forest_type) {
       forest->SetUpForest(p, n, X, augment_outcome, nc, omega);
     } else {
-      stan_forest->setdata(p, n, X, augment_outcome, nc);
+      stan_forest->SetData(p, n, X, augment_outcome, nc);
     }
   }
 

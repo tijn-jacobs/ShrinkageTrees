@@ -58,8 +58,6 @@ void makexinfo(size_t p, size_t n, double *x, xinfo& xi, int *nc) {
     }
 }
 
-
-
 //compute prob of a birth, goodbots will contain all the good bottom nodes
 double getpb(StanTree& t, xinfo& xi, pinfo& pi, StanTree::npv& goodbots)
 {
@@ -350,8 +348,7 @@ void dprop(StanTree& x, xinfo& xi, pinfo& pi,StanTree::npv& goodbots, double& PB
 }
 
 //draw one mu from post 
-double drawnodemu(size_t n, double sy, double eta, double sigma, Random& random)
-{
+double drawnodemu(size_t n, double sy, double eta, double sigma, Random& random) {
    double s2 = sigma*sigma;
    double b = n/s2;
    double a = 1.0/(eta*eta);
@@ -400,13 +397,11 @@ void draw_theta0(bool const_theta, double& theta, std::vector<double>& lpv,
       theta_g[k]=(lambda_g[k]*rho)/(1.-lambda_g[k]);
       double theta_log_lik=lgamma(theta_g[k])-(double)p*lgamma(theta_g[k]/(double)p)+(theta_g[k]/(double)p)*sumlpv;
       double beta_log_prior=(a-1.)*log(lambda_g[k])+(b-1.)*log(1.-lambda_g[k]);
-//      cout << "SLP: " << sumlogpv << "\nTLL: " << theta_log_lik << "\nBLP: " << beta_log_prior << '\n';
       lwt_g[k]=theta_log_lik+beta_log_prior;      
     }
     lse=log_sum_exp(lwt_g);
     for(size_t k=0;k<1000;k++) {
       lwt_g[k]=exp(lwt_g[k]-lse);
-//      cout << "LWT: " << lwt_g[k] << '\n';
     }
     random.SetInclusionWeights(lwt_g);    
     theta=theta_g[random.discrete()];

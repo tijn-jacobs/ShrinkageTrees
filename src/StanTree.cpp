@@ -1,6 +1,4 @@
-
 #include "StanTree.h"
-
 
 // node id
 size_t StanTree::nid() const 
@@ -72,34 +70,6 @@ char StanTree::ntype()
    return 'i';
 }
 
-//print out StanTree(pc=true) or node(pc=false) information
-void StanTree::pr(bool pc) 
-{
-   size_t d = depth();
-   size_t id = nid();
-
-   size_t pid;
-   if(!p) pid=0; //parent of top node
-   else pid = p->nid();
-
-   std::string pad(2*d,' ');
-   std::string sp(", ");
-   if(pc && (ntype()=='t'))
-      cout << "StanTree size: " << StanTreesize() << std::endl;
-   cout << pad << "(id,parent): " << id << sp << pid;
-   cout << sp << "(split_var,cut_val): " << split_var << sp << cut_val;
-   cout << sp << "step_height: " << step_height;
-   cout << sp << "type: " << ntype();
-   cout << sp << "depth: " << depth();
-   cout << sp << "pointer: " << this << std::endl;
-
-   if(pc) {
-      if(l) {
-         l->pr(pc);
-         r->pr(pc);
-      }
-   }
-}
 
 //kill children of  nog node nid
 bool StanTree::death(size_t nid, double step_height)
@@ -197,14 +167,21 @@ void StanTree::getnodes(cnpv& v)  const
    }
 }
 
-StanTree::StanTree_p StanTree::bn(double *x,xinfo& xi)
-{
+// What does this function do?
+// It finds the bottom node for a given x. It uses the split rules in the tree 
+// to find the bottom node. It returns a pointer to the bottom node associated with x.
+StanTree::StanTree_p StanTree::bn(double *x, xinfo& xi) {
    if(l==0) return this; //no children
-   if(x[split_var] < xi[split_var][cut_val]) {
-      return l->bn(x,xi);
-   } else {
-      return r->bn(x,xi);
-   }
+   if(std::isnan(x[split_var])) {
+    // This is for missing data!
+    } else {
+      if(x[split_var] < xi[split_var][cut_val]) {
+        return l->bn(x,xi);
+      } else {
+        return r->bn(x,xi);
+      }
+    }
+
 }
 
 //find region for a given variable
@@ -281,67 +258,6 @@ StanTree& StanTree::operator=(const StanTree& rhs)
    return *this;
 }
 
-//functions
-std::ostream& operator<<(std::ostream& os, const StanTree& t)
-{
-   StanTree::cnpv nds;
-   t.getnodes(nds);
-   os << nds.size() << std::endl;
-   for(size_t i=0;i<nds.size();i++) {
-      os << nds[i]->nid() << " ";
-      os << nds[i]->GetSplitVar() << " ";
-      os << nds[i]->GetCutVal() << " ";
-      os << nds[i]->gettheta() << std::endl;
-   }
-   return os;
-}
-std::istream& operator>>(std::istream& is, StanTree& t)
-{
-   size_t tid,pid; //tid: id of current node, pid: parent's id
-   std::map<size_t,StanTree::StanTree_p> pts;  //pointers to nodes indexed by node id
-   size_t nn; //number of nodes
-
-   t.tonull(); // obliterate old StanTree (if there)
-
-   //read number of nodes----------
-   is >> nn;
-   if(!is) {
-      //cout << ">> error: unable to read number of nodes" << endl;
-      return is;
-   }
-
-   //read in vector of node information----------
-   std::vector<node_info> nv(nn);
-   for(size_t i=0;i!=nn;i++) {
-      is >> nv[i].id >> nv[i].split_var >> nv[i].cut_val >> nv[i].step_height;
-      if(!is) {
-         //cout << ">> error: unable to read node info, on node  " << i+1 << endl;
-         return is;
-      }
-   }
-   //first node has to be the top one
-   pts[1] = &t; //careful! this is not the first pts, it is pointer of id 1.
-   t.setv(nv[0].split_var); t.setc(nv[0].cut_val); t.settheta(nv[0].step_height);
-   t.p=0;
-
-   //now loop through the rest of the nodes knowing parent is already there.
-   for(size_t i=1;i!=nv.size();i++) {
-      StanTree::StanTree_p np = new StanTree;
-      np->split_var = nv[i].split_var; np->cut_val=nv[i].cut_val; np->step_height=nv[i].step_height;
-      tid = nv[i].id;
-      pts[tid] = np;
-      pid = tid/2;
-      // set pointers
-      if(tid % 2 == 0) { //left child has even id
-         pts[pid]->l = np;
-      } else {
-         pts[pid]->r = np;
-      }
-      np->p = pts[pid];
-   }
-   return is;
-}
-
 //add children to bot node *np
 void StanTree::birthp(StanTree_p np,size_t split_var, size_t cut_val, double step_heightl, double step_heightr)
 {
@@ -375,75 +291,3 @@ size_t StanTree::getbadcut(size_t split_var){
   else
     return par->getbadcut(split_var);
 }
-
-#ifndef NoRcpp   
-// instead of returning y.test, let's return StanTrees
-// this conveniently avoids the need for x.test
-// loosely based on pr() 
-// create an efficient list from a single StanTree
-// StanTree2list calls itself recursively
-Rcpp::List StanTree::StanTree2list(xinfo& xi, double center, double scale) {
-  Rcpp::List res;
-
-  // five possible scenarios
-  if(l) { // StanTree has branches
-    //double cut=xi[split_var][c];
-    size_t var=split_var, cut=cut_val;
-
-    var++; cut++; // increment from 0-based (C) to 1-based (R) array index
-
-    if(l->l && r->l)         // two sub-StanTrees
-      res=Rcpp::List::create(Rcpp::Named("var")=(int)var,
-			     //Rcpp::Named("cut")=cut,
-			     Rcpp::Named("cut")=(int)cut,
-			     Rcpp::Named("type")=1,
-			     Rcpp::Named("left")= l->StanTree2list(xi, center, scale),
-			     Rcpp::Named("right")=r->StanTree2list(xi, center, scale));   
-    else if(l->l && !(r->l)) // left sub-StanTree and right terminal
-      res=Rcpp::List::create(Rcpp::Named("var")=(int)var,
-			     //Rcpp::Named("cut")=cut,
-			     Rcpp::Named("cut")=(int)cut,
-			     Rcpp::Named("type")=2,
-			     Rcpp::Named("left")= l->StanTree2list(xi, center, scale),
-			     Rcpp::Named("right")=r->gettheta()*scale+center);    
-    else if(!(l->l) && r->l) // left terminal and right sub-StanTree
-      res=Rcpp::List::create(Rcpp::Named("var")=(int)var,
-			     //Rcpp::Named("cut")=cut,
-			     Rcpp::Named("cut")=(int)cut,
-			     Rcpp::Named("type")=3,
-			     Rcpp::Named("left")= l->gettheta()*scale+center,
-			     Rcpp::Named("right")=r->StanTree2list(xi, center, scale));
-    else                     // no sub-StanTrees 
-      res=Rcpp::List::create(Rcpp::Named("var")=(int)var,
-			     //Rcpp::Named("cut")=cut,
-			     Rcpp::Named("cut")=(int)cut,
-			     Rcpp::Named("type")=0,
-			     Rcpp::Named("left")= l->gettheta()*scale+center,
-			     Rcpp::Named("right")=r->gettheta()*scale+center);
-  }
-  else // no branches
-    res=Rcpp::List::create(Rcpp::Named("var")=0, // var=0 means root
-			   //Rcpp::Named("cut")=0.,
-			   Rcpp::Named("cut")=0,
-			   Rcpp::Named("type")=0,
-			   Rcpp::Named("left") =step_height*scale+center,
-			   Rcpp::Named("right")=step_height*scale+center);
-
-  return res;
-}
-
-// for one StanTree, count the number of branches for each variable
-Rcpp::IntegerVector StanTree::StanTree2count(size_t nvar) {
-  Rcpp::IntegerVector res(nvar);
-
-  if(l) { // StanTree branches
-    res[split_var]++;
-    
-    if(l->l) res+=l->StanTree2count(nvar); // if left sub-StanTree
-    if(r->l) res+=r->StanTree2count(nvar); // if right sub-StanTree
-  } // else no branches and nothing to do
-
-  return res;
-}
-#endif
-

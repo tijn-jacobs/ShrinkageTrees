@@ -70,11 +70,7 @@ public:
    char ntype(); //node type t:top, b:bot, n:no grandchildren i:interior (t can be b)
    bool isnog();
    size_t getbadcut(size_t split_var);
-#ifndef NoRcpp   
-  Rcpp::List StanTree2list(xinfo& xi, double center=0., double scale=1.); // create an efficient list from a single StanTree
-  //StanTree list2StanTree(Rcpp::List&, xinfo& xi); // create a StanTree from a list and an xinfo  
-  Rcpp::IntegerVector StanTree2count(size_t nvar); // for one StanTree, count the number of branches for each variable
-#endif
+
 private:
    double step_height; //univariate double parameter
    //rule: left if x[cut_val] < xinfo[split_var][cut_val]
@@ -87,7 +83,7 @@ private:
    //utiity functions
    void cp(StanTree_p n,  StanTree_cp o); //copy StanTree
 };
-std::istream& operator>>(std::istream&, StanTree&);
-std::ostream& operator<<(std::ostream&, const StanTree&);
+// std::istream& operator>>(std::istream&, StanTree&);
+// std::ostream& operator<<(std::ostream&, const StanTree&);
 
 #endif
