@@ -1,3 +1,4 @@
+#' @noRd
 NewShrinkageTrees <- function(
   fit,
   call,
@@ -92,6 +93,7 @@ NewShrinkageTrees <- function(
   obj
 }
 
+#' @noRd
 NewCausalShrinkageForest <- function(
   fit,
   call,

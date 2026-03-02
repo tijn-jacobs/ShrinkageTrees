@@ -1,3 +1,27 @@
+#' Posterior predictive inference for a ShrinkageTrees model
+#'
+#' Re-runs the MCMC sampler on new covariate data using the stored training
+#' data and hyperparameters, returning posterior mean predictions and credible
+#' interval bounds.
+#'
+#' @param object A fitted \code{ShrinkageTrees} model object.
+#' @param newdata A matrix (or object coercible to one) of new covariates with
+#'   the same number of columns as the training data.
+#' @param level Credible interval width. Default \code{0.95}.
+#' @param ... Currently unused.
+#' @return A \code{ShrinkageTreesPrediction} object with elements:
+#'   \describe{
+#'     \item{mean}{Posterior mean predictions (length \code{nrow(newdata)}).}
+#'     \item{lower}{Lower credible interval bound.}
+#'     \item{upper}{Upper credible interval bound.}
+#'     \item{n}{Number of test observations.}
+#'     \item{level}{Credible level used.}
+#'     \item{outcome_type}{Outcome type inherited from the fitted model.}
+#'     \item{timescale}{Timescale inherited from the fitted model (survival only).}
+#'   }
+#' @seealso \code{\link{HorseTrees}}, \code{\link{ShrinkageTrees}},
+#'   \code{\link{print.ShrinkageTreesPrediction}},
+#'   \code{\link{summary.ShrinkageTreesPrediction}}
 #' @export
 predict.ShrinkageTrees <- function(object, newdata, level = 0.95, ...) {
 
@@ -117,6 +141,18 @@ predict.ShrinkageTrees <- function(object, newdata, level = 0.95, ...) {
   }
 }
 
+#' Print a ShrinkageTreesPrediction object
+#'
+#' Displays a formatted table of posterior mean predictions and credible
+#' interval bounds for the first \code{n_head} observations.
+#'
+#' @param x A \code{ShrinkageTreesPrediction} object.
+#' @param n_head Number of observations to display. Default \code{6}.
+#' @param digits Number of decimal places. Default \code{3}.
+#' @param ... Currently unused.
+#' @return Invisibly returns \code{x}.
+#' @seealso \code{\link{predict.ShrinkageTrees}},
+#'   \code{\link{summary.ShrinkageTreesPrediction}}
 #' @export
 print.ShrinkageTreesPrediction <- function(x, n_head = 6, digits = 3, ...) {
 
@@ -151,6 +187,16 @@ print.ShrinkageTreesPrediction <- function(x, n_head = 6, digits = 3, ...) {
   invisible(x)
 }
 
+#' Summarise a ShrinkageTreesPrediction object
+#'
+#' Returns distributional summaries (min, Q1, median, max) of the posterior
+#' mean predictions and credible interval bounds across all observations.
+#'
+#' @param object A \code{ShrinkageTreesPrediction} object.
+#' @param ... Currently unused.
+#' @return A \code{summary.ShrinkageTreesPrediction} object.
+#' @seealso \code{\link{predict.ShrinkageTrees}},
+#'   \code{\link{print.summary.ShrinkageTreesPrediction}}
 #' @export
 summary.ShrinkageTreesPrediction <- function(object, ...) {
   out <- list(
@@ -166,6 +212,16 @@ summary.ShrinkageTreesPrediction <- function(object, ...) {
   out
 }
 
+#' Print a ShrinkageTreesPrediction summary
+#'
+#' Displays distributional summaries (min, Q1, median, max) of the posterior
+#' mean predictions and credible interval bounds.
+#'
+#' @param x A \code{summary.ShrinkageTreesPrediction} object.
+#' @param digits Number of decimal places. Default \code{3}.
+#' @param ... Currently unused.
+#' @return Invisibly returns \code{x}.
+#' @seealso \code{\link{summary.ShrinkageTreesPrediction}}
 #' @export
 print.summary.ShrinkageTreesPrediction <- function(x, digits = 3, ...) {
 
@@ -191,6 +247,17 @@ print.summary.ShrinkageTreesPrediction <- function(x, digits = 3, ...) {
   invisible(x)
 }
 
+#' Print a ShrinkageTrees model
+#'
+#' Displays a concise summary of a fitted \code{ShrinkageTrees} model,
+#' including outcome type, prior, MCMC settings, acceptance ratio, and
+#' posterior mean sigma.
+#'
+#' @param x A fitted \code{ShrinkageTrees} model object.
+#' @param ... Currently unused.
+#' @return Invisibly returns \code{x}.
+#' @seealso \code{\link{summary.ShrinkageTrees}}, \code{\link{HorseTrees}},
+#'   \code{\link{ShrinkageTrees}}
 #' @export
 print.ShrinkageTrees <- function(x, ...) {
   cat("\n")
@@ -269,6 +336,34 @@ print.ShrinkageTrees <- function(x, ...) {
   sort(vi, decreasing = TRUE)
 }
 
+#' Summarise a ShrinkageTrees model
+#'
+#' Returns an inspectable list with posterior sigma summaries, prediction
+#' summaries, variable importance (posterior inclusion probabilities), and
+#' MCMC diagnostics.
+#'
+#' @param object A fitted \code{ShrinkageTrees} model object.
+#' @param ... Currently unused.
+#' @return A \code{summary.ShrinkageTrees} object with elements:
+#'   \describe{
+#'     \item{call}{The original model call.}
+#'     \item{outcome_type}{Outcome type (\code{"continuous"}, \code{"binary"},
+#'       or \code{"right-censored"}).}
+#'     \item{timescale}{Timescale for survival outcomes (\code{"time"} or
+#'       \code{"log"}).}
+#'     \item{prior}{Prior specification.}
+#'     \item{mcmc}{MCMC settings (trees, draws, burn-in).}
+#'     \item{data_info}{Training and test data dimensions.}
+#'     \item{sigma}{Named vector with posterior mean, SD, and 95\% CI of sigma
+#'       (continuous and survival outcomes only).}
+#'     \item{predictions}{List with \code{train} (and optionally \code{test})
+#'       prediction summaries (mean, SD, range).}
+#'     \item{variable_importance}{Named vector of posterior inclusion
+#'       probabilities, sorted decreasingly (if available).}
+#'     \item{acceptance_ratio}{MCMC acceptance ratio vector.}
+#'   }
+#' @seealso \code{\link{print.summary.ShrinkageTrees}},
+#'   \code{\link{HorseTrees}}, \code{\link{ShrinkageTrees}}
 #' @export
 summary.ShrinkageTrees <- function(object, ...) {
 
@@ -301,6 +396,18 @@ summary.ShrinkageTrees <- function(object, ...) {
   out
 }
 
+#' Print a ShrinkageTrees model summary
+#'
+#' Displays a detailed summary of a \code{ShrinkageTrees} model, including
+#' model specification, posterior sigma, prediction summaries, variable
+#' importance, and MCMC diagnostics.
+#'
+#' @param x A \code{summary.ShrinkageTrees} object.
+#' @param n_vi Maximum number of variables to display in the variable
+#'   importance table. Default \code{10}.
+#' @param ... Currently unused.
+#' @return Invisibly returns \code{x}.
+#' @seealso \code{\link{summary.ShrinkageTrees}}
 #' @export
 print.summary.ShrinkageTrees <- function(x, n_vi = 10, ...) {
 
@@ -349,6 +456,37 @@ print.summary.ShrinkageTrees <- function(x, n_vi = 10, ...) {
   invisible(x)
 }
 
+#' Summarise a CausalShrinkageForest model
+#'
+#' Returns an inspectable list with treatment effect estimates, prognostic
+#' function summaries, posterior sigma, variable importance for each forest,
+#' and MCMC diagnostics.
+#'
+#' @param object A fitted \code{CausalShrinkageForest} model object.
+#' @param ... Currently unused.
+#' @return A \code{summary.CausalShrinkageForest} object with elements:
+#'   \describe{
+#'     \item{call}{The original model call.}
+#'     \item{outcome_type}{Outcome type.}
+#'     \item{timescale}{Timescale for survival outcomes.}
+#'     \item{prior}{Prior specification for control and treatment forests.}
+#'     \item{mcmc}{MCMC settings.}
+#'     \item{data_info}{Training and test data dimensions.}
+#'     \item{treatment_effect}{List with \code{ate} (posterior mean ATE),
+#'       \code{cate_sd} (SD of individual CATEs), and optionally
+#'       \code{ate_lower} and \code{ate_upper} (95\% CI; requires
+#'       \code{store_posterior_sample = TRUE}).}
+#'     \item{prognostic}{Summary of the prognostic function (mean, SD, range).}
+#'     \item{sigma}{Named vector with posterior mean, SD, and 95\% CI of sigma
+#'       (if estimated).}
+#'     \item{variable_importance_control}{Variable importance for the control
+#'       forest (if available).}
+#'     \item{variable_importance_treat}{Variable importance for the treatment
+#'       forest (if available).}
+#'     \item{acceptance_ratios}{List with acceptance ratios for each forest.}
+#'   }
+#' @seealso \code{\link{print.summary.CausalShrinkageForest}},
+#'   \code{\link{CausalHorseForest}}, \code{\link{CausalShrinkageForest}}
 #' @export
 summary.CausalShrinkageForest <- function(object, ...) {
 
@@ -396,6 +534,19 @@ summary.CausalShrinkageForest <- function(object, ...) {
   out
 }
 
+#' Print a CausalShrinkageForest model summary
+#'
+#' Displays a detailed summary of a \code{CausalShrinkageForest} model,
+#' including model specification, treatment effect estimates, prognostic
+#' function, posterior sigma, variable importance for each forest, and MCMC
+#' diagnostics.
+#'
+#' @param x A \code{summary.CausalShrinkageForest} object.
+#' @param n_vi Maximum number of variables to display per variable importance
+#'   table. Default \code{10}.
+#' @param ... Currently unused.
+#' @return Invisibly returns \code{x}.
+#' @seealso \code{\link{summary.CausalShrinkageForest}}
 #' @export
 print.summary.CausalShrinkageForest <- function(x, n_vi = 10, ...) {
 
@@ -463,6 +614,17 @@ print.summary.CausalShrinkageForest <- function(x, n_vi = 10, ...) {
   invisible(x)
 }
 
+#' Print a CausalShrinkageForest model
+#'
+#' Displays a concise summary of a fitted \code{CausalShrinkageForest} model
+#' with per-forest columns for priors, tree counts, feature counts, and MCMC
+#' acceptance ratios.
+#'
+#' @param x A fitted \code{CausalShrinkageForest} model object.
+#' @param ... Currently unused.
+#' @return Invisibly returns \code{x}.
+#' @seealso \code{\link{summary.CausalShrinkageForest}},
+#'   \code{\link{CausalHorseForest}}, \code{\link{CausalShrinkageForest}}
 #' @export
 print.CausalShrinkageForest <- function(x, ...) {
 
