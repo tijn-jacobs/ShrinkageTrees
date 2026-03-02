@@ -433,7 +433,7 @@ test_that("ShrinkageTrees errors on invalid outcome_type", {
 test_that("X_test defaults correctly", {
   X <- matrix(rnorm(40), ncol = 2)
   y <- rnorm(20)
-  
+
   fit <- ShrinkageTrees(
     y = y,
     X_train = X,
@@ -445,6 +445,70 @@ test_that("X_test defaults correctly", {
     N_burn = 2,
     verbose = FALSE
   )
-  
+
   expect_length(fit$test_predictions, 1)
+})
+
+
+# ── S3 class, print, summary, predict ────────────────────────────────────────
+
+test_that("ShrinkageTrees S3 methods work", {
+  X      <- matrix(runif(50 * 3), ncol = 3)
+  X_test <- matrix(runif(10 * 3), ncol = 3)
+  y      <- X[, 1] + rnorm(50)
+
+  set.seed(1)
+  fit <- ShrinkageTrees(
+    y = y, X_train = X,
+    outcome_type = "continuous",
+    number_of_trees = 5,
+    prior_type = "horseshoe",
+    local_hp = 0.1 / sqrt(5), global_hp = 0.1 / sqrt(5),
+    N_post = 10, N_burn = 5,
+    store_posterior_sample = TRUE,
+    verbose = FALSE
+  )
+
+  expect_s3_class(fit, "ShrinkageTrees")
+  expect_no_error(print(fit))
+  expect_no_error(smry <- summary(fit))
+  expect_type(smry, "list")
+  expect_true(!is.null(smry$sigma))
+
+  # predict on new data
+  expect_no_error(pred <- predict(fit, newdata = X_test))
+  expect_s3_class(pred, "ShrinkageTreesPrediction")
+  expect_length(pred$mean, nrow(X_test))
+  expect_length(pred$lower, nrow(X_test))
+  expect_length(pred$upper, nrow(X_test))
+  expect_true(all(pred$lower <= pred$mean))
+  expect_true(all(pred$mean  <= pred$upper))
+
+  expect_no_error(print(pred))
+  expect_no_error(summary(pred))
+})
+
+
+# ── Multi-chain (n_chains) ────────────────────────────────────────────────────
+
+test_that("ShrinkageTrees n_chains > 1 pools chains correctly", {
+  X <- matrix(runif(50 * 3), ncol = 3)
+  y <- X[, 1] + rnorm(50)
+
+  set.seed(1)
+  fit <- ShrinkageTrees(
+    y = y, X_train = X,
+    outcome_type = "continuous",
+    number_of_trees = 5,
+    prior_type = "horseshoe",
+    local_hp = 0.1 / sqrt(5), global_hp = 0.1 / sqrt(5),
+    N_post = 10, N_burn = 5,
+    n_chains = 2,
+    verbose = FALSE
+  )
+
+  expect_s3_class(fit, "ShrinkageTrees")
+  expect_length(fit$sigma, 20)
+  expect_equal(fit$mcmc$n_chains, 2)
+  expect_length(fit$chains$acceptance_ratios, 2)
 })

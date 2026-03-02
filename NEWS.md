@@ -30,6 +30,18 @@ argument (default `1`). When `n_chains > 1`:
 - Added `predict` method for `ShrinkageTrees`, enabling posterior predictive inference on new data by re-running the sampler with stored training data and hyperparameters. Returns a `ShrinkageTreesPrediction` object with posterior mean and credible interval bounds.
 - Added `print` and `summary` methods for `ShrinkageTreesPrediction`, showing a formatted head-style table and a min/quartile/max distribution summary respectively.
 
+## Posterior visualisation (`plot`)
+
+S3 `plot()` methods added for `ShrinkageTrees` and `CausalShrinkageForest`.
+Requires the suggested packages `bayesplot` and `ggplot2`.
+
+- `plot(fit, type = "trace")` — sigma traceplot; one line per chain, useful for assessing mixing.
+- `plot(fit, type = "density")` — overlaid posterior density of sigma, one curve per chain.
+- `plot(fit, type = "vi")` — posterior credible intervals for variable inclusion probabilities (top `n_vi` predictors).
+- `plot(fit, type = "ate")` — posterior density of the ATE with 95 % credible region _(causal models only; requires `store_posterior_sample = TRUE`)_.
+- `plot(fit, type = "cate")` — point estimates and 95 % credible intervals for the CATE of each training observation, sorted by posterior mean _(causal models only; requires `store_posterior_sample = TRUE`)_.
+- `plot(fit, type = "vi", forest = "both")` — side-by-side VI for the control and treatment forests _(causal models only)_.
+
 ## Other changes
 
 - Fixed a latent bug in `HorseTrees` and `ShrinkageTrees` where `sigma_hat`, `y_mean`, and `lambda` were not initialised in the binary (probit) branch.

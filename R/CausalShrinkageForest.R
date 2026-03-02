@@ -476,11 +476,15 @@ CausalShrinkageForest <- function(y,
          data requires non-negative times.")
   }
   
+  # Coerce to matrix so nrow/ncol are always defined
+  if (!is.matrix(X_train_control)) X_train_control <- as.matrix(X_train_control)
+  if (!is.matrix(X_train_treat))   X_train_treat   <- as.matrix(X_train_treat)
+
   # Retrieve dimensions of training data
-  n_train <- nrow(X_train_control)
+  n_train   <- nrow(X_train_control)
   p_control <- ncol(X_train_control)
   p_treat   <- ncol(X_train_treat)
-  
+
   # Check matching row numbers
   if (nrow(X_train_control) != length(y)) {
     stop("X_train_control rows must match length of y.")
@@ -491,8 +495,11 @@ CausalShrinkageForest <- function(y,
   if (length(treatment_indicator_train) != length(y)) {
     stop("treatment_indicator_train must match length of y.")
   }
+  if (p_control < 1L) stop("X_train_control must have at least one column.")
+  if (p_treat   < 1L) stop("X_train_treat must have at least one column.")
   
   # If test provided, check
+  test_provided_flag <- !is.null(X_test_control) && !is.null(X_test_treat)
   if (!is.null(X_test_control) && !is.null(X_test_treat)) {
     n_test <- nrow(X_test_control)
     if (ncol(X_test_control) != p_control || ncol(X_test_treat) != p_treat) {
@@ -540,8 +547,12 @@ CausalShrinkageForest <- function(y,
     rho_dirichlet_treat <- p_treat
   }
   
+  # Save originals for data slot (used by predict())
+  y_causal_raw      <- y
+  status_causal_raw <- status
+
   if (outcome_type == "right-censored") {
-    
+
     # Convert y to numeric for C++ compatibility
     y <- as.numeric(y)
     
@@ -855,7 +866,7 @@ CausalShrinkageForest <- function(y,
     p_control = p_control,
     p_treat = p_treat,
     n_test = n_test,
-    test_provided = !is.null(X_test_control),
+    test_provided = test_provided_flag,
     number_of_trees_control = number_of_trees_control,
     number_of_trees_treat = number_of_trees_treat,
     N_post = N_post,
@@ -869,7 +880,37 @@ CausalShrinkageForest <- function(y,
     prior_type_treat_user = prior_type_treat_user,
     prior_type_treat_cpp = prior_type_treat_cpp,
     dirichlet_bool_control = dirichlet_bool_control,
-    dirichlet_bool_treat = dirichlet_bool_treat
+    dirichlet_bool_treat = dirichlet_bool_treat,
+    # Data stored for predict()
+    y_train                   = y_causal_raw,
+    X_train_control           = X_train_control,
+    X_train_treat             = X_train_treat,
+    treatment_indicator_train = treatment_indicator_train,
+    status_train              = status_causal_raw,
+    # Hyperparameters stored for predict()
+    p_grow           = p_grow,
+    p_prune          = p_prune,
+    delayed_proposal = delayed_proposal,
+    nu               = nu,
+    lambda           = lambda,
+    power_control    = power_control,
+    base_control     = base_control,
+    param1_control   = local_hp_control,
+    param2_control   = global_hp_control,
+    omega_control    = 1/2,
+    reversible_control   = reversible_flag_control,
+    a_dirichlet_control  = a_dirichlet_control,
+    b_dirichlet_control  = b_dirichlet_control,
+    rho_dirichlet_control = rho_dirichlet_control,
+    power_treat      = power_treat,
+    base_treat       = base_treat,
+    param1_treat     = local_hp_treat,
+    param2_treat     = global_hp_treat,
+    omega_treat      = 1/2,
+    reversible_treat     = reversible_flag_treat,
+    a_dirichlet_treat    = a_dirichlet_treat,
+    b_dirichlet_treat    = b_dirichlet_treat,
+    rho_dirichlet_treat  = rho_dirichlet_treat
   )
 
   return(obj)

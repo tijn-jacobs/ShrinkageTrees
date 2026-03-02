@@ -170,8 +170,55 @@ test_that("HorseTrees for right-censored survival outcome", {
   
   # Check reproducibility
   set.seed(1)
-  fit2 <- HorseTrees(y = time_obs, X_train = X, outcome_type = "right-censored", 
-                     status = status, number_of_trees = 5, N_post = 10, 
+  fit2 <- HorseTrees(y = time_obs, X_train = X, outcome_type = "right-censored",
+                     status = status, number_of_trees = 5, N_post = 10,
                      N_burn = 5, store_posterior_sample = TRUE, verbose = FALSE)
   expect_equal(fit$train_predictions, fit2$train_predictions)
+})
+
+
+# ── S3 class and methods ──────────────────────────────────────────────────────
+
+test_that("HorseTrees returns ShrinkageTrees S3 object with working methods", {
+  X <- matrix(runif(50 * 3), ncol = 3)
+  y <- X[, 1] + rnorm(50)
+
+  set.seed(1)
+  fit <- HorseTrees(
+    y = y, X_train = X,
+    outcome_type = "continuous",
+    number_of_trees = 5,
+    N_post = 10, N_burn = 5,
+    store_posterior_sample = TRUE,
+    verbose = FALSE
+  )
+
+  expect_s3_class(fit, "ShrinkageTrees")
+  expect_no_error(print(fit))
+  expect_no_error(smry <- summary(fit))
+  expect_type(smry, "list")
+  expect_true(!is.null(smry$sigma))
+})
+
+
+# ── Multi-chain (n_chains) ────────────────────────────────────────────────────
+
+test_that("HorseTrees n_chains > 1 pools chains correctly", {
+  X <- matrix(runif(50 * 3), ncol = 3)
+  y <- X[, 1] + rnorm(50)
+
+  set.seed(1)
+  fit <- HorseTrees(
+    y = y, X_train = X,
+    outcome_type = "continuous",
+    number_of_trees = 5,
+    N_post = 10, N_burn = 5,
+    n_chains = 2,
+    verbose = FALSE
+  )
+
+  expect_s3_class(fit, "ShrinkageTrees")
+  expect_length(fit$sigma, 20)
+  expect_equal(fit$mcmc$n_chains, 2)
+  expect_length(fit$chains$acceptance_ratios, 2)
 })

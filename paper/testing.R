@@ -3,6 +3,7 @@ remove.packages("ShrinkageTrees")
 setwd("/Users/tijnjacobs/Library/CloudStorage/OneDrive-VrijeUniversiteitAmsterdam/Documents/GitHub/ShrinkageTrees")
 devtools::install()
 devtools::load_all()
+devtools::document()
 library(ShrinkageTrees)
 
 n <- 50
@@ -68,7 +69,8 @@ fit_double <- CausalShrinkageForest(y = y,
                                     N_post = 100,
                                     N_burn = 5,
                                     store_posterior_sample = TRUE,
-                                    verbose = FALSE)
+                                    verbose = TRUE,
+                                    n_chains = 3)
 
 fit_double
 summary(fit_double)                         
@@ -81,113 +83,104 @@ summary(fit_double)
 
 
 
+library(bayesplot)
+library(ggplot2)
 
-
-
-
-
-
-
-
-
-
-
-
-# ============================================================
-# Test script for SurvivalBART, SurvivalDART, SurvivalBCF,
-# SurvivalShrinkageBCF
-# ============================================================
-
-library(survival)
-
-# Shared data
+# ─────────────────────────────────────────────────────────────────────────────
+# 1. ShrinkageTrees — continuous outcome, multiple chains
+# ─────────────────────────────────────────────────────────────────────────────
 set.seed(42)
-n <- 50
-p <- 3
-X <- matrix(runif(n * p), ncol = p)
-X_test <- matrix(runif(n * p), ncol = p)
+n <- 150; p <- 8
+X <- matrix(rnorm(n * p), n, p)
+colnames(X) <- paste0("X", 1:p)
+y <- X[, 1] * 2 + X[, 2] - 0.5 * X[, 3] + rnorm(n)
 
-# Simulate right-censored survival times
-true_time <- exp(X[, 1] + rnorm(n, sd = 0.5))
-cens_time <- runif(n, 0.5, 3)
-time   <- pmin(true_time, cens_time)
-status <- as.integer(true_time <= cens_time)
-treat  <- rbinom(n, 1, X[, 1])
+k  <- 0.5                         # BART k-factor
+lh <- (max(y) - min(y)) / (k * 2 * sqrt(10))  # local_hp
 
-# ============================================================
-# 1. SurvivalBART
-# ============================================================
-fit_sbart <- SurvivalBART(
-  time             = time,
-  status           = status,
-  X_train          = X,
-  X_test           = X_test,
-  timescale        = "time",
-  number_of_trees  = 5,
-  k                = 2.0,
-  N_post           = 10,
-  N_burn           = 5,
-  verbose          = FALSE
+fit_st <- ShrinkageTrees(
+  y              = y,
+  X_train        = X,
+  prior_type     = "horseshoe",
+  local_hp       = lh,
+  global_hp      = lh,
+  number_of_trees = 10,
+  N_post         = 50,
+  N_burn         = 20,
+  store_posterior_sample = TRUE,
+  n_chains       = 3,
+  verbose        = TRUE
 )
-fit_sbart
-summary(fit_sbart)
 
-# ============================================================
-# 2. SurvivalDART
-# ============================================================
-fit_sdart <- SurvivalDART(
-  time             = time,
-  status           = status,
-  X_train          = X,
-  X_test           = X_test,
-  timescale        = "time",
-  number_of_trees  = 5,
-  a_dirichlet      = 0.5,
-  b_dirichlet      = 1.0,
-  k                = 2.0,
-  N_post           = 10,
-  N_burn           = 5,
-  verbose          = FALSE
-)
-fit_sdart
-summary(fit_sdart)
+print(fit_st)
+summary(fit_st)
 
-# ============================================================
-# 3. SurvivalBCF
-# ============================================================
-fit_sbcf <- SurvivalBCF(
-  time                    = time,
-  status                  = status,
-  X_train                 = X,
-  treatment               = treat,
-  timescale               = "time",
-  propensity              = NULL,
-  number_of_trees_control = 5,
-  number_of_trees_treat   = 5,
-  N_post                  = 10,
-  N_burn                  = 5,
-  verbose                 = FALSE
-)
-fit_sbcf
-summary(fit_sbcf)
+# Plots
+plot(fit_st, type = "trace")    # sigma traceplot — one line per chain
+plot(fit_st, type = "density")  # overlaid posterior densities
 
-# ============================================================
-# 4. SurvivalShrinkageBCF
-# ============================================================
-fit_ssbcf <- SurvivalShrinkageBCF(
-  time                    = time,
-  status                  = status,
-  X_train                 = X,
-  treatment               = treat,
-  timescale               = "time",
-  propensity              = NULL,
-  a_dir                   = 0.5,
-  b_dir                   = 1.0,
-  number_of_trees_control = 5,
-  number_of_trees_treat   = 5,
-  N_post                  = 10,
-  N_burn                  = 5,
-  verbose                 = FALSE
+# ─────────────────────────────────────────────────────────────────────────────
+# 2. CausalShrinkageForest — continuous outcome, multiple chains
+#    (single-chain first to verify the bug fix, then multi-chain)
+# ─────────────────────────────────────────────────────────────────────────────
+set.seed(123)
+n   <- 200; p <- 6
+X   <- matrix(rnorm(n * p), n, p)
+colnames(X) <- paste0("X", 1:p)
+w   <- rbinom(n, 1, 0.5)                          # treatment indicator
+tau <- 1 + X[, 1]                                  # heterogeneous CATE
+y   <- X[, 2] + tau * w + rnorm(n)
+
+lh_c <- (max(y) - min(y)) / (0.5 * 2 * sqrt(10))
+
+# -- single chain first (sanity check) --
+fit_causal_1 <- CausalShrinkageForest(
+  y                         = y,
+  X_train_control           = X,
+  X_train_treat             = X,
+  treatment_indicator_train = w,
+  prior_type_control        = "horseshoe",
+  prior_type_treat          = "horseshoe",
+  local_hp_control          = lh_c,
+  global_hp_control         = lh_c,
+  local_hp_treat            = lh_c,
+  global_hp_treat           = lh_c,
+  number_of_trees_control   = 10,
+  number_of_trees_treat     = 10,
+  N_post                    = 50,
+  N_burn                    = 20,
+  store_posterior_sample    = TRUE,
+  n_chains                  = 1,
+  verbose                   = TRUE
 )
-fit_ssbcf
-summary(fit_ssbcf)              
+print(fit_causal_1)
+
+# -- now multi-chain --
+fit_causal <- CausalShrinkageForest(
+  y                         = y,
+  X_train_control           = X,
+  X_train_treat             = X,
+  treatment_indicator_train = w,
+  prior_type_control        = "horseshoe",
+  prior_type_treat          = "horseshoe",
+  local_hp_control          = lh_c,
+  global_hp_control         = lh_c,
+  local_hp_treat            = lh_c,
+  global_hp_treat           = lh_c,
+  number_of_trees_control   = 10,
+  number_of_trees_treat     = 10,
+  N_post                    = 50,
+  N_burn                    = 20,
+  store_posterior_sample    = TRUE,
+  n_chains                  = 3,
+  verbose                   = TRUE
+)
+
+print(fit_causal)
+summary(fit_causal)
+
+# Plots
+plot(fit_causal, type = "trace")    # sigma mixing
+plot(fit_causal, type = "density")  # sigma posterior
+plot(fit_causal, type = "ate")      # ATE posterior density
+plot(fit_causal, type = "cate") 

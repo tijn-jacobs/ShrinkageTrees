@@ -280,3 +280,69 @@ test_that("CausalShrinkageForest works for continuous outcome with horseshoe_fw 
   expect_true(all(fit$forestwide_shrinkage_treat >= 0))
 })
 
+
+# ── S3 class and methods ──────────────────────────────────────────────────────
+
+test_that("CausalShrinkageForest returns CausalShrinkageForest S3 object with working methods", {
+  n <- 30; p <- 3
+  X <- matrix(runif(n * p), ncol = p)
+  treatment <- rbinom(n, 1, X[, 1])
+  y <- X[, 1] + (0.5 - treatment) * 2 + rnorm(n)
+  lh <- 0.1 / sqrt(5)
+
+  set.seed(1)
+  fit <- CausalShrinkageForest(
+    y = y,
+    X_train_control = X, X_train_treat = X,
+    treatment_indicator_train = treatment,
+    outcome_type = "continuous",
+    number_of_trees_control = 5, number_of_trees_treat = 5,
+    prior_type_control = "horseshoe", prior_type_treat = "horseshoe",
+    local_hp_control = lh, global_hp_control = lh,
+    local_hp_treat  = lh, global_hp_treat  = lh,
+    N_post = 10, N_burn = 5,
+    store_posterior_sample = TRUE,
+    verbose = FALSE
+  )
+
+  expect_s3_class(fit, "CausalShrinkageForest")
+  expect_no_error(print(fit))
+  expect_no_error(smry <- summary(fit))
+  expect_type(smry, "list")
+  expect_true(!is.null(smry$sigma))
+  # ATE should be available since store_posterior_sample = TRUE
+  expect_true(!is.null(smry$treatment_effect$ate))
+  expect_true(!is.null(smry$treatment_effect$ate_lower))
+})
+
+
+# ── Multi-chain (n_chains) ────────────────────────────────────────────────────
+
+test_that("CausalShrinkageForest n_chains > 1 pools chains correctly", {
+  n <- 30; p <- 3
+  X <- matrix(runif(n * p), ncol = p)
+  treatment <- rbinom(n, 1, X[, 1])
+  y <- X[, 1] + (0.5 - treatment) * 2 + rnorm(n)
+  lh <- 0.1 / sqrt(5)
+
+  set.seed(1)
+  fit <- CausalShrinkageForest(
+    y = y,
+    X_train_control = X, X_train_treat = X,
+    treatment_indicator_train = treatment,
+    outcome_type = "continuous",
+    number_of_trees_control = 5, number_of_trees_treat = 5,
+    prior_type_control = "horseshoe", prior_type_treat = "horseshoe",
+    local_hp_control = lh, global_hp_control = lh,
+    local_hp_treat  = lh, global_hp_treat  = lh,
+    N_post = 10, N_burn = 5,
+    n_chains = 2,
+    verbose = FALSE
+  )
+
+  expect_s3_class(fit, "CausalShrinkageForest")
+  expect_length(fit$sigma, 20)
+  expect_equal(fit$mcmc$n_chains, 2)
+  expect_length(fit$chains$acceptance_ratios_control, 2)
+  expect_length(fit$chains$acceptance_ratios_treat,   2)
+})

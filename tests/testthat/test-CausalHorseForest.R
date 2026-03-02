@@ -1,23 +1,23 @@
 test_that("CausalHorseForest works for continuous outcome", {
-  
+
   # Generate data
   n <- 50
   p <- 3
   X_control <- matrix(runif(n * p), ncol = p)
   X_treat   <- matrix(runif(n * p), ncol = p)
   treatment <- rbinom(n, 1, 0.5)
-  
+
   # True treatment effect
   tau <- 2
-  
+
   # Outcome: baseline + treatment effect + noise
   y <- X_control[, 1] + treatment * tau + rnorm(n)
-  
+
   # Test data
   X_test_control <- matrix(runif(n * p), ncol = p)
   X_test_treat   <- matrix(runif(n * p), ncol = p)
   treatment_test <- rbinom(n, 1, 0.5)
-  
+
   # Fit the model
   set.seed(1)
   fit <- CausalHorseForest(
@@ -223,3 +223,57 @@ test_that("CausalHorseForest works for survival outcome", {
 })
 
 
+# ── S3 class and methods ──────────────────────────────────────────────────────
+
+test_that("CausalHorseForest returns CausalShrinkageForest S3 object with working methods", {
+  n <- 30; p <- 3
+  X <- matrix(runif(n * p), ncol = p)
+  treatment <- rbinom(n, 1, 0.5)
+  y <- X[, 1] + treatment * 2 + rnorm(n)
+
+  set.seed(1)
+  fit <- CausalHorseForest(
+    y = y,
+    X_train_control = X, X_train_treat = X,
+    treatment_indicator_train = treatment,
+    outcome_type = "continuous",
+    number_of_trees = 5,
+    N_post = 10, N_burn = 5,
+    store_posterior_sample = TRUE,
+    verbose = FALSE
+  )
+
+  expect_s3_class(fit, "CausalShrinkageForest")
+  expect_no_error(print(fit))
+  expect_no_error(smry <- summary(fit))
+  expect_type(smry, "list")
+  expect_true(!is.null(smry$sigma))
+})
+
+
+# ── Multi-chain (n_chains) ────────────────────────────────────────────────────
+
+test_that("CausalHorseForest n_chains > 1 pools chains correctly", {
+  n <- 30; p <- 3
+  X <- matrix(runif(n * p), ncol = p)
+  treatment <- rbinom(n, 1, 0.5)
+  y <- X[, 1] + treatment * 2 + rnorm(n)
+
+  set.seed(1)
+  fit <- CausalHorseForest(
+    y = y,
+    X_train_control = X, X_train_treat = X,
+    treatment_indicator_train = treatment,
+    outcome_type = "continuous",
+    number_of_trees = 5,
+    N_post = 10, N_burn = 5,
+    n_chains = 2,
+    verbose = FALSE
+  )
+
+  expect_s3_class(fit, "CausalShrinkageForest")
+  expect_length(fit$sigma, 20)
+  expect_equal(fit$mcmc$n_chains, 2)
+  expect_length(fit$chains$acceptance_ratios_control, 2)
+  expect_length(fit$chains$acceptance_ratios_treat,   2)
+})
