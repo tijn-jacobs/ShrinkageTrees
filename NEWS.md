@@ -1,0 +1,47 @@
+# ShrinkageTrees 1.2.0
+
+- Added `SurvivalBCF` wrapper for AFT-based Bayesian Causal Forests.
+- Added `SurvivalShrinkageBCF` with Dirichlet structural sparsity.
+- Added `SurvivalDART` for sparse high-dimensional survival modeling.
+- Added `SurvivalBART` for survival modeling using standard BART.
+- Unified survival wrappers with flexible argument forwarding via `...`.
+
+# ShrinkageTrees 1.1.0
+
+- Replaced the internal `std::map` structure with a more efficient vector-based lookup, improving overall computational speed by approximately 30%.
+- Added the `standard` prior type option for `ShrinkageTrees`, corresponding to the conventional BART implementation without reversible jumps.
+- Added missing checks for training data dimensions to improve input validation and error handling.
+
+# ShrinkageTrees 1.0.3
+
+- Refactored the non-reversible tree modification routines in the C++ backend for improved clarity and maintainability.
+- Corrected the 'leafs' typo throughout the codebase (now consistently 'leaves').
+
+# ShrinkageTrees 1.0.2
+
+- Improved handling of censored survival outcomes in the back-end 
+  (preparatory changes for interval censoring support).  
+- Minor internal refactoring; no changes to the user-facing API.
+
+# ShrinkageTrees 1.0.1
+
+- Fixed bugs in the demo script  
+- Added a `CONTRIBUTING.md` file with guidelines for contributors  
+- Corrected minor typos in the source code (non-functional changes) 
+
+# ShrinkageTrees 1.0.0
+
+🎉 First CRAN release of **ShrinkageTrees**!
+
+This package provides Bayesian regression tree models with shrinkage priors, supporting:
+- Continuous outcomes
+- Binary outcomes
+- Right-censored survival data
+
+It includes four core functions:
+- `HorseTrees()`: fits a single regression tree with a standard Horseshoe prior.
+- `ShrinkageTrees()`: fits a single tree with customizable shrinkage priors.
+- `CausalHorseForest()`: fits a causal forest using the standard Horseshoe prior.
+- `CausalShrinkageForest()`: fits a flexible causal forest with user-defined shrinkage priors and tuning options.
+
+The `...Trees` functions use a single learner to estimate the outcome model directly. In contrast, the `Causal...Forest` variants fit separate models for the treated and control regression function. This enables estimation of conditional average treatment effects (CATEs).

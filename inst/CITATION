@@ -1,0 +1,23 @@
+citHeader("To cite ShrinkageTrees in publications, please use:")
+
+bibentry(
+  bibtype = "Article",
+  title = "Horseshoe Forests for High-Dimensional Causal Survival Analysis",
+  author = c(
+    person("Tijn", "Jacobs"),
+    person("W. N.", "van Wieringen"),
+    person("S. L.", "van der Pas")
+  ),
+  year = "2025",
+  journal = "arXiv preprint arXiv:2507.22004",
+  url = "https://arxiv.org/abs/2507.22004"
+)
+
+bibentry(
+  bibtype = "Manual",
+  title = "ShrinkageTrees: Bayesian Regression Tree Ensembles for High-Dimensional Survival and Causal Inference",
+  author = person("Tijn", "Jacobs"),
+  year = "2026",
+  note = "R package version 1.2.0",
+  url = "https://cran.r-project.org/package=ShrinkageTrees"
+)

@@ -1,0 +1,13 @@
+# PKG_CPPFLAGS = -I$(PWD)/src -I$(PWD)/src/stan
+# SOURCES = $(wildcard *.cpp) $(wildcard stan/*.cpp)
+# OBJECTS = $(SOURCES:.cpp=.o)
+# PKG_LIBS =
+
+PKG_CPPFLAGS = -I./stan
+
+SOURCES = \
+  stan/StanForest.cpp \
+  stan/StanTree.cpp \
+  stan/StanForestFunctions.cpp \
+  stan/StanTreeFunctions.cpp \
+  stan/bd.cpp
