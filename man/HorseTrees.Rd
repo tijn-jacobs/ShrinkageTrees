@@ -189,5 +189,14 @@ hist(fit4$train_predictions_sample[, 1],
                        
 }
 \seealso{
-\code{\link{ShrinkageTrees}}, \code{\link{CausalHorseForest}}, \code{\link{CausalShrinkageForest}}
+Model family: \code{\link{ShrinkageTrees}} (flexible prior choice),
+\code{\link{CausalHorseForest}} (causal inference),
+\code{\link{CausalShrinkageForest}} (causal, flexible prior).
+
+Survival wrappers: \code{\link{SurvivalBART}}, \code{\link{SurvivalDART}}.
+
+S3 methods: \code{\link{print.ShrinkageTrees}},
+\code{\link{summary.ShrinkageTrees}},
+\code{\link{predict.ShrinkageTrees}},
+\code{\link{plot.ShrinkageTrees}}.
 }

@@ -1,4 +1,4 @@
-# ShrinkageTrees x.x.x
+# ShrinkageTrees 1.3.0
 
 ## Multi-chain MCMC (`n_chains`)
 
@@ -42,9 +42,26 @@ Requires the suggested packages `bayesplot` and `ggplot2`.
 - `plot(fit, type = "cate")` — point estimates and 95 % credible intervals for the CATE of each training observation, sorted by posterior mean _(causal models only; requires `store_posterior_sample = TRUE`)_.
 - `plot(fit, type = "vi", forest = "both")` — side-by-side VI for the control and treatment forests _(causal models only)_.
 
-## Other changes
+## Vignette
 
-- Fixed a latent bug in `HorseTrees` and `ShrinkageTrees` where `sigma_hat`, `y_mean`, and `lambda` were not initialised in the binary (probit) branch.
+- Added a package vignette (_ShrinkageTrees: Introduction and Usage_)
+  demonstrating all main functions (`HorseTrees`, `ShrinkageTrees`,
+  `SurvivalBART`, `SurvivalDART`, `SurvivalBCF`, `SurvivalShrinkageBCF`,
+  `CausalHorseForest`, `CausalShrinkageForest`), all S3 methods (`print`,
+  `summary`, `predict`, `plot`), multi-chain MCMC, and a full TCGA PAAD
+  case study.
+
+## Bug fixes
+
+- Fixed `CausalHorseForest` and `CausalShrinkageForest` failing with
+  `"argument 'y_train' is missing"` when called directly (broken constructor
+  call introduced in 1.3.0 S3 refactor).
+- Fixed `plot(..., type = "vi")` crashing with `"argument must be coercible
+  to non-negative integer"` in all four model functions: covariate matrices
+  were being stored as flat numeric vectors instead of matrices, making
+  `ncol()` return `NULL`.
+- Fixed a latent bug in `HorseTrees` and `ShrinkageTrees` where `sigma_hat`,
+  `y_mean`, and `lambda` were not initialised in the binary (probit) branch.
 
 # ShrinkageTrees 1.2.0
 

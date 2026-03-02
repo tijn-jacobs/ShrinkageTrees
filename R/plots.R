@@ -1,4 +1,4 @@
-# ── Internal helpers ──────────────────────────────────────────────────────────
+# -- Internal helpers ----------------------------------------------------------
 
 .check_bayesplot <- function() {
   if (!requireNamespace("bayesplot", quietly = TRUE)) {
@@ -54,7 +54,7 @@
 }
 
 
-# ── plot.ShrinkageTrees ───────────────────────────────────────────────────────
+# -- plot.ShrinkageTrees -------------------------------------------------------
 
 #' Plot diagnostics for a ShrinkageTrees model
 #'
@@ -89,7 +89,7 @@
 #'   n_chains = 4
 #' )
 #'
-#' # Sigma traceplot — check chain mixing
+#' # Sigma traceplot -- check chain mixing
 #' plot(fit, type = "trace")
 #'
 #' # Overlaid posterior densities of sigma per chain
@@ -129,7 +129,7 @@ plot.ShrinkageTrees <- function(x,
 }
 
 
-# ── plot.CausalShrinkageForest ────────────────────────────────────────────────
+# -- plot.CausalShrinkageForest ------------------------------------------------
 
 #' Plot diagnostics for a CausalShrinkageForest model
 #'
@@ -176,7 +176,7 @@ plot.ShrinkageTrees <- function(x,
 #'   n_chains = 4
 #' )
 #'
-#' # Sigma traceplot — check chain mixing
+#' # Sigma traceplot -- check chain mixing
 #' plot(fit, type = "trace")
 #'
 #' # Overlaid posterior densities of sigma
@@ -208,7 +208,7 @@ plot.CausalShrinkageForest <- function(x,
   n_ch   <- if (!is.null(x$mcmc$n_chains)) x$mcmc$n_chains else 1L
   N_post <- x$mcmc$N_post
 
-  # ── Sigma trace / density ────────────────────────────────────────────────
+  # -- Sigma trace / density --------------------------------------------------
   if (type == "trace") {
     arr <- .to_draws_array(x$sigma, "sigma", N_post, n_ch)
     return(bayesplot::mcmc_trace(arr, ...))
@@ -219,7 +219,7 @@ plot.CausalShrinkageForest <- function(x,
     return(bayesplot::mcmc_dens_overlay(arr, ...))
   }
 
-  # ── ATE posterior ────────────────────────────────────────────────────────
+  # -- ATE posterior ----------------------------------------------------------
   if (type == "ate") {
     sc <- x$train_predictions_sample_control
     st <- x$train_predictions_sample_treat
@@ -231,7 +231,7 @@ plot.CausalShrinkageForest <- function(x,
     return(bayesplot::mcmc_areas(arr, prob = 0.95, ...))
   }
 
-  # ── CATE distribution ────────────────────────────────────────────────────
+  # -- CATE distribution ------------------------------------------------------
   if (type == "cate") {
     sc <- x$train_predictions_sample_control
     st <- x$train_predictions_sample_treat
@@ -269,13 +269,13 @@ plot.CausalShrinkageForest <- function(x,
     )
   }
 
-  # ── Variable importance ──────────────────────────────────────────────────
+  # -- Variable importance ----------------------------------------------------
   if (forest %in% c("control", "both")) {
     sp_c <- x$split_probs_control
     if (is.null(sp_c))
       stop("Control variable importance not available.", call. = FALSE)
     p_control <- .vi_intervals(sp_c, x$data$X_train_control, n_vi,
-                               title = "Variable importance — control forest",
+                               title = "Variable importance - control forest",
                                ...)
   }
   if (forest %in% c("treat", "both")) {
@@ -283,7 +283,7 @@ plot.CausalShrinkageForest <- function(x,
     if (is.null(sp_t))
       stop("Treatment variable importance not available.", call. = FALSE)
     p_treat <- .vi_intervals(sp_t, x$data$X_train_treat, n_vi,
-                             title = "Variable importance — treatment forest",
+                             title = "Variable importance - treatment forest",
                              ...)
   }
 

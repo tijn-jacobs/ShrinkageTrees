@@ -135,7 +135,17 @@
 #'   `store_posterior_sample = TRUE`).}
 #' }
 #' 
-#' @seealso \code{\link{ShrinkageTrees}}, \code{\link{CausalHorseForest}}, \code{\link{CausalShrinkageForest}}
+#' @seealso
+#' Model family: \code{\link{ShrinkageTrees}} (flexible prior choice),
+#' \code{\link{CausalHorseForest}} (causal inference),
+#' \code{\link{CausalShrinkageForest}} (causal, flexible prior).
+#'
+#' Survival wrappers: \code{\link{SurvivalBART}}, \code{\link{SurvivalDART}}.
+#'
+#' S3 methods: \code{\link{print.ShrinkageTrees}},
+#' \code{\link{summary.ShrinkageTrees}},
+#' \code{\link{predict.ShrinkageTrees}},
+#' \code{\link{plot.ShrinkageTrees}}.
 #' 
 #' @importFrom Rcpp evalCpp
 #' @useDynLib ShrinkageTrees, .registration = TRUE
@@ -217,16 +227,22 @@ HorseTrees <- function(y,
 
   # Check consistency with status argument
   if (outcome_type == "right-censored" && is.null(status)) {
-    stop("You specified outcome_type = 'right-censored', but did not provide a 
+    stop("You specified outcome_type = 'right-censored', but did not provide a
          'status' vector.")
+  }
+  if (!is.null(status) && length(status) != length(y)) {
+    stop("The length of 'status' must match the length of 'y'.")
   }
 
   if (outcome_type != "right-censored" && !is.null(status)) {
-    warning("You provided a 'status' vector, but outcome_type is not 
+    warning("You provided a 'status' vector, but outcome_type is not
             'right-censored'. The 'status' vector will be ignored.")
   }
 
   # Check binary data consistency
+  if (outcome_type == "binary" && !all(y %in% c(0, 1))) {
+    stop("For outcome_type = 'binary', y must contain only 0 and 1.")
+  }
   if (outcome_type != "binary" && all(y %in% c(0, 1))) {
     warning("The outcome y contains only 0 and 1, but outcome_type is not set to
             'binary'. Consider setting outcome_type = 'binary'.")
@@ -266,6 +282,7 @@ HorseTrees <- function(y,
   base <- as.numeric(base)[1]
   p_grow <- as.numeric(p_grow)[1]
   p_prune <- as.numeric(p_prune)[1]
+  X_train_mat <- X_train                 # preserve matrix for predict() / vi plots
   X_train <- as.numeric(t(X_train))
   
 
@@ -500,7 +517,7 @@ HorseTrees <- function(y,
     sigma_known      = sigma_known,
     y_mean           = y_mean,
     y_train          = y_train_raw,
-    X_train          = X_train,
+    X_train          = X_train_mat,
     status_train     = if (outcome_type == "right-censored") status else NULL,
     power            = power,
     base             = base,

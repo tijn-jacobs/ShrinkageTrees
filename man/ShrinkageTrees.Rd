@@ -246,5 +246,14 @@ prediction and variable selection.} Journal of the American Statistical
 Association.
 }
 \seealso{
-\code{\link{HorseTrees}}, \code{\link{CausalHorseForest}}, \code{\link{CausalShrinkageForest}}
+Model family: \code{\link{HorseTrees}} (horseshoe prior),
+\code{\link{CausalHorseForest}} (causal inference),
+\code{\link{CausalShrinkageForest}} (causal, flexible prior).
+
+Survival wrappers: \code{\link{SurvivalBART}}, \code{\link{SurvivalDART}}.
+
+S3 methods: \code{\link{print.ShrinkageTrees}},
+\code{\link{summary.ShrinkageTrees}},
+\code{\link{predict.ShrinkageTrees}},
+\code{\link{plot.ShrinkageTrees}}.
 }

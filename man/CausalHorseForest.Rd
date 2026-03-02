@@ -312,5 +312,14 @@ abline(v = 0, col = "black", lwd = 2)
 
 }
 \seealso{
-\code{\link{HorseTrees}}, \code{\link{ShrinkageTrees}}, \code{\link{CausalShrinkageForest}}
+Model family: \code{\link{HorseTrees}} (non-causal, horseshoe prior),
+\code{\link{ShrinkageTrees}} (non-causal, flexible prior),
+\code{\link{CausalShrinkageForest}} (causal, flexible prior).
+
+Survival wrappers: \code{\link{SurvivalBCF}}, \code{\link{SurvivalShrinkageBCF}}.
+
+S3 methods: \code{\link{print.CausalShrinkageForest}},
+\code{\link{summary.CausalShrinkageForest}},
+\code{\link{predict.CausalShrinkageForest}},
+\code{\link{plot.CausalShrinkageForest}}.
 }

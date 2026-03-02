@@ -67,8 +67,45 @@ Users requiring alternative shrinkage priors (e.g., Horseshoe or
 Dirichlet splitting priors) should use \code{\link{ShrinkageTrees}}
 directly.
 }
+\examples{
+set.seed(1)
+n <- 30; p <- 5
+X <- matrix(rnorm(n * p), ncol = p)
+time <- rexp(n, rate = exp(0.5 * X[, 1]))
+status <- rbinom(n, 1, 0.7)
+
+fit <- SurvivalBART(time = time, status = status, X_train = X,
+                    number_of_trees = 5, N_post = 50, N_burn = 25,
+                    verbose = FALSE)
+
+# S3 methods
+print(fit)
+smry <- summary(fit)
+
+# Posterior predictions on new data
+X_new <- matrix(rnorm(10 * p), ncol = p)
+pred <- predict(fit, newdata = X_new)
+print(pred)
+
+# Diagnostic plot (requires bayesplot and ggplot2)
+if (requireNamespace("bayesplot", quietly = TRUE) &&
+    requireNamespace("ggplot2", quietly = TRUE)) {
+  plot(fit, type = "trace")
+}
+
+}
 \references{
 Chipman, H. A., George, E. I., & McCulloch, R. E. (2010).
 Bayesian Additive Regression Trees.
 Annals of Applied Statistics.
+}
+\seealso{
+Related models: \code{\link{SurvivalDART}} (Dirichlet sparsity),
+\code{\link{HorseTrees}} (horseshoe prior),
+\code{\link{ShrinkageTrees}} (general shrinkage priors).
+
+S3 methods: \code{\link{print.ShrinkageTrees}},
+\code{\link{summary.ShrinkageTrees}},
+\code{\link{predict.ShrinkageTrees}},
+\code{\link{plot.ShrinkageTrees}}.
 }

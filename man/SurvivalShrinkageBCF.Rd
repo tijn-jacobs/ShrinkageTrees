@@ -74,7 +74,7 @@ Dirichlet splitting priors and additional shrinkage.
 \description{
 Fits a survival version of a Bayesian Causal Forest (BCF) under an
 accelerated failure time (AFT) model, combining Dirichlet splitting
-priors with global–local shrinkage.
+priors with global-local shrinkage.
 }
 \details{
 This wrapper extends \code{\link{SurvivalBCF}} by incorporating
@@ -98,18 +98,56 @@ in the control forest.
 }
 
 The Dirichlet prior follows the sparse splitting framework of Linero (2018),
-where splitting probabilities are governed by a Beta–Dirichlet hierarchy.
+where splitting probabilities are governed by a Beta-Dirichlet hierarchy.
 The sparsity level is controlled by \code{a_dir} and \code{b_dir}.
 
 Survival outcomes are modeled using an AFT formulation with right-censoring
 handled via data augmentation.
 }
+\examples{
+set.seed(4)
+n <- 30; p <- 5
+X <- matrix(rnorm(n * p), ncol = p)
+treatment <- rbinom(n, 1, 0.5)
+log_T <- X[, 1] + treatment * (-0.5) + rnorm(n)
+time <- exp(log_T)
+status <- rbinom(n, 1, 0.7)
+
+fit <- SurvivalShrinkageBCF(time = time, status = status, X_train = X,
+                             treatment = treatment,
+                             number_of_trees_control = 5,
+                             number_of_trees_treat = 5,
+                             N_post = 50, N_burn = 25,
+                             verbose = FALSE)
+
+# S3 methods
+print(fit)
+smry <- summary(fit)
+
+# Posterior ATE with 95\% credible interval
+cat("ATE:", round(smry$treatment_effect$ate, 3), "\n")
+
+# Diagnostic and treatment-effect plots (requires bayesplot and ggplot2)
+if (requireNamespace("bayesplot", quietly = TRUE) &&
+    requireNamespace("ggplot2", quietly = TRUE)) {
+  plot(fit, type = "trace")
+  plot(fit, type = "cate")
+}
+
+}
 \references{
 Caron, A., Baio, G., & Manolopoulou, I. (2022).
 Shrinkage Bayesian Causal Forests for Heterogeneous Treatment Effects Estimation.
-Journal of Computational and Graphical Statistics, 31(4), 1202–1214.
+Journal of Computational and Graphical Statistics, 31(4), 1202--1214.
 https://doi.org/10.1080/10618600.2022.2067549
 }
 \seealso{
-\code{\link{SurvivalBCF}}, \code{\link{CausalShrinkageForest}}
+Related models: \code{\link{SurvivalBCF}} (standard BART priors),
+\code{\link{CausalShrinkageForest}} (general shrinkage priors),
+\code{\link{CausalHorseForest}} (horseshoe prior).
+
+S3 methods: \code{\link{print.CausalShrinkageForest}},
+\code{\link{summary.CausalShrinkageForest}},
+\code{\link{predict.CausalShrinkageForest}},
+\code{\link{plot.CausalShrinkageForest}}.
 }

@@ -169,7 +169,7 @@ fit_causal <- CausalShrinkageForest(
   global_hp_treat           = lh_c,
   number_of_trees_control   = 10,
   number_of_trees_treat     = 10,
-  N_post                    = 50,
+  N_post                    = 5000,
   N_burn                    = 20,
   store_posterior_sample    = TRUE,
   n_chains                  = 3,

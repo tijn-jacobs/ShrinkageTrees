@@ -44,7 +44,7 @@ fit <- ShrinkageTrees(
   n_chains = 4
 )
 
-# Sigma traceplot — check chain mixing
+# Sigma traceplot -- check chain mixing
 plot(fit, type = "trace")
 
 # Overlaid posterior densities of sigma per chain

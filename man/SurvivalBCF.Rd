@@ -83,9 +83,51 @@ Users requiring alternative shrinkage priors (e.g., Horseshoe or Dirichlet
 splitting priors) should use \code{\link{SurvivalShrinkageBCF}} or call
 \code{\link{CausalShrinkageForest}} directly.
 }
+\examples{
+set.seed(3)
+n <- 30; p <- 5
+X <- matrix(rnorm(n * p), ncol = p)
+treatment <- rbinom(n, 1, 0.5)
+log_T <- X[, 1] + treatment * (-0.5) + rnorm(n)
+time <- exp(log_T)
+status <- rbinom(n, 1, 0.7)
+
+fit <- SurvivalBCF(time = time, status = status, X_train = X,
+                   treatment = treatment,
+                   number_of_trees_control = 5,
+                   number_of_trees_treat = 5,
+                   N_post = 50, N_burn = 25,
+                   verbose = FALSE)
+
+# S3 methods
+print(fit)
+smry <- summary(fit)
+
+# Posterior ATE
+cat("ATE:", round(smry$treatment_effect$ate, 3), "\n")
+
+# Diagnostic and treatment-effect plots (requires bayesplot and ggplot2)
+if (requireNamespace("bayesplot", quietly = TRUE) &&
+    requireNamespace("ggplot2", quietly = TRUE)) {
+  plot(fit, type = "trace")
+  plot(fit, type = "ate")
+  plot(fit, type = "cate")
+}
+
+}
 \references{
 Hahn, P. R., Murray, J. S., & Carvalho, C. M. (2020).
 Bayesian regression tree models for causal inference:
 Regularization, confounding, and heterogeneous effects.
 Bayesian Analysis.
+}
+\seealso{
+Related models: \code{\link{SurvivalShrinkageBCF}} (Dirichlet sparsity),
+\code{\link{CausalHorseForest}} (horseshoe prior),
+\code{\link{CausalShrinkageForest}} (general shrinkage priors).
+
+S3 methods: \code{\link{print.CausalShrinkageForest}},
+\code{\link{summary.CausalShrinkageForest}},
+\code{\link{predict.CausalShrinkageForest}},
+\code{\link{plot.CausalShrinkageForest}}.
 }

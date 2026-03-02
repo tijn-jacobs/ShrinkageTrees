@@ -207,8 +207,17 @@
 #' ATE_halfcauchy <- mean(post_ATE_halfcauchy)
 #' 
 #' 
-#' @seealso \code{\link{CausalHorseForest}}, \code{\link{ShrinkageTrees}}, 
-#' \code{\link{HorseTrees}}
+#' @seealso
+#' Model family: \code{\link{CausalHorseForest}} (causal, horseshoe prior),
+#' \code{\link{ShrinkageTrees}} (non-causal, flexible prior),
+#' \code{\link{HorseTrees}} (non-causal, horseshoe prior).
+#'
+#' Survival wrappers: \code{\link{SurvivalBCF}}, \code{\link{SurvivalShrinkageBCF}}.
+#'
+#' S3 methods: \code{\link{print.CausalShrinkageForest}},
+#' \code{\link{summary.CausalShrinkageForest}},
+#' \code{\link{predict.CausalShrinkageForest}},
+#' \code{\link{plot.CausalShrinkageForest}}.
 #'
 #' @importFrom Rcpp evalCpp
 #' @useDynLib ShrinkageTrees, .registration = TRUE
@@ -461,12 +470,15 @@ CausalShrinkageForest <- function(y,
   
   # Check consistency with status argument
   if (outcome_type == "right-censored" && is.null(status)) {
-    stop("You specified outcome_type = 'right-censored', but did not provide a 
+    stop("You specified outcome_type = 'right-censored', but did not provide a
          'status' vector.")
   }
-  
+  if (!is.null(status) && length(status) != length(y)) {
+    stop("The length of 'status' must match the length of 'y'.")
+  }
+
   if (outcome_type != "right-censored" && !is.null(status)) {
-    warning("You provided a 'status' vector, but outcome_type is not 
+    warning("You provided a 'status' vector, but outcome_type is not
             'right-censored'. The 'status' vector will be ignored.")
   }
   
@@ -494,6 +506,9 @@ CausalShrinkageForest <- function(y,
   }
   if (length(treatment_indicator_train) != length(y)) {
     stop("treatment_indicator_train must match length of y.")
+  }
+  if (!all(treatment_indicator_train %in% c(0, 1))) {
+    stop("treatment_indicator_train must contain only 0 and 1.")
   }
   if (p_control < 1L) stop("X_train_control must have at least one column.")
   if (p_treat   < 1L) stop("X_train_treat must have at least one column.")
@@ -536,6 +551,8 @@ CausalShrinkageForest <- function(y,
   base_treat <- as.numeric(base_treat)[1]
   p_grow <- as.numeric(p_grow)[1]
   p_prune <- as.numeric(p_prune)[1]
+  X_control_mat <- X_train_control        # preserve matrix for predict() / vi plots
+  X_treat_mat   <- X_train_treat
   X_train_treat <- as.numeric(t(X_train_treat))
   X_train_control <- as.numeric(t(X_train_control))
   
@@ -883,8 +900,8 @@ CausalShrinkageForest <- function(y,
     dirichlet_bool_treat = dirichlet_bool_treat,
     # Data stored for predict()
     y_train                   = y_causal_raw,
-    X_train_control           = X_train_control,
-    X_train_treat             = X_train_treat,
+    X_train_control           = X_control_mat,
+    X_train_treat             = X_treat_mat,
     treatment_indicator_train = treatment_indicator_train,
     status_train              = status_causal_raw,
     # Hyperparameters stored for predict()

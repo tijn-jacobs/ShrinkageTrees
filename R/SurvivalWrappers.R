@@ -36,11 +36,47 @@
 #' Bayesian Additive Regression Trees.
 #' Annals of Applied Statistics.
 #' 
+#' @seealso
+#' Related models: \code{\link{SurvivalDART}} (Dirichlet sparsity),
+#' \code{\link{HorseTrees}} (horseshoe prior),
+#' \code{\link{ShrinkageTrees}} (general shrinkage priors).
+#'
+#' S3 methods: \code{\link{print.ShrinkageTrees}},
+#' \code{\link{summary.ShrinkageTrees}},
+#' \code{\link{predict.ShrinkageTrees}},
+#' \code{\link{plot.ShrinkageTrees}}.
+#'
 #' @return
 #' An object of class \code{"ShrinkageTrees"} fitted under a classical
 #' BART prior within an AFT formulation.
 #'
 #' See \code{\link{ShrinkageTrees}} for a full description of returned components
+#'
+#' @examples
+#' set.seed(1)
+#' n <- 30; p <- 5
+#' X <- matrix(rnorm(n * p), ncol = p)
+#' time <- rexp(n, rate = exp(0.5 * X[, 1]))
+#' status <- rbinom(n, 1, 0.7)
+#'
+#' fit <- SurvivalBART(time = time, status = status, X_train = X,
+#'                     number_of_trees = 5, N_post = 50, N_burn = 25,
+#'                     verbose = FALSE)
+#'
+#' # S3 methods
+#' print(fit)
+#' smry <- summary(fit)
+#'
+#' # Posterior predictions on new data
+#' X_new <- matrix(rnorm(10 * p), ncol = p)
+#' pred <- predict(fit, newdata = X_new)
+#' print(pred)
+#'
+#' # Diagnostic plot (requires bayesplot and ggplot2)
+#' if (requireNamespace("bayesplot", quietly = TRUE) &&
+#'     requireNamespace("ggplot2", quietly = TRUE)) {
+#'   plot(fit, type = "trace")
+#' }
 #'
 #' @export
 SurvivalBART <- function(
@@ -94,7 +130,7 @@ SurvivalBART <- function(
 #' SurvivalDART
 #'
 #' Fits an Accelerated Failure Time (AFT) model using the Dirichlet splitting
-#' prior (DART), which induces structural sparsity through a Beta–Dirichlet
+#' prior (DART), which induces structural sparsity through a Beta-Dirichlet
 #' hierarchy on splitting probabilities.
 #'
 #' @inheritParams SurvivalBART
@@ -120,12 +156,47 @@ SurvivalBART <- function(
 #' (e.g., Horseshoe or half-Cauchy priors) should use
 #' \code{\link{ShrinkageTrees}} directly.
 #'
+#' @seealso
+#' Related models: \code{\link{SurvivalBART}} (standard BART prior),
+#' \code{\link{ShrinkageTrees}} (general shrinkage priors).
+#'
+#' S3 methods: \code{\link{print.ShrinkageTrees}},
+#' \code{\link{summary.ShrinkageTrees}},
+#' \code{\link{predict.ShrinkageTrees}},
+#' \code{\link{plot.ShrinkageTrees}}.
+#'
 #' @return
 #' An object of class \code{"ShrinkageTrees"} fitted under a Dirichlet
 #' splitting prior (DART) within an AFT formulation.
 #'
 #' See \code{\link{ShrinkageTrees}} for a full description of returned components.
-#' 
+#'
+#' @examples
+#' set.seed(2)
+#' n <- 30; p <- 5
+#' X <- matrix(rnorm(n * p), ncol = p)
+#' time <- rexp(n, rate = exp(0.5 * X[, 1]))
+#' status <- rbinom(n, 1, 0.7)
+#'
+#' fit <- SurvivalDART(time = time, status = status, X_train = X,
+#'                     number_of_trees = 5, N_post = 50, N_burn = 25,
+#'                     verbose = FALSE)
+#'
+#' # S3 methods
+#' print(fit)
+#' smry <- summary(fit)
+#'
+#' # Posterior predictions on new data
+#' X_new <- matrix(rnorm(10 * p), ncol = p)
+#' pred <- predict(fit, newdata = X_new)
+#' print(pred)
+#'
+#' # Variable importance plot (requires bayesplot and ggplot2)
+#' if (requireNamespace("bayesplot", quietly = TRUE) &&
+#'     requireNamespace("ggplot2", quietly = TRUE)) {
+#'   plot(fit, type = "vi", n_vi = 5)
+#' }
+#'
 #' @export
 SurvivalDART <- function(
   time, 
@@ -225,12 +296,53 @@ SurvivalDART <- function(
 #' Regularization, confounding, and heterogeneous effects.
 #' Bayesian Analysis.
 #'
+#' @seealso
+#' Related models: \code{\link{SurvivalShrinkageBCF}} (Dirichlet sparsity),
+#' \code{\link{CausalHorseForest}} (horseshoe prior),
+#' \code{\link{CausalShrinkageForest}} (general shrinkage priors).
+#'
+#' S3 methods: \code{\link{print.CausalShrinkageForest}},
+#' \code{\link{summary.CausalShrinkageForest}},
+#' \code{\link{predict.CausalShrinkageForest}},
+#' \code{\link{plot.CausalShrinkageForest}}.
+#'
 #' @return
 #' An object of class \code{"CausalShrinkageForest"} corresponding to a
 #' survival BCF model under classical BART priors.
 #'
 #' See \code{\link{CausalShrinkageForest}} for returned components.
-#' 
+#'
+#' @examples
+#' set.seed(3)
+#' n <- 30; p <- 5
+#' X <- matrix(rnorm(n * p), ncol = p)
+#' treatment <- rbinom(n, 1, 0.5)
+#' log_T <- X[, 1] + treatment * (-0.5) + rnorm(n)
+#' time <- exp(log_T)
+#' status <- rbinom(n, 1, 0.7)
+#'
+#' fit <- SurvivalBCF(time = time, status = status, X_train = X,
+#'                    treatment = treatment,
+#'                    number_of_trees_control = 5,
+#'                    number_of_trees_treat = 5,
+#'                    N_post = 50, N_burn = 25,
+#'                    verbose = FALSE)
+#'
+#' # S3 methods
+#' print(fit)
+#' smry <- summary(fit)
+#'
+#' # Posterior ATE
+#' cat("ATE:", round(smry$treatment_effect$ate, 3), "\n")
+#'
+#' # Diagnostic and treatment-effect plots (requires bayesplot and ggplot2)
+#' if (requireNamespace("bayesplot", quietly = TRUE) &&
+#'     requireNamespace("ggplot2", quietly = TRUE)) {
+#'   plot(fit, type = "trace")
+#'   plot(fit, type = "ate")
+#'   plot(fit, type = "cate")
+#' }
+#'
 #' @export
 SurvivalBCF <- function(
   time,
@@ -304,7 +416,7 @@ SurvivalBCF <- function(
 #'
 #' Fits a survival version of a Bayesian Causal Forest (BCF) under an 
 #' accelerated failure time (AFT) model, combining Dirichlet splitting 
-#' priors with global–local shrinkage.
+#' priors with global-local shrinkage.
 #'
 #' This wrapper extends \code{\link{SurvivalBCF}} by incorporating 
 #' Dirichlet sparsity in both the prognostic (control) and treatment 
@@ -334,7 +446,7 @@ SurvivalBCF <- function(
 #' }
 #'
 #' The Dirichlet prior follows the sparse splitting framework of Linero (2018),
-#' where splitting probabilities are governed by a Beta–Dirichlet hierarchy.
+#' where splitting probabilities are governed by a Beta-Dirichlet hierarchy.
 #' The sparsity level is controlled by \code{a_dir} and \code{b_dir}.
 #'
 #' Survival outcomes are modeled using an AFT formulation with right-censoring
@@ -343,15 +455,53 @@ SurvivalBCF <- function(
 #' @references
 #' Caron, A., Baio, G., & Manolopoulou, I. (2022).
 #' Shrinkage Bayesian Causal Forests for Heterogeneous Treatment Effects Estimation.
-#' Journal of Computational and Graphical Statistics, 31(4), 1202–1214.
+#' Journal of Computational and Graphical Statistics, 31(4), 1202--1214.
 #' https://doi.org/10.1080/10618600.2022.2067549
 #'
-#' @seealso \code{\link{SurvivalBCF}}, \code{\link{CausalShrinkageForest}}
-#' 
+#' @seealso
+#' Related models: \code{\link{SurvivalBCF}} (standard BART priors),
+#' \code{\link{CausalShrinkageForest}} (general shrinkage priors),
+#' \code{\link{CausalHorseForest}} (horseshoe prior).
+#'
+#' S3 methods: \code{\link{print.CausalShrinkageForest}},
+#' \code{\link{summary.CausalShrinkageForest}},
+#' \code{\link{predict.CausalShrinkageForest}},
+#' \code{\link{plot.CausalShrinkageForest}}.
+#'
 #' @return
 #' An object of class \code{"CausalShrinkageForest"} fitted with
 #' Dirichlet splitting priors and additional shrinkage.
-#' 
+#'
+#' @examples
+#' set.seed(4)
+#' n <- 30; p <- 5
+#' X <- matrix(rnorm(n * p), ncol = p)
+#' treatment <- rbinom(n, 1, 0.5)
+#' log_T <- X[, 1] + treatment * (-0.5) + rnorm(n)
+#' time <- exp(log_T)
+#' status <- rbinom(n, 1, 0.7)
+#'
+#' fit <- SurvivalShrinkageBCF(time = time, status = status, X_train = X,
+#'                              treatment = treatment,
+#'                              number_of_trees_control = 5,
+#'                              number_of_trees_treat = 5,
+#'                              N_post = 50, N_burn = 25,
+#'                              verbose = FALSE)
+#'
+#' # S3 methods
+#' print(fit)
+#' smry <- summary(fit)
+#'
+#' # Posterior ATE with 95% credible interval
+#' cat("ATE:", round(smry$treatment_effect$ate, 3), "\n")
+#'
+#' # Diagnostic and treatment-effect plots (requires bayesplot and ggplot2)
+#' if (requireNamespace("bayesplot", quietly = TRUE) &&
+#'     requireNamespace("ggplot2", quietly = TRUE)) {
+#'   plot(fit, type = "trace")
+#'   plot(fit, type = "cate")
+#' }
+#'
 #' @export
 SurvivalShrinkageBCF <- function(
   time, 

@@ -62,7 +62,7 @@ See \code{\link{ShrinkageTrees}} for a full description of returned components.
 }
 \description{
 Fits an Accelerated Failure Time (AFT) model using the Dirichlet splitting
-prior (DART), which induces structural sparsity through a Beta–Dirichlet
+prior (DART), which induces structural sparsity through a Beta-Dirichlet
 hierarchy on splitting probabilities.
 }
 \details{
@@ -76,4 +76,40 @@ high-dimensional settings.
 Users requiring alternative shrinkage priors on the leaf parameters
 (e.g., Horseshoe or half-Cauchy priors) should use
 \code{\link{ShrinkageTrees}} directly.
+}
+\examples{
+set.seed(2)
+n <- 30; p <- 5
+X <- matrix(rnorm(n * p), ncol = p)
+time <- rexp(n, rate = exp(0.5 * X[, 1]))
+status <- rbinom(n, 1, 0.7)
+
+fit <- SurvivalDART(time = time, status = status, X_train = X,
+                    number_of_trees = 5, N_post = 50, N_burn = 25,
+                    verbose = FALSE)
+
+# S3 methods
+print(fit)
+smry <- summary(fit)
+
+# Posterior predictions on new data
+X_new <- matrix(rnorm(10 * p), ncol = p)
+pred <- predict(fit, newdata = X_new)
+print(pred)
+
+# Variable importance plot (requires bayesplot and ggplot2)
+if (requireNamespace("bayesplot", quietly = TRUE) &&
+    requireNamespace("ggplot2", quietly = TRUE)) {
+  plot(fit, type = "vi", n_vi = 5)
+}
+
+}
+\seealso{
+Related models: \code{\link{SurvivalBART}} (standard BART prior),
+\code{\link{ShrinkageTrees}} (general shrinkage priors).
+
+S3 methods: \code{\link{print.ShrinkageTrees}},
+\code{\link{summary.ShrinkageTrees}},
+\code{\link{predict.ShrinkageTrees}},
+\code{\link{plot.ShrinkageTrees}}.
 }

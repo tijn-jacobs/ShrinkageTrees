@@ -307,7 +307,7 @@ print.ShrinkageTrees <- function(x, ...) {
   invisible(x)
 }
 
-# ── summary ──────────────────────────────────────────────────────────────────
+# -- summary ------------------------------------------------------------------
 
 .outcome_label <- function(outcome_type, timescale) {
   switch(
@@ -603,7 +603,7 @@ print.summary.CausalShrinkageForest <- function(x, n_vi = 10, ...) {
                        round(te$ate_upper, 4), "]\n", sep = "")
   } else {
     cat("  ATE:     ", round(te$ate, 4),
-        "  (no CI — refit with store_posterior_sample = TRUE)\n", sep = "")
+        "  (no CI -- refit with store_posterior_sample = TRUE)\n", sep = "")
   }
   cat("  CATE SD: ", round(te$cate_sd, 4), "\n", sep = "")
 
@@ -627,11 +627,11 @@ print.summary.CausalShrinkageForest <- function(x, n_vi = 10, ...) {
     paste(names(vi), round(vi, 3), sep = ": ", collapse = "   ")
   }
   if (!is.null(x$variable_importance_control)) {
-    cat("\nVariable importance — control forest (posterior inclusion probability):\n")
+    cat("\nVariable importance - control forest (posterior inclusion probability):\n")
     cat(" ", fmt_vi(x$variable_importance_control), "\n")
   }
   if (!is.null(x$variable_importance_treat)) {
-    cat("\nVariable importance — treatment forest (posterior inclusion probability):\n")
+    cat("\nVariable importance - treatment forest (posterior inclusion probability):\n")
     cat(" ", fmt_vi(x$variable_importance_treat), "\n")
   }
 
@@ -675,7 +675,7 @@ print.CausalShrinkageForest <- function(x, ...) {
 
   lbl <- function(s) sprintf("%-22s", s)
 
-  # ── General info ──────────────────────────────────────────────────────────
+  # -- General info ----------------------------------------------------------
   cat(lbl("Outcome type:"), .outcome_label(x$outcome_type, x$timescale),
       "\n", sep = "")
   cat(lbl("Training size (n):"), x$data_info$n_train, "\n", sep = "")
@@ -692,7 +692,7 @@ print.CausalShrinkageForest <- function(x, ...) {
   if (!x$preprocess$sigma_known && !is.null(x$sigma))
     cat(lbl("Posterior mean sigma:"), round(mean(x$sigma), 3), "\n", sep = "")
 
-  # ── Per-forest info (side by side) ────────────────────────────────────────
+  # -- Per-forest info (side by side) ----------------------------------------
   col  <- function(s) sprintf("%-20s", s)
   hdr  <- function(s) sprintf("%-20s", s)
 
