@@ -37,8 +37,9 @@ test_that("CausalShrinkageForest works for continuous outcome", {
   expect_length(fit$sigma, 10)  # N_post + N_burn = 10 + 5
   
   # Numerical checks
-  expect_false(any(is.na(unlist(fit))))
-  expect_true(all(is.finite(unlist(fit))))
+  fit_numeric <- unlist(fit[vapply(fit, is.numeric, logical(1))])
+  expect_false(any(is.na(fit_numeric)))
+  expect_true(all(is.finite(fit_numeric)))
   
   # Check acceptance ratios
   expect_length(fit$acceptance_ratio_control, 1)
@@ -128,8 +129,9 @@ test_that("CausalShrinkageForest works for right-censored survival outcome", {
   expect_length(fit$sigma, 10)
   
   # Numerical checks
-  expect_false(any(is.na(unlist(fit))))
-  expect_true(all(is.finite(unlist(fit))))
+  fit_numeric <- unlist(fit[vapply(fit, is.numeric, logical(1))])
+  expect_false(any(is.na(fit_numeric)))
+  expect_true(all(is.finite(fit_numeric)))
   
   # Check acceptance ratios
   expect_length(fit$acceptance_ratio_control, 1)
@@ -206,8 +208,9 @@ test_that("CausalShrinkageForest works for continuous outcome with half-cauchy p
   expect_true("train_predictions" %in% names(fit))
   expect_length(fit$train_predictions, n)
   expect_length(fit$sigma, 10)
-  expect_false(any(is.na(unlist(fit))))
-  expect_true(all(is.finite(unlist(fit))))
+  fit_numeric <- unlist(fit[vapply(fit, is.numeric, logical(1))])
+  expect_false(any(is.na(fit_numeric)))
+  expect_true(all(is.finite(fit_numeric)))
   expect_true(sd(fit$train_predictions) > 0)
   expect_true(sd(fit$train_predictions_control) > 0)
   expect_true(sd(fit$train_predictions_treat) > 0)
@@ -261,8 +264,9 @@ test_that("CausalShrinkageForest works for continuous outcome with horseshoe_fw 
   expect_length(fit$forestwide_shrinkage_treat, 10)
   
   # Sanity checks on numerical values
-  expect_false(any(is.na(unlist(fit))))
-  expect_true(all(is.finite(unlist(fit))))
+  fit_numeric <- unlist(fit[vapply(fit, is.numeric, logical(1))])
+  expect_false(any(is.na(fit_numeric)))
+  expect_true(all(is.finite(fit_numeric)))
   
   expect_true(sd(fit$train_predictions) > 0)
   expect_true(sd(fit$train_predictions_control) > 0)

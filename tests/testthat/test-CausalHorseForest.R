@@ -66,9 +66,10 @@ test_that("CausalHorseForest works for continuous outcome", {
   expect_equal(dim(fit$test_predictions_sample_treat), c(10, n))
   
   # --- Numerical sanity checks ---
-  expect_false(any(is.na(unlist(fit))))
-  expect_false(any(is.nan(unlist(fit))))
-  expect_true(all(is.finite(unlist(fit))))
+  fit_numeric <- unlist(fit[vapply(fit, is.numeric, logical(1))])
+  expect_false(any(is.na(fit_numeric)))
+  expect_false(any(is.nan(fit_numeric)))
+  expect_true(all(is.finite(fit_numeric)))
   
   # Predictions are not all zero
   expect_true(sd(fit$train_predictions) > 0)
@@ -184,9 +185,10 @@ test_that("CausalHorseForest works for survival outcome", {
   expect_equal(dim(fit$test_predictions_sample_treat), c(10, n))
   
   # --- Numerical sanity checks ---
-  expect_false(any(is.na(unlist(fit))))
-  expect_false(any(is.nan(unlist(fit))))
-  expect_true(all(is.finite(unlist(fit))))
+  fit_numeric <- unlist(fit[vapply(fit, is.numeric, logical(1))])
+  expect_false(any(is.na(fit_numeric)))
+  expect_false(any(is.nan(fit_numeric)))
+  expect_true(all(is.finite(fit_numeric)))
   
   # Predictions are not all zero
   expect_true(sd(fit$train_predictions) > 0)

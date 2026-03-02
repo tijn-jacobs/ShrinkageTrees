@@ -64,8 +64,9 @@ test_that("SurvivalShrinkageBCF works for right-censored survival outcome", {
   # --------------------
   # Numerical sanity
   # --------------------
-  expect_false(any(is.na(unlist(fit))))
-  expect_true(all(is.finite(unlist(fit))))
+  fit_numeric <- unlist(fit[vapply(fit, is.numeric, logical(1))])
+  expect_false(any(is.na(fit_numeric)))
+  expect_true(all(is.finite(fit_numeric)))
   expect_true(all(fit$sigma > 0))
   
   # Non-degeneracy

@@ -28,7 +28,7 @@ print.ShrinkageTrees <- function(x, ...) {
   }
 
   if (!x$preprocess$sigma_known && !is.null(x$sigma)) {
-    cat("Posterior mean sigma:",
+    cat("Posterior mean sigma: ",
         round(mean(x$sigma), 3), "\n", sep = "")
   }
 
