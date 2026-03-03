@@ -262,7 +262,7 @@
 #' \code{\link{summary.CausalShrinkageForest}},
 #' \code{\link{predict.CausalShrinkageForest}},
 #' \code{\link{plot.CausalShrinkageForest}}.
-#' 
+#'
 #' @importFrom Rcpp evalCpp
 #' @useDynLib ShrinkageTrees, .registration = TRUE
 #' @importFrom stats sd qchisq runif
@@ -485,6 +485,9 @@ CausalHorseForest <- function(y,
       ySEXP = y,
       status_indicatorSEXP = status,
       is_survivalSEXP = survival,
+      observed_left_timeSEXP = numeric(n_train),
+      observed_right_timeSEXP = y + 0,
+      interval_censoring_indicatorSEXP = numeric(n_train),
       treatment_indicatorSEXP = treatment_indicator_train,
       n_testSEXP = n_test,
       X_test_controlSEXP = X_test_control,
@@ -624,6 +627,9 @@ CausalHorseForest <- function(y,
       ySEXP = y,
       status_indicatorSEXP = status,
       is_survivalSEXP = survival,
+      observed_left_timeSEXP = numeric(n_train),
+      observed_right_timeSEXP = y + 0,
+      interval_censoring_indicatorSEXP = numeric(n_train),
       treatment_indicatorSEXP = treatment_indicator_train,
       n_testSEXP = n_test,
       X_test_controlSEXP = X_test_control,

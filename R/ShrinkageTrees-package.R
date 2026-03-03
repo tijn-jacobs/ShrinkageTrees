@@ -6,9 +6,8 @@
 #' accelerated failure time (AFT) formulations. Designed for high-dimensional
 #' prediction and heterogeneous treatment effect estimation in causal inference.
 #'
-#' @docType "_PACKAGE"
+#' @docType package
 #' @name ShrinkageTrees-package
-#' @aliases ShrinkageTrees
 #'
 #' @importFrom stats quantile
 #' @importFrom utils head

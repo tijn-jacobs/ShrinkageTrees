@@ -194,7 +194,7 @@ test_that("HorseTrees returns ShrinkageTrees S3 object with working methods", {
   )
 
   expect_s3_class(fit, "ShrinkageTrees")
-  expect_no_error(print(fit))
+  expect_no_error(capture.output(print(fit)))
   expect_no_error(smry <- summary(fit))
   expect_type(smry, "list")
   expect_true(!is.null(smry$sigma))

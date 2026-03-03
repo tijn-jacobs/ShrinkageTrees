@@ -83,6 +83,126 @@ ShrinkageTrees & AFT (right-censored) & Yes & Horseshoe / Dirichlet & Yes\\
 \end{tabular}
 \end{table}
 
+\subsection{Related Software doing BART, but not survival}\label{related-software-doing-bart-but-not-survival}
+
+Several R packages implement Bayesian Additive Regression Trees (BART) for regression, classification, and causal inference. However, native support for right-censored survival outcomes within a fully Bayesian tree ensemble framework is rare. In this section we summarise existing BART-based packages and clarify how \textbf{ShrinkageTrees} differs.
+
+The \textbf{BART} package (Sparapani, Spanbauer \& McCulloch, 2021) provides the most established implementation of Bayesian tree ensembles in R and includes support for survival analysis under an accelerated failure time (AFT) formulation. While mature and widely used, its implementation relies on classical Gaussian leaf priors and does not support global--local shrinkage priors, Dirichlet splitting priors, or causal survival forests.
+
+Several other packages implement BART-style models without native survival likelihoods:
+
+\begin{itemize}
+\item
+  \textbf{dbarts} provides a fast C++ implementation of classical BART for regression and classification, but does not include survival modelling or shrinkage extensions.
+\item
+  \textbf{bartMachine} offers a Java-based implementation of BART with regression and classification support, though it does not implement survival models or modern shrinkage priors.
+\item
+  \textbf{BayesTree} is the original reference implementation of BART, primarily of historical importance, and does not include survival or shrinkage extensions.
+\item
+  \textbf{bcf} implements Bayesian Causal Forests for heterogeneous treatment effect estimation using a two-forest decomposition. It does not provide survival modelling or global--local shrinkage priors.
+\item
+  \textbf{stochtree} provides a flexible C++ framework for stochastic tree ensembles and supports regression and causal inference models. However, it does not include a built-in right-censored survival likelihood or packaged horseshoe-based shrinkage survival models.
+\end{itemize}
+
+In summary, among currently available R packages, only \textbf{BART} provides native Bayesian survival tree models. None combine survival modelling with modular prior selection, global--local shrinkage (e.g., horseshoe priors), Dirichlet splitting priors, and causal forest extensions within a unified interface. \textbf{ShrinkageTrees} addresses this gap by integrating survival analysis, causal inference, and structured shrinkage within a single coherent framework.
+
+\subsection{\texorpdfstring{Survival Modelling in the \texttt{BART} Package}{Survival Modelling in the BART Package}}\label{survival-modelling-in-the-bart-package}
+
+The \texttt{BART} package provides two distinct approaches for modelling right-censored survival outcomes. These differ fundamentally in how the survival likelihood is constructed and how time is handled.
+
+\subsubsection{\texorpdfstring{1. \texttt{surv.bart()} --- Discrete-Time Survival via Logistic Regression}{1. surv.bart() --- Discrete-Time Survival via Logistic Regression}}\label{surv.bart-discrete-time-survival-via-logistic-regression}
+
+The function \texttt{surv.bart()} implements survival analysis by converting the data into a discrete-time representation. Specifically:
+
+\begin{itemize}
+\tightlist
+\item
+  The follow-up time axis is expanded into discrete observed event times.
+\item
+  At each observed time point, a binary indicator is constructed to represent whether an event occurred.
+\item
+  A sequence of BART logistic regression models is then fitted across time points.
+\item
+  Censoring is handled through this discrete hazard representation.
+\end{itemize}
+
+Conceptually, this corresponds to modelling the conditional hazard function in discrete time using a BART logistic regression framework.
+
+Key characteristics:
+
+\begin{itemize}
+\tightlist
+\item
+  Models the hazard rather than log-survival time.
+\item
+  Time must be discretised to observed event times.
+\item
+  Computational cost increases with the number of unique time points.
+\item
+  Inference is framed in terms of hazard probabilities.
+\end{itemize}
+
+This approach does not assume proportional hazards, but it does rely on a discrete-time approximation.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\subsubsection{\texorpdfstring{2. \texttt{abart()} --- Accelerated Failure Time (AFT) Formulation}{2. abart() --- Accelerated Failure Time (AFT) Formulation}}\label{abart-accelerated-failure-time-aft-formulation}
+
+The function \texttt{abart()} implements survival modelling through an accelerated failure time (AFT) specification:
+
+\[
+\log(T_i) = f(\mathbf{x}_i) + \varepsilon_i.
+\]
+
+Key features:
+
+\begin{itemize}
+\tightlist
+\item
+  Continuous-time model on the log-survival scale.
+\item
+  Direct modelling of log-time rather than hazard.
+\item
+  Censoring handled through Bayesian data augmentation.
+\item
+  Uses classical Gaussian leaf priors.
+\item
+  Computational complexity does not depend on the number of unique event times.
+\end{itemize}
+
+This approach is closer in spirit to regression modelling and avoids discretisation of time.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\subsubsection{Summary of Differences}\label{summary-of-differences}
+
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\linewidth - 6\tabcolsep) * \real{0.2000}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 6\tabcolsep) * \real{0.2941}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 6\tabcolsep) * \real{0.2706}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 6\tabcolsep) * \real{0.2353}}@{}}
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\raggedright
+Function
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Likelihood Type
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Time Handling
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Model Target
+\end{minipage} \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+\texttt{surv.bart()} & Discrete hazard (logit) & Discrete event times & Hazard probabilities \\
+\texttt{abart()} & AFT (Gaussian errors) & Continuous log-time & Log-survival time \\
+\end{longtable}
+
+In practice, \texttt{surv.bart()} models the conditional hazard function through repeated logistic BART fits, whereas \texttt{abart()} models log-survival time directly under an AFT assumption.
+
+ShrinkageTrees adopts the continuous-time AFT formulation, extending it with global--local shrinkage priors and modular structural regularisation.
+
 \section{Package Architecture}\label{package-architecture}
 
 \CRANpkg{ShrinkageTrees} is available on CRAN and on GitHub at \url{https://github.com/tijn-jacobs/ShrinkageTrees}. The package is implemented in R with an \CRANpkg{Rcpp} \citep{eddelbuettel2011rcpp} backend for the core sampling routines.

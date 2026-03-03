@@ -18,6 +18,6 @@ bibentry(
   title = "ShrinkageTrees: Bayesian Regression Tree Ensembles for High-Dimensional Survival and Causal Inference",
   author = person("Tijn", "Jacobs"),
   year = "2026",
-  note = "R package version 1.3.0",
+  note = "R package version 2.0.0",
   url = "https://cran.r-project.org/package=ShrinkageTrees"
 )

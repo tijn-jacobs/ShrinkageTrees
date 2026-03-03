@@ -82,7 +82,7 @@ where $\mu$ captures the prognostic effect and $\tau$ the treatment effect. \pkg
 
 Several R packages implement variants of Bayesian tree ensembles, but none provides the combination of modular shrinkage priors and survival/causal inference offered by \pkg{ShrinkageTrees}.
 
-\CRANpkg{BART} [@sparapani2021nonparametric] is the most comprehensive general-purpose BART package and includes survival extensions based on a discrete-time hazard formulation. However, it does not support global–local shrinkage priors on leaf parameters or AFT-based survival models.
+\CRANpkg{BART} [@sparapani2021nonparametric] is the most comprehensive general-purpose BART package and includes survival extensions via both a discrete-time hazard formulation (`surv.bart()`) and an AFT formulation (`abart()`). However, it does not support global–local shrinkage priors on leaf parameters, Dirichlet splitting priors, or causal survival forests.
 
 \CRANpkg{dbarts} [@dorie2023dbarts] provides a fast BART sampler with a flexible R interface but is limited to continuous and binary outcomes and does not support survival or causal forest models.
 
@@ -95,7 +95,7 @@ Table \@ref(tab:pkg-comparison) summarises the capabilities of these packages re
 ```{r pkg-comparison, echo=FALSE}
 df <- data.frame(
   Package        = c("BART", "dbarts", "bcf", "stochtree", "ShrinkageTrees"),
-  `Survival`     = c("Discrete hazard", "No", "No", "No", "AFT (right-censored)"),
+  `Survival`     = c("Discrete hazard / AFT", "No", "No", "No", "AFT (right-censored)"),
   `Causal`       = c("No", "No", "Yes", "Yes", "Yes"),
   `Shrinkage`    = c("Normal leaf prior", "Normal leaf prior", "Normal leaf prior", "Normal leaf prior", "Horseshoe / Dirichlet"),
   `Causal + Survival` = c("No", "No", "No", "No", "Yes"),
@@ -121,15 +121,18 @@ This modularity means that structural and parametric shrinkage can be combined f
 
 All models share a consistent S3 interface. The main fitting functions are:
 
-| Function | Model |
-|---|---|
-| `bart_survival()` | BART for AFT survival |
-| `dart_survival()` | DART for AFT survival |
-| `bcf_survival()` | BCF for AFT survival |
-| `horseshoe_forest()` | Horseshoe Forest for survival |
-| `horseshoe_bcf()` | Horseshoe BCF for causal survival |
+| Function | Model | Class |
+|---|---|---|
+| `ShrinkageTrees()` | General shrinkage tree ensemble | `ShrinkageTrees` |
+| `HorseTrees()` | Horseshoe Forest | `ShrinkageTrees` |
+| `SurvivalBART()` | BART for AFT survival | `ShrinkageTrees` |
+| `SurvivalDART()` | DART for AFT survival | `ShrinkageTrees` |
+| `CausalShrinkageForest()` | General causal shrinkage forest | `CausalShrinkageForest` |
+| `CausalHorseForest()` | Causal Horseshoe Forest | `CausalShrinkageForest` |
+| `SurvivalBCF()` | BCF for AFT survival | `CausalShrinkageForest` |
+| `SurvivalShrinkageBCF()` | Shrinkage BCF for AFT survival | `CausalShrinkageForest` |
 
-All functions return an object of class `"ShrinkageTrees"` with consistent `print()`, `summary()`, `predict()`, and `plot()` methods.
+Non-causal models return an object of class `"ShrinkageTrees"`, while causal models return `"CausalShrinkageForest"`. Both classes provide `print()`, `summary()`, `predict()`, and `plot()` methods.
 
 ## Rcpp Backend
 
@@ -137,34 +140,51 @@ The Metropolis-within-Gibbs samplers for tree structure and the horseshoe augmen
 
 # Worked Example
 
-We illustrate the package on the [...] dataset, which contains [...]. We first fit a survival model, then extend the analysis to causal inference.
+We illustrate the package using simulated survival data with a known treatment effect. We first fit a Horseshoe Forest survival model, then extend the analysis to causal inference using a Survival BCF model.
 
 ```{r data, echo=TRUE}
-# Load data
-# data(...)
+set.seed(42)
+n <- 200; p <- 10
+X <- matrix(rnorm(n * p), ncol = p)
+treatment <- rbinom(n, 1, 0.5)
+log_T <- 2 + X[, 1] + 0.5 * X[, 2] + treatment * (-0.5 * X[, 1]) + rnorm(n)
+time <- exp(log_T)
+status <- rbinom(n, 1, 0.8)
 ```
 
 ## Survival Analysis
 
-```{r survival-fit, echo=TRUE}
-# fit <- horseshoe_forest(
-#   x = X, time = time, status = status,
-#   n_tree = 50, n_iter = 2000, n_burn = 500
-# )
-# summary(fit)
+```{r survival-fit, echo=TRUE, eval=FALSE}
+fit <- HorseTrees(
+  y = time, status = status,
+  X_train = X,
+  outcome_type = "right-censored",
+  timescale = "time",
+  number_of_trees = 50,
+  local_hp = 0.1 / sqrt(50),
+  global_hp = 0.1 / sqrt(50),
+  N_post = 2000, N_burn = 500,
+  store_posterior_sample = TRUE,
+  verbose = FALSE
+)
+summary(fit)
 ```
 
 ## Causal Survival Inference
 
-```{r causal-fit, echo=TRUE}
-# fit_bcf <- horseshoe_bcf(
-#   x = X, z = treatment, time = time, status = status,
-#   n_tree_mu = 50, n_tree_tau = 20,
-#   n_iter = 2000, n_burn = 500
-# )
-# plot(fit_bcf, type = "cate")
+```{r causal-fit, echo=TRUE, eval=FALSE}
+fit_bcf <- SurvivalBCF(
+  time = time, status = status,
+  X_train = X, treatment = treatment,
+  number_of_trees_control = 50,
+  number_of_trees_treat = 20,
+  N_post = 2000, N_burn = 500,
+  verbose = FALSE
+)
+summary(fit_bcf)
+plot(fit_bcf, type = "cate")
 ```
 
 # Conclusion
 
-\CRANpkg{ShrinkageTrees} provides the first modular R implementation that combines global–local shrinkage priors with Bayesian tree ensembles for survival and causal inference. By separating structural and parametric regularisation within a coherent S3 framework, the package enables principled and flexible modelling in high-dimensional settings. Future development will include [...].
+\CRANpkg{ShrinkageTrees} provides the first modular R implementation that combines global–local shrinkage priors with Bayesian tree ensembles for survival and causal inference. By separating structural and parametric regularisation within a coherent S3 framework, the package enables principled and flexible modelling in high-dimensional settings.

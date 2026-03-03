@@ -1,4 +1,4 @@
-# ShrinkageTrees 1.3.0
+# ShrinkageTrees 2.0.0
 
 ## Multi-chain MCMC (`n_chains`)
 
@@ -55,9 +55,9 @@ Requires the suggested packages `bayesplot` and `ggplot2`.
 
 - Fixed `CausalHorseForest` and `CausalShrinkageForest` failing with
   `"argument 'y_train' is missing"` when called directly (broken constructor
-  call introduced in 1.3.0 S3 refactor).
+  call introduced in 2.0.0 S3 refactor).
 - Fixed `plot(..., type = "vi")` crashing with `"argument must be coercible
-  to non-negative integer"` in all four model functions: covariate matrices
+to non-negative integer"` in all four model functions: covariate matrices
   were being stored as flat numeric vectors instead of matrices, making
   `ncol()` return `NULL`.
 - Fixed a latent bug in `HorseTrees` and `ShrinkageTrees` where `sigma_hat`,

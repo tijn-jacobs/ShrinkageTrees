@@ -8,8 +8,11 @@ Rcpp::List HorseTrees_cpp(
   SEXP n_testSEXP,    
   SEXP X_trainSEXP,    
   SEXP ySEXP,  
-  SEXP status_indicatorSEXP, 
-  SEXP is_survivalSEXP,     
+  SEXP status_indicatorSEXP,
+  SEXP is_survivalSEXP,
+  SEXP observed_left_timeSEXP,
+  SEXP observed_right_timeSEXP,
+  SEXP interval_censoring_indicatorSEXP,
   SEXP X_testSEXP,    
   SEXP number_of_treesSEXP,     
   SEXP N_postSEXP,     
@@ -82,10 +85,18 @@ Rcpp::List HorseTrees_cpp(
 
   // Objects for is_survival data
   bool is_survival = Rcpp::as<bool>(is_survivalSEXP);
-  Rcpp::NumericVector status_indicator_vector(status_indicatorSEXP);   
-  double* status_indicator = &status_indicator_vector[0];   
+  Rcpp::NumericVector status_indicator_vector(status_indicatorSEXP);
+  double* status_indicator = &status_indicator_vector[0];
   std::vector<double> y_observed_vector(y_vector.begin(), y_vector.end());  // Create an independent copy of y
   double* y_observed = y_observed_vector.data(); // Get pointer to use like an array
+
+  // Objects for interval censoring
+  Rcpp::NumericVector observed_left_time_vector(observed_left_timeSEXP);
+  double* observed_left_time = &observed_left_time_vector[0];
+  Rcpp::NumericVector observed_right_time_vector(observed_right_timeSEXP);
+  double* observed_right_time = &observed_right_time_vector[0];
+  Rcpp::NumericVector interval_censoring_indicator_vector(interval_censoring_indicatorSEXP);
+  double* interval_censoring_indicator = &interval_censoring_indicator_vector[0];
 
   // Declare sigma storage based on whether sigma is known
   Rcpp::NumericVector store_sigma = sigma_known ? Rcpp::NumericVector::create(sigma) : Rcpp::NumericVector(N_post + N_burn);
@@ -263,15 +274,17 @@ Rcpp::List HorseTrees_cpp(
     );
 
 
-    // Augment the censored data
+    // Augment the censored data (right-censored and interval-censored)
     AugmentCensoredObservations(
-      is_survival, 
-      y, 
-      y_observed, 
-      status_indicator, 
-      forest.GetPredictions(), 
-      sigma, 
-      n, 
+      is_survival,
+      y,
+      observed_left_time,
+      status_indicator,
+      observed_right_time,
+      interval_censoring_indicator,
+      forest.GetPredictions(),
+      sigma,
+      n,
       random
     );
 

@@ -91,6 +91,9 @@ predict.ShrinkageTrees <- function(object, newdata, level = 0.95, ...) {
       ySEXP                    = y_std,
       status_indicatorSEXP     = status,
       is_survivalSEXP          = survival,
+      observed_left_timeSEXP   = numeric(n_train),
+      observed_right_timeSEXP  = y_std + 0,
+      interval_censoring_indicatorSEXP = numeric(n_train),
       X_testSEXP               = X_new,
       number_of_treesSEXP      = object$mcmc$number_of_trees,
       N_postSEXP               = object$mcmc$N_post,
@@ -574,7 +577,7 @@ summary.CausalShrinkageForest <- function(object, ...) {
 #' @seealso \code{\link{summary.CausalShrinkageForest}}
 #' @export
 print.summary.CausalShrinkageForest <- function(x, n_vi = 10, ...) {
-#TESTESTtest
+  
   cat("\n")
   cat("CausalShrinkageForest model summary\n")
   cat("=====================================\n")
@@ -724,6 +727,343 @@ print.CausalShrinkageForest <- function(x, ...) {
                round(mean(x$acceptance_ratio_treat), 3) else "-"
     cat(lbl("Acceptance ratio:"), col(acc_c), col(acc_t), "\n", sep = "")
   }
+
+  cat("\n")
+  invisible(x)
+}
+
+# ── predict.CausalShrinkageForest ─────────────────────────────────────────────
+
+#' Posterior predictive inference for a CausalShrinkageForest model
+#'
+#' Re-runs the MCMC sampler on new covariate data using the stored training
+#' data and hyperparameters, returning posterior mean predictions and credible
+#' interval bounds for three quantities: the \strong{prognostic function}
+#' (control-forest prediction \eqn{\mu(X)}), the \strong{Conditional Average
+#' Treatment Effect} (CATE, \eqn{\tau(X)}), and the \strong{total predicted
+#' outcome} (\eqn{\mu(X) + \tau(X)}).
+#'
+#' @details
+#' The causal forest decomposes the expected outcome as
+#' \deqn{E[Y \mid X] = \mu(X) + \tau(X) \cdot W,}
+#' where \eqn{\mu(X)} is the prognostic function (control forest),
+#' \eqn{\tau(X)} is the CATE (treatment forest), and \eqn{W} is the
+#' treatment indicator.
+#'
+#' For \strong{continuous} outcomes and survival with
+#' \code{timescale = "log"}, all three components are on the response scale:
+#' \code{prognostic} and \code{total} include the intercept shift
+#' (\eqn{+ \bar{y}}), while \code{cate} is the pure additive treatment
+#' effect with no intercept.
+#'
+#' For \strong{survival with \code{timescale = "time"}}, predictions are
+#' back-transformed to the original time scale:
+#' \itemize{
+#'   \item \code{prognostic}: posterior expected baseline survival time
+#'     \eqn{E[\exp(\mu(X))]}.
+#'   \item \code{cate}: multiplicative effect on survival time
+#'     \eqn{\exp(\tau(X))}; a value greater than 1 means treatment prolongs
+#'     survival.
+#'   \item \code{total}: posterior expected survival time under the observed
+#'     treatment \eqn{E[\exp(\mu(X) + \tau(X))]}.
+#' }
+#'
+#' @param object A fitted \code{CausalShrinkageForest} model object.
+#' @param newdata_control A matrix of new covariates for the control forest,
+#'   with the same number of columns as \code{X_train_control} at fit time.
+#' @param newdata_treat A matrix of new covariates for the treatment forest,
+#'   with the same number of columns as \code{X_train_treat} at fit time.
+#'   Must have the same number of rows as \code{newdata_control}.
+#' @param level Credible interval width. Default \code{0.95}.
+#' @param ... Currently unused.
+#' @return A \code{CausalShrinkageForestPrediction} object with elements:
+#'   \describe{
+#'     \item{prognostic}{List with \code{mean}, \code{lower}, \code{upper}:
+#'       posterior summaries of the prognostic function
+#'       \eqn{\mu(X_{\text{new}})}.}
+#'     \item{cate}{List with \code{mean}, \code{lower}, \code{upper}:
+#'       posterior summaries of the CATE \eqn{\tau(X_{\text{new}})}.}
+#'     \item{total}{List with \code{mean}, \code{lower}, \code{upper}:
+#'       posterior summaries of the total outcome
+#'       \eqn{\mu(X_{\text{new}}) + \tau(X_{\text{new}})}.}
+#'     \item{n}{Number of test observations.}
+#'     \item{level}{Credible level used.}
+#'     \item{outcome_type}{Outcome type inherited from the fitted model.}
+#'     \item{timescale}{Timescale inherited from the fitted model.}
+#'   }
+#' @seealso \code{\link{CausalHorseForest}}, \code{\link{CausalShrinkageForest}},
+#'   \code{\link{print.CausalShrinkageForestPrediction}},
+#'   \code{\link{summary.CausalShrinkageForestPrediction}}
+#' @export
+predict.CausalShrinkageForest <- function(object, newdata_control, newdata_treat,
+                                          level = 0.95, ...) {
+
+  if (!is.matrix(newdata_control)) newdata_control <- as.matrix(newdata_control)
+  if (!is.matrix(newdata_treat))   newdata_treat   <- as.matrix(newdata_treat)
+
+  p_control <- object$data_info$p_control
+  p_treat   <- object$data_info$p_treat
+
+  if (ncol(newdata_control) != p_control)
+    stop("newdata_control has ", ncol(newdata_control),
+         " columns but the model expects ", p_control, ".")
+  if (ncol(newdata_treat) != p_treat)
+    stop("newdata_treat has ", ncol(newdata_treat),
+         " columns but the model expects ", p_treat, ".")
+
+  n_new <- nrow(newdata_control)
+  if (nrow(newdata_treat) != n_new)
+    stop("newdata_control and newdata_treat must have the same number of rows.")
+
+  n_train  <- object$data_info$n_train
+  pre      <- object$preprocess
+  args     <- object$args
+  survival <- object$outcome_type == "right-censored"
+
+  # Reconstruct standardised training response (inverse of fit-time transforms)
+  y      <- as.numeric(object$data$y_train)
+  status <- object$data$status_train
+  if (survival && object$timescale == "time") y <- log(y)
+  y <- (y - pre$y_mean) / pre$sigma_hat
+  if (!survival) status <- rep(1L, n_train)
+
+  # Format matrices for C++ (row-major: each observation is a contiguous block)
+  X_train_control <- as.numeric(t(object$data$X_train_control))
+  X_train_treat   <- as.numeric(t(object$data$X_train_treat))
+  X_test_control  <- as.numeric(t(newdata_control))
+  X_test_treat    <- as.numeric(t(newdata_treat))
+  trt_train       <- as.integer(object$data$treatment_indicator_train)
+  trt_test        <- as.integer(rep(1L, n_new))  # placeholder; not used in predictions
+
+  alpha <- (1 - level) / 2
+
+  fit <- CausalHorseForest_cpp(
+    nSEXP                              = n_train,
+    p_treatSEXP                        = p_treat,
+    p_controlSEXP                      = p_control,
+    X_train_treatSEXP                  = X_train_treat,
+    X_train_controlSEXP                = X_train_control,
+    ySEXP                              = y,
+    status_indicatorSEXP               = status,
+    is_survivalSEXP                    = survival,
+    observed_left_timeSEXP             = numeric(n_train),
+    observed_right_timeSEXP            = y + 0,
+    interval_censoring_indicatorSEXP   = numeric(n_train),
+    treatment_indicatorSEXP            = trt_train,
+    n_testSEXP                         = n_new,
+    X_test_controlSEXP                 = X_test_control,
+    X_test_treatSEXP                   = X_test_treat,
+    treatment_indicator_testSEXP       = trt_test,
+    no_trees_treatSEXP                 = object$mcmc$number_of_trees_treat,
+    power_treatSEXP                    = args$treat$power,
+    base_treatSEXP                     = args$treat$base,
+    p_grow_treatSEXP                   = args$p_grow,
+    p_prune_treatSEXP                  = args$p_prune,
+    omega_treatSEXP                    = args$treat$omega,
+    prior_type_treatSEXP               = object$prior$treat$prior_type_cpp,
+    param1_treatSEXP                   = args$treat$param1,
+    param2_treatSEXP                   = args$treat$param2,
+    reversible_treatSEXP               = args$treat$reversible,
+    dirichlet_bool_treatSEXP           = isTRUE(object$prior$treat$dirichlet),
+    a_dirichlet_treatSEXP              = args$treat$a_dirichlet,
+    b_dirichlet_treatSEXP              = args$treat$b_dirichlet,
+    rho_dirichlet_treatSEXP            = args$treat$rho_dirichlet,
+    no_trees_controlSEXP               = object$mcmc$number_of_trees_control,
+    power_controlSEXP                  = args$control$power,
+    base_controlSEXP                   = args$control$base,
+    p_grow_controlSEXP                 = args$p_grow,
+    p_prune_controlSEXP                = args$p_prune,
+    omega_controlSEXP                  = args$control$omega,
+    prior_type_controlSEXP             = object$prior$control$prior_type_cpp,
+    param1_controlSEXP                 = args$control$param1,
+    param2_controlSEXP                 = args$control$param2,
+    reversible_controlSEXP             = args$control$reversible,
+    dirichlet_bool_controlSEXP         = isTRUE(object$prior$control$dirichlet),
+    a_dirichlet_controlSEXP            = args$control$a_dirichlet,
+    b_dirichlet_controlSEXP            = args$control$b_dirichlet,
+    rho_dirichlet_controlSEXP          = args$control$rho_dirichlet,
+    sigma_knownSEXP                    = TRUE,
+    sigmaSEXP                          = pre$sigma_hat,
+    lambdaSEXP                         = args$lambda,
+    nuSEXP                             = args$nu,
+    N_postSEXP                         = object$mcmc$N_post,
+    N_burnSEXP                         = object$mcmc$N_burn,
+    delayed_proposalSEXP               = args$delayed_proposal,
+    store_posterior_sample_controlSEXP = TRUE,
+    store_posterior_sample_treatSEXP   = TRUE,
+    verboseSEXP                        = FALSE
+  )
+
+  # C++ does not return a combined total sample; reconstruct from components.
+  control_std <- fit$test_predictions_sample_control  # N_post x n_new
+  treat_std   <- fit$test_predictions_sample_treat    # N_post x n_new
+  total_std   <- control_std + treat_std
+
+  sigma_hat <- pre$sigma_hat
+  y_mean    <- pre$y_mean
+
+  if (survival && object$timescale == "time") {
+    # Back-transform to original time scale
+    prognostic_sample <- exp(control_std * sigma_hat + y_mean)
+    cate_sample       <- exp(treat_std   * sigma_hat)          # multiplicative ratio
+    total_sample      <- exp(total_std   * sigma_hat + y_mean)
+  } else {
+    # Continuous or log-scale survival: additive de-standardisation
+    prognostic_sample <- control_std * sigma_hat + y_mean
+    cate_sample       <- treat_std   * sigma_hat               # no intercept shift
+    total_sample      <- total_std   * sigma_hat + y_mean
+  }
+
+  ci <- function(mat) list(
+    mean  = colMeans(mat),
+    lower = apply(mat, 2, quantile, alpha),
+    upper = apply(mat, 2, quantile, 1 - alpha)
+  )
+
+  out <- list(
+    prognostic   = ci(prognostic_sample),
+    cate         = ci(cate_sample),
+    total        = ci(total_sample),
+    n            = n_new,
+    level        = level,
+    outcome_type = object$outcome_type,
+    timescale    = object$timescale
+  )
+  class(out) <- "CausalShrinkageForestPrediction"
+  out
+}
+
+# ── print / summary for CausalShrinkageForestPrediction ───────────────────────
+
+#' Print a CausalShrinkageForestPrediction object
+#'
+#' Displays a formatted table of posterior mean predictions and credible
+#' interval bounds for the first \code{n_head} observations, with separate
+#' sections for the prognostic function \eqn{\mu(X)}, the CATE \eqn{\tau(X)},
+#' and the total outcome \eqn{\mu(X) + \tau(X)}.
+#'
+#' @param x A \code{CausalShrinkageForestPrediction} object.
+#' @param n_head Number of observations to display per section. Default \code{6}.
+#' @param digits Number of decimal places. Default \code{3}.
+#' @param ... Currently unused.
+#' @return Invisibly returns \code{x}.
+#' @seealso \code{\link{predict.CausalShrinkageForest}},
+#'   \code{\link{summary.CausalShrinkageForestPrediction}}
+#' @export
+print.CausalShrinkageForestPrediction <- function(x, n_head = 6, digits = 3, ...) {
+
+  ci_pct     <- paste0(round(x$level * 100), "%")
+  time_scale <- x$outcome_type == "right-censored" && x$timescale == "time"
+
+  cat("\n")
+  cat("CausalShrinkageForest predictions\n")
+  cat("----------------------------------\n")
+  lbl <- function(s) sprintf("%-22s", s)
+  cat(lbl("Observations:"),      x$n,            "\n", sep = "")
+  cat(lbl("Credible interval:"), ci_pct,         "\n", sep = "")
+  cat(lbl("Outcome type:"),      x$outcome_type, "\n", sep = "")
+
+  n_show <- min(n_head, x$n)
+  hdr    <- sprintf("  %5s  %8s  %8s  %8s\n", "", "mean", "lower", "upper")
+  sep    <- sprintf("  %5s  %8s  %8s  %8s\n", "",
+                    strrep("-", 8), strrep("-", 8), strrep("-", 8))
+  row_fn <- function(i, lst)
+    sprintf("  [%3d]  %8.*f  %8.*f  %8.*f\n",
+            i, digits, lst$mean[i], digits, lst$lower[i], digits, lst$upper[i])
+
+  print_block <- function(lst, label) {
+    cat("\n", label, ":\n", sep = "")
+    cat(hdr); cat(sep)
+    for (i in seq_len(n_show)) cat(row_fn(i, lst))
+    if (x$n > n_head) cat("  ... (", x$n - n_head, " more)\n", sep = "")
+  }
+
+  print_block(x$prognostic,
+              if (time_scale) "Prognostic (E[T0])" else "Prognostic (mu)")
+  print_block(x$cate,
+              if (time_scale) "CATE (time ratio, exp(tau))" else "CATE (tau)")
+  print_block(x$total,
+              if (time_scale) "Total (E[T])" else "Total (mu + tau)")
+
+  cat("\n")
+  invisible(x)
+}
+
+#' Summarise a CausalShrinkageForestPrediction object
+#'
+#' Returns distributional summaries (min, Q1, median, max) of the posterior
+#' mean predictions and credible interval bounds across all test observations,
+#' separately for the prognostic function, CATE, and total outcome.
+#'
+#' @param object A \code{CausalShrinkageForestPrediction} object.
+#' @param ... Currently unused.
+#' @return A \code{summary.CausalShrinkageForestPrediction} object.
+#' @seealso \code{\link{predict.CausalShrinkageForest}},
+#'   \code{\link{print.summary.CausalShrinkageForestPrediction}}
+#' @export
+summary.CausalShrinkageForestPrediction <- function(object, ...) {
+  summ_pred <- function(lst) list(
+    mean  = quantile(lst$mean,  c(0, 0.25, 0.5, 1)),
+    lower = quantile(lst$lower, c(0, 0.25, 0.5, 1)),
+    upper = quantile(lst$upper, c(0, 0.25, 0.5, 1))
+  )
+  out <- list(
+    n            = object$n,
+    level        = object$level,
+    outcome_type = object$outcome_type,
+    timescale    = object$timescale,
+    prognostic   = summ_pred(object$prognostic),
+    cate         = summ_pred(object$cate),
+    total        = summ_pred(object$total)
+  )
+  class(out) <- "summary.CausalShrinkageForestPrediction"
+  out
+}
+
+#' Print a CausalShrinkageForestPrediction summary
+#'
+#' Displays distributional summaries (min, Q1, median, max) of the posterior
+#' mean predictions and credible interval bounds, separately for the prognostic
+#' function, CATE, and total outcome.
+#'
+#' @param x A \code{summary.CausalShrinkageForestPrediction} object.
+#' @param digits Number of decimal places. Default \code{3}.
+#' @param ... Currently unused.
+#' @return Invisibly returns \code{x}.
+#' @seealso \code{\link{summary.CausalShrinkageForestPrediction}}
+#' @export
+print.summary.CausalShrinkageForestPrediction <- function(x, digits = 3, ...) {
+
+  ci_pct     <- paste0(round(x$level * 100), "%")
+  time_scale <- x$outcome_type == "right-censored" && x$timescale == "time"
+
+  cat("\n")
+  cat("CausalShrinkageForest prediction summary\n")
+  cat("-----------------------------------------\n")
+  lbl <- function(s) sprintf("%-22s", s)
+  cat(lbl("Observations:"),      x$n,    "\n", sep = "")
+  cat(lbl("Credible interval:"), ci_pct, "\n", sep = "")
+
+  hdr <- sprintf("  %-8s  %8s  %8s  %8s\n", "", "mean", "lower", "upper")
+  sep <- sprintf("  %-8s  %8s  %8s  %8s\n", "",
+                 strrep("-", 8), strrep("-", 8), strrep("-", 8))
+
+  print_block <- function(lst, label) {
+    cat("\n", label, ":\n", sep = "")
+    cat(hdr); cat(sep)
+    nms <- c("Min.", "Q1", "Median", "Max.")
+    for (i in seq_along(nms))
+      cat(sprintf("  %-8s  %8.*f  %8.*f  %8.*f\n",
+                  nms[i], digits, lst$mean[i],
+                  digits, lst$lower[i], digits, lst$upper[i]))
+  }
+
+  print_block(x$prognostic,
+              if (time_scale) "Prognostic (E[T0])" else "Prognostic (mu)")
+  print_block(x$cate,
+              if (time_scale) "CATE (time ratio, exp(tau))" else "CATE (tau)")
+  print_block(x$total,
+              if (time_scale) "Total (E[T])" else "Total (mu + tau)")
 
   cat("\n")
   invisible(x)

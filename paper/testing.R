@@ -78,11 +78,6 @@ summary(fit_double)
 
 
 
-
-
-
-
-
 library(bayesplot)
 library(ggplot2)
 

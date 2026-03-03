@@ -7,9 +7,9 @@ output:
     toc: true
     toc_depth: 3
 vignette: >
+  %\VignetteEncoding{UTF-8}
   %\VignetteIndexEntry{ShrinkageTrees: Introduction and Usage}
   %\VignetteEngine{knitr::rmarkdown}
-  %\VignetteEncoding{UTF-8}
 ---
 
 ```{r setup, include=FALSE}
@@ -392,7 +392,7 @@ y_causal <- X_syn[, 1] + W_syn * tau_true + rnorm(n, sd = 0.5)
 `SurvivalBCF()` fits a BCF model for right-censored survival outcomes using
 classical BART priors.
 
-```{r survbcf, eval=TRUE}
+```{r survbcf, eval=FALSE}
 # Full analysis (eval=FALSE — use larger MCMC settings in practice)
 fit_sbcf <- SurvivalBCF(
   time       = time,

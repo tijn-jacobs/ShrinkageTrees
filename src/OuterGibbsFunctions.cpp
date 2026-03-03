@@ -116,16 +116,20 @@ void AugmentCensoredObservations(
       U = random.uniform();
       prediction = predicted_time[i];
 
-      const double a  = (observed_right_time[i] - prediction) / sigma; // R bound
+      double a  = (observed_right_time[i] - prediction) / sigma; // R bound
+
+      // Cap at 4 to avoid numerical issues (Fa too close to 1.0),
+      // especially in early MCMC iterations
+      if (a > 4.0) a = 4.0;
+
       const double Fa = standard_normal_cdf(a);
 
       // Uniform over [Fa, 1]
-      // (tiny guard in case Fa is numerically 1.0)
-      if (Fa >= 1.0) {
-        temporary = std::nextafter(1.0, 0.0);
-      } else {
-        temporary = Fa + U * (1.0 - Fa);
-      }
+      temporary = Fa + U * (1.0 - Fa);
+
+      // Clamp into (0, 1) for the quantile function
+      temporary = std::max(temporary, std::nextafter(0.0, 1.0));
+      temporary = std::min(temporary, std::nextafter(1.0, 0.0));
 
       event_time[i] = prediction + sigma * standard_normal_quantile(temporary);
     }
@@ -155,6 +159,10 @@ void AugmentCensoredObservations(
         // uniform on [Fa, Fb]
         temporary = Fa + U * width;
       }
+
+      // Clamp into (0, 1) for the quantile function
+      temporary = std::max(temporary, std::nextafter(0.0, 1.0));
+      temporary = std::min(temporary, std::nextafter(1.0, 0.0));
 
       // Map back to the original scale
       event_time[i] = prediction + sigma * standard_normal_quantile(temporary);
