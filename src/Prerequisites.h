@@ -29,7 +29,7 @@
 
 #include "Rcpp.h"
 
-double log_sum_exp(std::vector<double>& v);
+double LogSumExp(std::vector<double>& v);
 
 // Random number generation library
 #include "Random.h"

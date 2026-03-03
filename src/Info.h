@@ -3,27 +3,31 @@
 #define GUARD_info_h
 #include "Prerequisites.h"
 
-//data
-class dinfo {
+// Data container passed to the birth-death and sufficient-statistics functions.
+// X is stored column-major: the j-th predictor of the i-th observation is
+// *(X + p * i + j).  residuals holds the current working residuals.
+class DataInfo {
 public:
-   dinfo() {p=0;n=0;x=0;y=0;}
-   size_t p;  //number of vars
-   size_t n;  //number of observations
-   double *x; // jth var of ith obs is *(x + p*i+j)
-   double *y; // ith y is *(y+i) or y[i]
+  DataInfo() : p(0), n(0), X(nullptr), residuals(nullptr) {}
+  size_t p;          // Number of predictors
+  size_t n;          // Number of observations
+  double* X;         // Feature matrix (n x p, column-major)
+  double* residuals; // Working residuals (length n)
 };
-//prior and mcmc
-class pinfo
-{
+
+// Prior and MCMC tuning parameters used by the birth-death sampler.
+class PriorInfo {
 public:
-   pinfo(): pbd(1.0),pb(.5),base(.95),power(2.0),eta(1.0) {}
-//mcmc info
-   double pbd; //prob of birth/death
-   double pb;  //prob of birth
-//prior info
-   double base;
-   double power;
-   double eta;
+  PriorInfo() : prob_birth_death(1.0), prob_birth(0.5),
+                base(0.95), power(2.0), eta(1.0) {}
+  // MCMC proposal probabilities
+  double prob_birth_death; // Probability of proposing a birth or death step
+  double prob_birth;       // Conditional probability of a birth (vs. death)
+  // Tree topology prior: P(split at depth d) = base / (1 + d)^power
+  double base;
+  double power;
+  // Prior standard deviation of leaf step heights
+  double eta;
 };
 
 #endif

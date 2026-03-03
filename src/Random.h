@@ -101,7 +101,7 @@ public:
     for (size_t j = 0; j < k; j++)
       out[j] = this->log_gamma(alpha[j]);
 
-    double lse = log_sum_exp(out);
+    double lse = LogSumExp(out);
     for (size_t j = 0; j < k; j++)
       out[j] -= lse;
 

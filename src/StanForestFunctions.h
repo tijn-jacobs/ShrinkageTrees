@@ -6,44 +6,92 @@
 #include "Info.h"
 #include <algorithm>
 
+// Build a CutpointMatrix for p predictors from n observations stored in x
+// (column-major).  nc[v] controls the number of cutpoints for predictor v:
+// if nc != nullptr, uniform grids are used; if nc == nullptr, unique observed
+// values are used as cutpoints.
+void MakeCutpoints(size_t p, size_t n, double* x, CutpointMatrix& cutpoints,
+                   int* nc);
 
-//make xinfo = cutpoints
-void makexinfo(size_t p, size_t n, double *x, xinfo& xi, int* nc);
+// Compute the probability of proposing a birth step given the current tree.
+// splittable_leaves is populated with all leaf nodes that can be split.
+double GetBirthProbability(StanTree& tree, CutpointMatrix& cutpoints,
+                           PriorInfo& prior_info,
+                           std::vector<StanTree*>& splittable_leaves);
 
-//compute prob of a birth, goodbots will contain all the good bottom nodes
-double getpb(StanTree& t, xinfo& xi, pinfo& pi, StanTree::npv& goodbots);
+// Compute observation counts and residual sums for the left and right
+// partitions induced by splitting target_leaf on (split_var, cut_val).
+void GetSufficientStatistics(StanTree& tree, StanTree* target_leaf,
+                             size_t split_var, size_t cut_val,
+                             CutpointMatrix& cutpoints, DataInfo& data_info,
+                             size_t& left_count, double& left_sum,
+                             size_t& right_count, double& right_sum);
 
-//compute n and \sum y_i for left and right give bot and v,c
-void getsuff(StanTree& x, StanTree::StanTree_p nx, size_t v, size_t c, xinfo& xi, dinfo& di, size_t& nl, double& syl, size_t& nr, double& syr);
+// Compute observation counts and residual sums for an existing left/right
+// leaf pair (used during a death proposal).
+void GetSufficientStatistics(StanTree& tree, StanTree* left_leaf,
+                             StanTree* right_leaf,
+                             CutpointMatrix& cutpoints, DataInfo& data_info,
+                             size_t& left_count, double& left_sum,
+                             size_t& right_count, double& right_sum);
 
-//lh, replacement for lil that only depends on sum y.
-double lh(size_t n, double sy, double sigma, double eta);
+// Compute sufficient statistics for every leaf in the tree in a single pass
+// over the data.  Populates leaves, observation_counts, and residual_sums.
+void GetAllLeafStatistics(StanTree& tree, CutpointMatrix& cutpoints,
+                          DataInfo& data_info,
+                          std::vector<StanTree*>& leaves,
+                          std::vector<size_t>& observation_counts,
+                          std::vector<double>& residual_sums);
 
-//get prob a node grows, 0 if no good vars, else a/(1+d)^b
-double pgrow(StanTree::StanTree_p n, xinfo& xi, pinfo& pi);
+// Log-likelihood of n residuals with sum sum_residuals under a Gaussian
+// model with noise std dev sigma and leaf prior std dev eta.
+double LogLikelihood(size_t n, double sum_residuals, double sigma, double eta);
 
-//compute n and \sum y_i for left and right bots
-void getsuff(StanTree& x, StanTree::StanTree_p l, StanTree::StanTree_p r, xinfo& xi, dinfo& di, size_t& nl, double& syl, size_t& nr, double& syr);
+// Probability that a node at the given depth grows; 0 if no valid split
+// variable is available.
+double ProbabilityNodeGrows(StanTree* node, CutpointMatrix& cutpoints,
+                            PriorInfo& prior_info);
 
-//get sufficients stats for all bottom nodes, this way just loop through all the data once.
-void allsuff(StanTree& x, xinfo& xi, dinfo& di, StanTree::npv& leaves, std::vector<size_t>& nv, std::vector<double>& syv);
+// Draw new step heights for all leaves of the tree from their posterior.
+void DrawAllLeafMeans(StanTree& tree, CutpointMatrix& cutpoints,
+                      DataInfo& data_info, PriorInfo& prior_info,
+                      double sigma, Random& random);
 
-// draw all the bottom node mu's
-void drmu(StanTree& t, xinfo& xi, dinfo& di, pinfo& pi, double sigma, Random& random);
+// Generate a birth proposal: draw the target leaf, split variable, cut
+// value, and compute the Metropolis ratio component (log_proposal_ratio).
+void BirthProposal(StanTree& tree, CutpointMatrix& cutpoints,
+                   PriorInfo& prior_info,
+                   std::vector<StanTree*>& splittable_leaves,
+                   double& prob_birth, StanTree*& target_leaf,
+                   size_t& split_var, size_t& cut_val,
+                   double& log_proposal_ratio,
+                   std::vector<size_t>& variable_split_counts,
+                   std::vector<double>& split_probabilities,
+                   bool use_augmentation, Random& random);
 
-//birth proposal
-void bprop(StanTree& x, xinfo& xi, pinfo& pi, StanTree::npv& goodbots, double& PBx, StanTree::StanTree_p& nx, size_t& v, size_t& c, double& pr, std::vector<size_t>& nv, std::vector<double>& pv, bool aug, Random& random);
+// Generate a death proposal: draw the nog node to collapse and compute
+// the Metropolis ratio component (log_proposal_ratio).
+void DeathProposal(StanTree& tree, CutpointMatrix& cutpoints,
+                   PriorInfo& prior_info,
+                   std::vector<StanTree*>& splittable_leaves,
+                   double& prob_birth, StanTree*& nog_node,
+                   double& log_proposal_ratio, Random& random);
 
-// death proposal
-void dprop(StanTree& x, xinfo& xi, pinfo& pi, StanTree::npv& goodbots, double& PBx, StanTree::StanTree_p& nx, double& pr, Random& random);
+// Draw a single leaf mean from its Gaussian posterior.
+double DrawLeafMean(size_t n, double sum_residuals, double eta,
+                    double sigma, Random& random);
 
-//draw one mu from post 
-double drawnodemu(size_t n, double sy, double eta, double sigma, Random& random);
+// Draw the vector of splitting probabilities from a Dirichlet posterior
+// (Linero, 2018).  Updates log_split_probabilities in-place.
+void DrawSplitProbabilities(std::vector<size_t>& variable_split_counts,
+                            std::vector<double>& log_split_probabilities,
+                            double& dart_theta, Random& random);
 
-//draw variable splitting probabilities from Dirichlet (Linero, 2018)
-void draw_s(std::vector<size_t>& nv, std::vector<double>& lpv, double& theta, Random& random);
+// Draw the Dirichlet sparsity parameter theta from a grid approximation
+// to its posterior (Linero, 2018).
+void DrawSparsityParameter(bool fixed_theta, double& dart_theta,
+                           std::vector<double>& log_split_probabilities,
+                           double dart_a, double dart_b, double dart_rho,
+                           Random& random);
 
-//draw Dirichlet sparsity parameter from posterior using grid
-void draw_theta0(bool const_theta, double& theta, std::vector<double>& lpv,
-		 double a, double b, double rho, Random& random);
 #endif

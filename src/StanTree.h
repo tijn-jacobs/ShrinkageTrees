@@ -3,87 +3,118 @@
 
 #include "Prerequisites.h"
 
+// CutpointMatrix[v][c] is the c-th cutpoint for predictor v.
+// An observation goes left when x[v] < CutpointMatrix[v][c].
+using CutpointMatrix = std::vector<std::vector<double>>;
 
-//xinfo xi, then xi[v][c] is the c^{th} cutpoint for variable v.
-//left if x[v] < xi[v][c]
-typedef std::vector<double> vec_d; //double vector
-typedef std::vector<vec_d> xinfo; //vector of vectors, will be split rules
-
-
-//info contained in a node, used by input operator
-struct node_info {
-   std::size_t id; // node id
-   std::size_t split_var;  // variable
-   std::size_t cut_val;  // cut point
-   double step_height;   // step_height
+// Information about a single node, used by the input-stream operator.
+struct NodeInfo {
+  std::size_t id;
+  std::size_t split_var;
+  std::size_t cut_val;
+  double step_height;
 };
 
 
+// A node in a binary regression tree carrying a scalar leaf parameter
+// (step_height).  Each node stores its own split rule (split_var, cut_val),
+// and pointers to its parent, left child, and right child.
 class StanTree {
 public:
-   //friends--------------------
-   friend std::istream& operator>>(std::istream&, StanTree&);
-   //typedefs--------------------
-   typedef StanTree* StanTree_p;
-   typedef const StanTree* StanTree_cp;
-   typedef std::vector<StanTree_p> npv; 
-   typedef std::vector<StanTree_cp> cnpv;
-   //contructors,destructors--------------------
-   StanTree(): step_height(0.0),split_var(0),cut_val(0),p(0),l(0),r(0) {}
-   StanTree(const StanTree& n): step_height(0.0),split_var(0),cut_val(0),p(0),l(0),r(0) {cp(this,&n);}
-   StanTree(double istep_height): step_height(istep_height),split_var(0),cut_val(0),p(0),l(0),r(0) {}
-   void tonull(); //like a "clear", null StanTree has just one node
-   ~StanTree() {tonull();}
-   //operators----------
-   StanTree& operator=(const StanTree&);
-   //interface--------------------
-   //set
-   void settheta(double step_height) {this->step_height=step_height;}
-   void setv(size_t split_var) {this->split_var = split_var;}
-   void setc(size_t cut_val) {this->cut_val = cut_val;}
-   //get
-   double gettheta() const {return step_height;}
-   size_t GetSplitVar() const {return split_var;}
-   size_t GetCutVal() const {return cut_val;}
-   StanTree_p getp() {return p;}  
-   StanTree_p getl() {return l;}
-   StanTree_p getr() {return r;}
-   //StanTree functions--------------------
-   StanTree_p getptr(size_t nid); //get node pointer from node id, 0 if not there
-   void pr(bool pc=true); //to screen, pc is "print children"
-   size_t StanTreesize(); //number of nodes in StanTree
-   size_t nnogs();    //number of nog nodes (no grandchildren nodes)
-   size_t nbots();    //number of bottom nodes
-   bool birth(size_t nid, size_t split_var, size_t cut_val, double step_heightl, double step_heightr);
-   bool death(size_t nid, double step_height);
-   void birthp(StanTree_p np, size_t split_var, size_t cut_val, double step_heightl, double step_heightr);
-   void deathp(StanTree_p nb, double step_height);
-   void getbots(npv& bv);         //get bottom nodes
-   void getnogs(npv& nv);         //get nog nodes (no granchildren)
-   void getnodes(npv& v);         //get vector of all nodes
-   void getnodes(cnpv& v) const;  //get vector of all nodes (const)
-   StanTree_p bn(double *x,xinfo& xi); //find Bottom Node
-   void rg(size_t split_var, int* L, int* U); //recursively find region [L,U] for var v
-   //node functions--------------------
-   size_t nid() const; //nid of a node
-   size_t depth();  //depth of a node
-   char ntype(); //node type t:top, b:bot, n:no grandchildren i:interior (t can be b)
-   bool isnog();
-   size_t getbadcut(size_t split_var);
+  // Stream operator for deserialisation
+  friend std::istream& operator>>(std::istream&, StanTree&);
+
+  // Constructors and destructor
+  StanTree()
+    : step_height(0.0), split_var(0), cut_val(0),
+      parent(nullptr), left(nullptr), right(nullptr) {}
+  StanTree(const StanTree& other)
+    : step_height(0.0), split_var(0), cut_val(0),
+      parent(nullptr), left(nullptr), right(nullptr) {
+    CopyTree(this, &other);
+  }
+  explicit StanTree(double initial_step_height)
+    : step_height(initial_step_height), split_var(0), cut_val(0),
+      parent(nullptr), left(nullptr), right(nullptr) {}
+  void Clear(); // Reduce the tree back to a single root node
+  ~StanTree() { Clear(); }
+
+  // Assignment operator
+  StanTree& operator=(const StanTree&);
+
+  // Setters
+  void SetStepHeight(double value) { step_height = value; }
+  void SetSplitVar(size_t var)     { split_var = var; }
+  void SetCutVal(size_t val)       { cut_val = val; }
+
+  // Getters
+  double GetStepHeight() const { return step_height; }
+  size_t GetSplitVar()   const { return split_var; }
+  size_t GetCutVal()     const { return cut_val; }
+  StanTree* GetParent()        { return parent; }
+  StanTree* GetLeft()          { return left; }
+  StanTree* GetRight()         { return right; }
+
+  // Return a pointer to the node with the given id (nullptr if not found).
+  StanTree* GetNodePointer(size_t id);
+
+  // Find the leaf node reached by observation x using the given cutpoints.
+  StanTree* FindLeaf(double* x, CutpointMatrix& cutpoints);
+
+  // Recursively narrow the valid range [lower_bound, upper_bound] for
+  // split_var by walking up to the root.
+  void FindRegionBounds(size_t split_var, int* lower_bound, int* upper_bound);
+
+  // Return the cut value imposed by the nearest ancestor that splits on
+  // split_var (used for the degenerate-tree augmentation strategy).
+  size_t GetConstrainedCut(size_t split_var);
+
+  // Node type queries
+  size_t NodeID()    const; // 1-based binary-heap index
+  size_t NodeDepth();       // Distance from root (0 = root)
+  char   NodeType();        // 't'=top 'b'=bottom 'n'=no-grandchildren 'i'=interior
+  bool   IsNog();           // True iff node has children but no grandchildren
+
+  // Tree metrics
+  size_t TreeSize();        // Total number of nodes
+  size_t NumberOfNogs();    // Number of no-grandchildren nodes
+  size_t NumberOfLeaves();  // Number of leaf (bottom) nodes
+
+  // Grow a leaf into an internal node (addressed by node id).
+  bool Birth(size_t nid, size_t split_var, size_t cut_val,
+             double left_step_height, double right_step_height);
+  // Remove the two leaf children of a nog node (addressed by node id).
+  bool Death(size_t nid, double new_step_height);
+  // Grow a leaf into an internal node via direct pointer.
+  void BirthAtNode(StanTree* leaf, size_t split_var, size_t cut_val,
+                   double left_step_height, double right_step_height);
+  // Remove children of a nog node via direct pointer.
+  void DeathAtNode(StanTree* nog_node, double new_step_height);
+
+  // Collect pointers to all leaf nodes.
+  void CollectLeaves(std::vector<StanTree*>& leaf_vector);
+  // Collect pointers to all no-grandchildren nodes.
+  void CollectNogs(std::vector<StanTree*>& nog_vector);
+  // Collect pointers to all nodes.
+  void CollectNodes(std::vector<StanTree*>& node_vector);
+  void CollectNodes(std::vector<const StanTree*>& node_vector) const;
+
+  // Print the tree to screen.
+  void Print(bool also_print_children = true);
 
 private:
-   double step_height; //univariate double parameter
-   //rule: left if x[cut_val] < xinfo[split_var][cut_val]
-   size_t split_var;
-   size_t cut_val;
-   //StanTree structure
-   StanTree_p p; //parent
-   StanTree_p l; //left child
-   StanTree_p r; //right child
-   //utiity functions
-   void cp(StanTree_p n,  StanTree_cp o); //copy StanTree
+  double step_height; // Leaf parameter (step height)
+  // Split rule: go left when x[split_var] < cutpoints[split_var][cut_val]
+  size_t split_var;
+  size_t cut_val;
+  // Tree structure pointers
+  StanTree* parent;
+  StanTree* left;
+  StanTree* right;
+
+  // Deep-copy the tree rooted at source into destination (destination must
+  // have no children).
+  void CopyTree(StanTree* destination, const StanTree* source);
 };
-// std::istream& operator>>(std::istream&, StanTree&);
-// std::ostream& operator<<(std::ostream&, const StanTree&);
 
 #endif

@@ -10,4 +10,4 @@ SOURCES = \
   stan/StanTree.cpp \
   stan/StanForestFunctions.cpp \
   stan/StanTreeFunctions.cpp \
-  stan/bd.cpp
+  stan/StanBirthDeath.cpp

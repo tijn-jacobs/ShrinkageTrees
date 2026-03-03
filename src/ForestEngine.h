@@ -38,8 +38,8 @@ struct ForestEngine {
     if (type == ForestEngineType::forest_type) {
       forest->SetTreePrior(base, power, eta, p_grow, p_prune);
     } else {
-      stan_forest->setprior(base, power, eta);   
-      stan_forest->setdart(a_dirichlet, b_dirichlet, rho_dirichlet, augment, dirichlet_bool, alpha_dirichlet);
+      stan_forest->SetPriorParameters(base, power, eta);
+      stan_forest->SetDartParameters(a_dirichlet, b_dirichlet, rho_dirichlet, augment, dirichlet_bool, alpha_dirichlet);
     } // Usually, rho_dirichlet = p, and augment = true
   }
 
@@ -55,7 +55,7 @@ struct ForestEngine {
 
   void StartDirichlet() {
     if (type == ForestEngineType::stan_forest_type) {
-      stan_forest->startdart();
+      stan_forest->ToggleDart();
     }
   }
 
@@ -72,7 +72,7 @@ struct ForestEngine {
         sigma, scale_mixture, reversible, delayed, rng, accepted
       );
     } else {
-      stan_forest->draw(sigma, rng, accepted);  // StanForest does not use scale mixture
+      stan_forest->Draw(sigma, rng, accepted);  // StanForest does not use scale mixture
       // optionally: fill accepted[] = ??? (Stan doesn't use it)
     }
   }
@@ -82,7 +82,7 @@ struct ForestEngine {
     if (type == ForestEngineType::forest_type) {
       forest->Predict(p, n_test, X, out);
     } else {
-      stan_forest->predict(p, n_test, X, out);
+      stan_forest->Predict(p, n_test, X, out);
     }
   }
 
@@ -90,7 +90,7 @@ struct ForestEngine {
   inline double GetPrediction(size_t i) {
     return (type == ForestEngineType::forest_type)
                ? forest->GetPrediction(i)
-               : stan_forest->f(i);
+               : stan_forest->GetFitAt(i);
   }
 
   inline double* GetPredictions() {
@@ -103,7 +103,7 @@ struct ForestEngine {
     if (type == ForestEngineType::forest_type) {
       return forest->GetVariableInclusionCount();
     } else {
-      return stan_forest->getnv();   // correct Stan version
+      return stan_forest->GetVariableSplitCounts();
     }
   }
 
@@ -111,7 +111,7 @@ struct ForestEngine {
     if (type == ForestEngineType::forest_type) {
       return forest->GetVariableInclusionProb();
     } else {
-      return stan_forest->getpv();   // correct Stan version
+      return stan_forest->GetSplitProbabilities();
     }
   }
 
