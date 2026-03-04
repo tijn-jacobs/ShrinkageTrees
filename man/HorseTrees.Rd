@@ -5,10 +5,12 @@
 \title{Horseshoe Regression Trees (HorseTrees)}
 \usage{
 HorseTrees(
-  y,
+  y = NULL,
   status = NULL,
   X_train,
   X_test = NULL,
+  left_time = NULL,
+  right_time = NULL,
   outcome_type = "continuous",
   timescale = "time",
   number_of_trees = 200,
@@ -30,10 +32,14 @@ HorseTrees(
 }
 \arguments{
 \item{y}{Outcome vector. Numeric. Can represent continuous outcomes, binary
-outcomes (0/1), or follow-up times for survival data.}
+outcomes (0/1), or follow-up times for survival data. Set to \code{NULL}
+(default) when using \code{outcome_type = "interval-censored"}, as values
+are derived from \code{left_time} and \code{right_time}.}
 
 \item{status}{Optional censoring indicator vector (1 = event occurred,
-0 = censored). Required if \code{outcome_type = "right-censored"}.}
+0 = censored). Required if \code{outcome_type = "right-censored"}.
+For interval-censored outcomes, this is derived automatically from
+\code{left_time} and \code{right_time}.}
 
 \item{X_train}{Covariate matrix for training. Each row corresponds to an
 observation, and each column to a covariate.}
@@ -41,8 +47,18 @@ observation, and each column to a covariate.}
 \item{X_test}{Optional covariate matrix for test data. If NULL, defaults to
 the mean of the training covariates.}
 
-\item{outcome_type}{Type of outcome. One of \code{"continuous"}, \code{"binary"}, or
-\code{"right-censored"}.}
+\item{left_time}{Optional numeric vector of left (lower) time boundaries.
+Required when \code{outcome_type = "interval-censored"}. Exact events
+have \code{left_time == right_time}; right-censored observations have
+\code{right_time = Inf}; interval-censored observations have finite
+\code{left_time < right_time}.}
+
+\item{right_time}{Optional numeric vector of right (upper) time boundaries.
+Required when \code{outcome_type = "interval-censored"}. Use \code{Inf}
+for right-censored observations.}
+
+\item{outcome_type}{Type of outcome. One of \code{"continuous"},
+\code{"binary"}, \code{"right-censored"}, or \code{"interval-censored"}.}
 
 \item{timescale}{Indicates the scale of follow-up times. Options are
 \code{"time"} (nonnegative follow-up times, will be log-transformed internally)
@@ -125,7 +141,7 @@ probabilities (only for \code{outcome_type = "binary"} and if
 Fits a Bayesian Horseshoe Trees model with a single learner.
 Implements regularization on the step heights using a global-local Horseshoe
 prior, controlled via the parameter \code{k}. Supports continuous, binary,
-and right-censored (survival) outcomes.
+right-censored, and interval-censored (survival) outcomes.
 }
 \details{
 For continuous outcomes, the model centers and optionally standardizes the
@@ -133,6 +149,10 @@ outcome using a prior guess of the standard deviation.
 For binary outcomes, the function uses a probit link formulation.
 For right-censored outcomes (survival data), the function can handle
 follow-up times either on the original time scale or log-transformed.
+For interval-censored outcomes, provide \code{left_time} and
+\code{right_time} instead of \code{y} and \code{status}; the event
+indicators are derived internally following the
+\code{survival::Surv(type = "interval2")} convention.
 Generalized implementation with multiple prior possibilities is given by
 \code{\link{ShrinkageTrees}}.
 }
@@ -157,8 +177,20 @@ fit2 <- HorseTrees(y = y, X_train = X, outcome_type = "binary",
 X <- matrix(rnorm(n * p), ncol = p)
 time <- rexp(n, rate = 0.1)
 status <- rbinom(n, 1, 0.7)
-fit3 <- HorseTrees(y = time, status = status, X_train = X, 
-                   outcome_type = "right-censored", number_of_trees = 5, 
+fit3 <- HorseTrees(y = time, status = status, X_train = X,
+                   outcome_type = "right-censored", number_of_trees = 5,
+                   N_post = 75, N_burn = 25, verbose = FALSE)
+
+# Minimal example: interval-censored outcome
+X <- matrix(rnorm(n * p), ncol = p)
+true_t <- rexp(n, rate = 0.1)
+left_t  <- true_t * runif(n, 0.5, 1)
+right_t <- true_t * runif(n, 1, 1.5)
+# Mark some as exact, some as right-censored
+exact <- sample(n, 8); left_t[exact] <- true_t[exact]; right_t[exact] <- true_t[exact]
+rc <- sample(setdiff(seq_len(n), exact), 5); right_t[rc] <- Inf
+fit4 <- HorseTrees(left_time = left_t, right_time = right_t, X_train = X,
+                   outcome_type = "interval-censored", number_of_trees = 5,
                    N_post = 75, N_burn = 25, verbose = FALSE)
 
 # Larger continuous example (not run automatically)

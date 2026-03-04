@@ -27,33 +27,35 @@ double GrowProbability(Tree& tree, Cutpoints& cutpoints,
                        TreePrior& tree_prior, 
                        std::vector<Tree*>& splittable_nodes);
 
-// Computes the count (n) and sum of residuals (∑ y_i) for left and right 
-// partitions given a split variable and cutpoint.
-void SufficientStatistics(Tree& tree, Tree* target_node, size_t split_var, 
-                          size_t cut_val, Cutpoints& cutpoints, Data& data, 
-                          size_t& left_count, double& left_sum, 
-                          size_t& right_count, double& right_sum);
+// Computes the effective count and weighted sum of residuals for left and right
+// partitions given a split variable and cutpoint. When Data has per-observation
+// weights, counts become sum(w_i) and sums become sum(w_i * res_i).
+void SufficientStatistics(Tree& tree, Tree* target_node, size_t split_var,
+                          size_t cut_val, Cutpoints& cutpoints, Data& data,
+                          double& left_count, double& left_sum,
+                          double& right_count, double& right_sum);
 
-// Computes the log-posterior likelihood of the data given the tree structure 
+// Computes the log-posterior likelihood of the data given the tree structure
 // and updated variance. Only used in non-reversible algorithm.
-double LogPostLikelihood(size_t observation_count, double sum_residuals, 
+double LogPostLikelihood(double observation_count, double sum_residuals,
                          double residual_std_dev, double prior_variance);
 
 // Computes the probability that a node will grow; returns 0 if no valid 
 // variables are available.
 double ProbNodeGrows(Tree& node, Cutpoints& cutpoints, TreePrior& tree_prior);
 
-// Computes the count (n) and sum of residuals (∑ y_i) for the left and right 
-// child nodes of a split.
-void SufficientStatistics(Tree& tree, Tree* left_child, Tree* right_child, 
-                          Cutpoints& cutpoints, Data& data, size_t& left_count, 
-                          double& left_sum, size_t& right_count, 
+// Computes the effective count and weighted sum of residuals for the left and
+// right child nodes of a split.
+void SufficientStatistics(Tree& tree, Tree* left_child, Tree* right_child,
+                          Cutpoints& cutpoints, Data& data, double& left_count,
+                          double& left_sum, double& right_count,
                           double& right_sum);
 
 // Computes sufficient statistics for all bottom nodes in the tree.
-void SufficientStatisticsAllLeaves(Tree& tree, Cutpoints& cutpoints, Data& data, 
-                                   std::vector<Tree*>& bottom_nodes, 
-                                   std::vector<size_t>& observation_count_vector, 
+// When Data has weights, counts become sum(w_i) and sums become sum(w_i * res_i).
+void SufficientStatisticsAllLeaves(Tree& tree, Cutpoints& cutpoints, Data& data,
+                                   std::vector<Tree*>& bottom_nodes,
+                                   std::vector<double>& observation_count_vector,
                                    std::vector<double>& residual_sum_vector);
 
 // Draws mu (parameter) values for all bottom nodes in the tree.
@@ -72,10 +74,10 @@ void FullUpdate(Tree& tree,
                 Random& random);
 
 // Draws a single mu value from the posterior distribution.
-double DrawMuOneLeave(size_t n, 
-                      double sum_residuals, 
-                      double prior_variance, 
-                      double sigma, 
+double DrawMuOneLeave(double n,
+                      double sum_residuals,
+                      double prior_variance,
+                      double sigma,
                       Random& random);
 
 // Prints the tree and includes the size of each leaf (bottom node) and the 
@@ -83,10 +85,10 @@ double DrawMuOneLeave(size_t n,
 void PrintTreeWithSizes(Tree& tree, Cutpoints& cutpoints, Data& data);
 
 // Recursive function to print the tree structure with node sizes and residual sums.
-void PrintTreeWithSizesRecursive(Tree* node, Cutpoints& cutpoints, Data& data, 
-                                 std::map<const Tree*, size_t>& bottom_node_map, 
-                                 std::vector<size_t>& observation_count_vector, 
-                                 std::vector<double>& residual_sum_vector, 
+void PrintTreeWithSizesRecursive(Tree* node, Cutpoints& cutpoints, Data& data,
+                                 std::map<const Tree*, size_t>& bottom_node_map,
+                                 std::vector<double>& observation_count_vector,
+                                 std::vector<double>& residual_sum_vector,
                                  int depth);
 
 // Computes the logarithm of the tree ratio for the PRUNE move.

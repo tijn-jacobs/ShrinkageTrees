@@ -36,8 +36,7 @@ When \code{"both"}, a named list of two \pkg{ggplot2} objects is returned.}
 \item{n_vi}{Integer; number of top variables for \code{type = "vi"}.
 Default \code{10}.}
 
-\item{...}{Additional arguments forwarded to the underlying
-\pkg{bayesplot} or \pkg{ggplot2} function.}
+\item{...}{Additional arguments (currently unused).}
 }
 \value{
 A \pkg{ggplot2} object, or (for \code{type = "vi"} with
@@ -45,12 +44,17 @@ A \pkg{ggplot2} object, or (for \code{type = "vi"} with
 \code{treat}.
 }
 \description{
-Visualises posterior draws using \pkg{bayesplot} and \pkg{ggplot2}.
-Requires the suggested packages \pkg{bayesplot} and \pkg{ggplot2}.
+Visualises posterior draws using \pkg{ggplot2}.
+Requires the suggested package \pkg{ggplot2}.
 }
 \examples{
 \dontrun{
-# Fit a causal forest with multiple chains
+set.seed(1)
+n <- 60; p <- 5
+X <- matrix(rnorm(n * p), ncol = p)
+w <- rbinom(n, 1, 0.5)
+y <- X[, 1] + w * 1.5 * (X[, 2] > 0) + rnorm(n, sd = 0.5)
+
 fit <- CausalShrinkageForest(
   y = y,
   X_train_control = X, X_train_treat = X,
@@ -58,9 +62,8 @@ fit <- CausalShrinkageForest(
   prior_type_control = "horseshoe", prior_type_treat = "horseshoe",
   local_hp_control = 0.1, global_hp_control = 0.1,
   local_hp_treat  = 0.1, global_hp_treat  = 0.1,
-  N_post = 500, N_burn = 200,
-  store_posterior_sample = TRUE,
-  n_chains = 4
+  N_post = 200, N_burn = 100,
+  store_posterior_sample = TRUE
 )
 
 # Sigma traceplot -- check chain mixing
@@ -74,10 +77,5 @@ plot(fit, type = "ate")
 
 # Conditional treatment effects for each observation
 plot(fit, type = "cate")
-
-# Variable importance for both forests (Dirichlet prior only)
-vi_plots <- plot(fit, type = "vi", forest = "both")
-vi_plots$control
-vi_plots$treat
 }
 }

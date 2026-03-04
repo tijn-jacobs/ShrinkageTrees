@@ -4,12 +4,24 @@
 \alias{censored_info}
 \title{Compute mean estimate for censored data}
 \usage{
-censored_info(y, status)
+censored_info(
+  y,
+  status,
+  left_time = NULL,
+  right_time = NULL,
+  ic_indicator = NULL
+)
 }
 \arguments{
 \item{y}{Numeric vector of (log-transformed) survival times.}
 
 \item{status}{Numeric vector; event indicator (1 = event, 0 = censored).}
+
+\item{left_time}{Optional numeric vector of left boundaries (for interval censoring).}
+
+\item{right_time}{Optional numeric vector of right boundaries (for interval censoring).}
+
+\item{ic_indicator}{Optional numeric vector; 1 = interval-censored, 0 = right-censored/exact.}
 }
 \value{
 A list with elements:
@@ -19,6 +31,7 @@ A list with elements:
 \item{max}{Estimated maximum of survival times.}
 }
 \description{
-Estimates the mean and standard deviation for right-censored survival data.
-Uses the \code{survival} package if available, otherwise falls back to the naive mean among observed events.
+Estimates the mean and standard deviation for right-censored or
+interval-censored survival data. Uses the \code{survival} package if available,
+otherwise falls back to the naive mean among observed events.
 }

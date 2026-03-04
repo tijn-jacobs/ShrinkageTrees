@@ -135,15 +135,15 @@ double GrowProbability(Tree& tree, Cutpoints& cutpoints, TreePrior& tree_prior,
 // 1. The number of observations in the left and right partitions (left_count, 
 //    right_count).
 // 2. The sum of residuals in the left and right partitions (left_sum, right_sum).
-void SufficientStatistics(Tree& tree, Tree* target_node, size_t split_var, 
-                          size_t cut_val, Cutpoints& cutpoints, Data& data, 
-                          size_t& left_count, double& left_sum, 
-                          size_t& right_count, double& right_sum) {
+void SufficientStatistics(Tree& tree, Tree* target_node, size_t split_var,
+                          size_t cut_val, Cutpoints& cutpoints, Data& data,
+                          double& left_count, double& left_sum,
+                          double& right_count, double& right_sum) {
 
   // Reset the counts and sums for left and right partitions
-  left_count = 0;
+  left_count = 0.0;
   left_sum = 0.0;
-  right_count = 0;
+  right_count = 0.0;
   right_sum = 0.0;
 
   // Create a placeholder for the row of covariates
@@ -157,25 +157,23 @@ void SufficientStatistics(Tree& tree, Tree* target_node, size_t split_var,
 
     // Find the leaf node in the tree that this observation falls into
     if (target_node == tree.FindLeaf(current_row, cutpoints)) {
-      
+
       // Get the value of the feature at the specified variable index
       double value_at_var = current_row[split_var];
-      
+
       // Get the value of the cutpoint for the specified variable and index
       double cutpoint_value = cutpoints.values[split_var][cut_val];
-      
+
+      // Per-observation weight (1.0 when no weights are set)
+      double w = data.GetWeight(i);
+
       // Determine if the data point falls to the left or right of the cutpoint
       if (value_at_var < cutpoint_value) {
-
-        // Data point falls to the left of the cutpoint
-        ++left_count; // Increment the count for the left partition
-        left_sum += data.residual[i]; // Add residual to the left partition's sum
-
+        left_count += w;
+        left_sum += w * data.residual[i];
       } else {
-
-        // Data point falls to the right of the cutpoint
-        ++right_count; // Increment the count for the right partition
-        right_sum += data.residual[i]; // Add residual to the right partition's sum
+        right_count += w;
+        right_sum += w * data.residual[i];
       }
     }
   }
@@ -187,36 +185,39 @@ void SufficientStatistics(Tree& tree, Tree* target_node, size_t split_var,
 // in that it specifically handles two child nodes (l and r) resulting from a 
 // split and computes the sufficient statistics for these two nodes based on the 
 // observations that fall into them.
-void SufficientStatistics(Tree& tree, Tree* left_child, Tree* right_child, 
-                          Cutpoints& cutpoints, Data& data, size_t& left_count, 
-                          double& left_sum, size_t& right_count, 
+void SufficientStatistics(Tree& tree, Tree* left_child, Tree* right_child,
+                          Cutpoints& cutpoints, Data& data, double& left_count,
+                          double& left_sum, double& right_count,
                           double& right_sum) {
 
   // Initialize counts and sums for the left and right child nodes
-  left_count = 0;
+  left_count = 0.0;
   left_sum = 0.0;
-  right_count = 0;
+  right_count = 0.0;
   right_sum = 0.0;
 
   // Iterate over all observations in the dataset
   for (size_t i = 0; i < data.GetN(); ++i) {
-    
+
     // Get the current row of covariates
     double* current_row = data.GetDataRow(i);
 
     // Find the leaf node in the tree that the current observation falls into
     const Tree* current_leaf = tree.FindLeaf(current_row, cutpoints);
 
+    // Per-observation weight (1.0 when no weights are set)
+    double w = data.GetWeight(i);
+
     // If the observation falls into the left child node, update its statistics
     if (current_leaf == left_child) {
-      ++left_count;
-      left_sum += data.GetResidual(i);
+      left_count += w;
+      left_sum += w * data.GetResidual(i);
     }
 
     // If the observation falls into the right child node, update its statistics
     if (current_leaf == right_child) {
-      ++right_count;
-      right_sum += data.GetResidual(i);
+      right_count += w;
+      right_sum += w * data.GetResidual(i);
     }
   }
 }
@@ -226,7 +227,7 @@ void SufficientStatistics(Tree& tree, Tree* left_child, Tree* right_child,
 // updated variance. This function calculates the posterior log-likelihood based 
 // on the number of observations (n), the sum of the residuals (sum_residuals), 
 // the standard deviation of the residuals (sigma), and the prior variance (eta).
-double LogPostLikelihood(size_t observation_count, double sum_residuals, 
+double LogPostLikelihood(double observation_count, double sum_residuals,
                          double sigma, double prior_variance) {
 
   // Calculate the variance squared for both the residuals and the prior
@@ -334,7 +335,7 @@ void SufficientStatisticsAllLeaves(
     Cutpoints& cutpoints,
     Data& data,
     std::vector<Tree*>& bottom_nodes,
-    std::vector<size_t>& observation_count_vector,
+    std::vector<double>& observation_count_vector,
     std::vector<double>& residual_sum_vector) {
 
   bottom_nodes.clear();
@@ -344,7 +345,7 @@ void SufficientStatisticsAllLeaves(
   AssignLeafIndices(bottom_nodes);
 
   const size_t L = bottom_nodes.size();
-  observation_count_vector.assign(L, 0);
+  observation_count_vector.assign(L, 0.0);
   residual_sum_vector.assign(L, 0.0);
 
   // Fast raw pointers
@@ -353,14 +354,16 @@ void SufficientStatisticsAllLeaves(
   double* Xrow = nullptr;
   double* X = data.GetX();
   double* resid = data.GetResidual();
+  double* wts = data.GetWeights();
 
   // Main scan
   for (size_t i = 0; i < N; ++i) {
     Xrow = X + i * P;  // contiguous row
     Tree* leaf = tree.FindLeaf(Xrow, cutpoints);  // iterative inline
     const size_t idx = leaf->GetLeafIndex();      // O(1)
-    ++observation_count_vector[idx];
-    residual_sum_vector[idx] += resid[i];
+    double w = wts ? wts[i] : 1.0;
+    observation_count_vector[idx] += w;
+    residual_sum_vector[idx] += w * resid[i];
   }
 
   // Defensive cleanup (cheap, keeps invariants simple)
@@ -369,14 +372,14 @@ void SufficientStatisticsAllLeaves(
 
 
 // New update function for scale mixture set-up
-void DrawMuAllLeaves(Tree& tree, Cutpoints& cutpoints, Data& data, 
+void DrawMuAllLeaves(Tree& tree, Cutpoints& cutpoints, Data& data,
                      TreePrior& tree_prior, double sigma, const double& omega,
                      ScaleMixture& scale_mixture, Random& random) {
-  
-  // Vectors to hold bottom nodes, their respective observation counts, and 
+
+  // Vectors to hold bottom nodes, their respective observation counts, and
   // sum of residuals
   std::vector<Tree*> bottom_nodes;
-  std::vector<size_t> observation_counts;
+  std::vector<double> observation_counts;
   std::vector<double> residual_sums;
 
   // Compute sufficient statistics for all bottom nodes in the tree
@@ -398,17 +401,17 @@ void DrawMuAllLeaves(Tree& tree, Cutpoints& cutpoints, Data& data,
 // Performs a full update of both global and local parameters for all bottom 
 // nodes in the tree. This includes updating the sufficient statistics, global 
 // parameters, and proposing new values for the local parameters.
-void FullUpdate(Tree& tree, Cutpoints& cutpoints, Data& data, 
-                const double& sigma, 
-                const double& omega, 
-                ScaleMixture& scale_mixture, 
+void FullUpdate(Tree& tree, Cutpoints& cutpoints, Data& data,
+                const double& sigma,
+                const double& omega,
+                ScaleMixture& scale_mixture,
                 Random& random) {
 
-  // Vectors to hold leaf nodes, their respective observation counts, and 
+  // Vectors to hold leaf nodes, their respective observation counts, and
   // sum of residuals
   std::vector<Tree*> leaf_nodes;
   std::vector<Parameters*> leaf_parameters;
-  std::vector<size_t> observation_counts;
+  std::vector<double> observation_counts;
   std::vector<double> residual_sums;
 
   // Compute sufficient statistics for all bottom nodes in the tree
@@ -438,7 +441,7 @@ void FullUpdate(Tree& tree, Cutpoints& cutpoints, Data& data,
 }
 
 // Draws a single mu (parameter) value from the posterior distribution
-double DrawMuOneLeave(size_t n, double sum_residuals, double prior_variance, 
+double DrawMuOneLeave(double n, double sum_residuals, double prior_variance,
                       double sigma, Random& random) {
 
   // Compute the square of the residual standard deviation
@@ -462,7 +465,7 @@ double DrawMuOneLeave(size_t n, double sum_residuals, double prior_variance,
 // Print the tree and include the size of each leaf (bottom node) and the residual sum
 void PrintTreeWithSizes(Tree& tree, Cutpoints& cutpoints, Data& data) {
   std::vector<Tree*> bottom_nodes;                   // Vector to store bottom nodes
-  std::vector<size_t> observation_count_vector;      // Vector to store the size of each bottom node
+  std::vector<double> observation_count_vector;      // Vector to store the size of each bottom node
   std::vector<double> residual_sum_vector;           // Vector to store residual sums
 
   // Compute the sufficient statistics for all bottom nodes
@@ -482,10 +485,10 @@ void PrintTreeWithSizes(Tree& tree, Cutpoints& cutpoints, Data& data) {
 
 
 // Recursive function to print tree structure with node sizes and residual sums
-void PrintTreeWithSizesRecursive(Tree* node, Cutpoints& cutpoints, Data& data, 
-                                 std::map<const Tree*, size_t>& bottom_node_map, 
-                                 std::vector<size_t>& observation_count_vector, 
-                                 std::vector<double>& residual_sum_vector, 
+void PrintTreeWithSizesRecursive(Tree* node, Cutpoints& cutpoints, Data& data,
+                                 std::map<const Tree*, size_t>& bottom_node_map,
+                                 std::vector<double>& observation_count_vector,
+                                 std::vector<double>& residual_sum_vector,
                                  int depth) {
   // Indentation based on depth to visualize the tree structure
   for (int i = 0; i < depth; ++i) {

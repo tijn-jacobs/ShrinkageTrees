@@ -5,8 +5,8 @@
 \title{SurvivalBART}
 \usage{
 SurvivalBART(
-  time,
-  status,
+  time = NULL,
+  status = NULL,
   X_train,
   X_test = NULL,
   timescale = "time",
@@ -14,14 +14,19 @@ SurvivalBART(
   k = 2,
   N_post = 1000,
   N_burn = 1000,
+  store_posterior_sample = TRUE,
   verbose = TRUE,
+  left_time = NULL,
+  right_time = NULL,
   ...
 )
 }
 \arguments{
-\item{time}{Outcome vector of right-censored (non-negative) survival times.}
+\item{time}{Outcome vector of (non-negative) survival times. Required for
+right-censored outcomes; set to \code{NULL} when using interval censoring.}
 
-\item{status}{Event indicator (1 = event, 0 = censored).}
+\item{status}{Event indicator (1 = event, 0 = censored). Required for
+right-censored outcomes; derived automatically for interval censoring.}
 
 \item{X_train}{Design matrix for training data.}
 
@@ -40,7 +45,25 @@ step heights.}
 
 \item{N_burn}{Number of burn-in iterations.}
 
+\item{store_posterior_sample}{Logical; if \code{TRUE} (default), store
+the full \eqn{N_\text{post} \times n} matrix of posterior predictions.
+Required for \code{predict()}, \code{plot(type = "survival")} with full
+posterior credible bands, and custom posterior analyses. Set to
+\code{FALSE} to save memory when only posterior means are needed.}
+
 \item{verbose}{Logical; print sampling progress.}
+
+\item{left_time}{Optional numeric vector of left (lower) time boundaries
+for interval-censored data. Exact events have
+\code{left_time == right_time}; right-censored observations have
+\code{right_time = Inf}; interval-censored observations have finite
+\code{left_time < right_time}. When provided together with
+\code{right_time}, the model is fitted with
+\code{outcome_type = "interval-censored"} and \code{time}/\code{status}
+are ignored.}
+
+\item{right_time}{Optional numeric vector of right (upper) time boundaries.
+Use \code{Inf} for right-censored observations.}
 
 \item{...}{Additional arguments passed to \code{\link{ShrinkageTrees}}
 to override default hyperparameters.}
@@ -55,10 +78,16 @@ See \code{\link{ShrinkageTrees}} for a full description of returned components
 Fits an Accelerated Failure Time (AFT) model using the classical
 Bayesian Additive Regression Trees (BART) prior:
 \eqn{\log(Y) = f(x) + \varepsilon}.
+Supports both right-censored and interval-censored survival outcomes.
 }
 \details{
 This function provides a survival-specific interface for classical BART
-under an AFT formulation for right-censored outcomes.
+under an AFT formulation for right-censored or interval-censored outcomes.
+
+For right-censored data, supply \code{time} and \code{status}.
+For interval-censored data, supply \code{left_time} and \code{right_time}
+instead; event indicators are derived internally following the
+\code{survival::Surv(type = "interval2")} convention.
 
 Structural regularisation is induced through the standard Gaussian
 leaf prior and tree depth prior of Chipman, George & McCulloch (2010).
@@ -87,11 +116,24 @@ X_new <- matrix(rnorm(10 * p), ncol = p)
 pred <- predict(fit, newdata = X_new)
 print(pred)
 
-# Diagnostic plot (requires bayesplot and ggplot2)
-if (requireNamespace("bayesplot", quietly = TRUE) &&
-    requireNamespace("ggplot2", quietly = TRUE)) {
+# Diagnostic plot (requires ggplot2)
+if (requireNamespace("ggplot2", quietly = TRUE)) {
   plot(fit, type = "trace")
 }
+
+# Interval-censored example
+set.seed(11)
+n <- 30; p <- 5
+X <- matrix(rnorm(n * p), ncol = p)
+true_t <- rexp(n, rate = exp(0.5 * X[, 1]))
+left_t  <- true_t * runif(n, 0.5, 1)
+right_t <- true_t * runif(n, 1, 1.5)
+exact <- sample(n, 10); left_t[exact] <- true_t[exact]; right_t[exact] <- true_t[exact]
+rc <- sample(setdiff(seq_len(n), exact), 5); right_t[rc] <- Inf
+
+fit_ic <- SurvivalBART(left_time = left_t, right_time = right_t,
+                        X_train = X, number_of_trees = 5,
+                        N_post = 50, N_burn = 25, verbose = FALSE)
 
 }
 \references{

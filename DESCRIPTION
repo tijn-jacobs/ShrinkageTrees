@@ -12,9 +12,10 @@ Maintainer: Tijn Jacobs <t.jacobs@vu.nl>
 Description: Bayesian regression tree ensembles for survival analysis
     and causal inference. Implements BART, DART, Bayesian Causal
     Forests (BCF), and Horseshoe Forest models. Supports
-    right-censored survival outcomes via accelerated failure time
-    (AFT) formulations. Designed for high-dimensional prediction
-    and heterogeneous treatment effect estimation.
+    right-censored and interval-censored survival outcomes via
+    accelerated failure time (AFT) formulations. Designed for
+    high-dimensional prediction and heterogeneous treatment effect
+    estimation.
 URL: https://github.com/tijn-jacobs/ShrinkageTrees
 BugReports: https://github.com/tijn-jacobs/ShrinkageTrees/issues
 License: MIT + file LICENSE
@@ -26,7 +27,6 @@ Imports:
 LinkingTo:
     Rcpp (>= 1.0.11)
 Suggests:
-    bayesplot,
     ggplot2,
     knitr,
     rmarkdown,

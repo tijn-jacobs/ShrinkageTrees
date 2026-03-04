@@ -1,10 +1,9 @@
 # Tests for plot.ShrinkageTrees and plot.CausalShrinkageForest.
-# All tests are skipped when bayesplot or ggplot2 are not installed.
+# All tests are skipped when ggplot2 is not installed.
 
 # -- Helper -------------------------------------------------------------------
 
 .skip_plots <- function() {
-  skip_if_not_installed("bayesplot")
   skip_if_not_installed("ggplot2")
 }
 
@@ -63,7 +62,7 @@ test_that("plot.ShrinkageTrees type='density' works with n_chains > 1", {
   expect_s3_class(out, "gg")
 })
 
-test_that("plot.ShrinkageTrees type='density' errors with n_chains == 1", {
+test_that("plot.ShrinkageTrees type='density' works with n_chains == 1", {
   .skip_plots()
   n <- 30L; p <- 3L
   set.seed(1)
@@ -72,7 +71,8 @@ test_that("plot.ShrinkageTrees type='density' errors with n_chains == 1", {
   fit <- HorseTrees(y, X_train = X, outcome_type = "continuous",
                     number_of_trees = 5, N_post = 10, N_burn = 5,
                     verbose = FALSE)
-  expect_error(plot(fit, type = "density"))
+  out <- expect_no_error(plot(fit, type = "density"))
+  expect_s3_class(out, "gg")
 })
 
 
@@ -124,10 +124,11 @@ test_that("plot.CausalShrinkageForest type='density' works with n_chains > 1", {
   expect_s3_class(out, "gg")
 })
 
-test_that("plot.CausalShrinkageForest type='density' errors with n_chains == 1", {
+test_that("plot.CausalShrinkageForest type='density' works with n_chains == 1", {
   .skip_plots()
   fit <- .causal_fit()
-  expect_error(plot(fit, type = "density"))
+  out <- expect_no_error(plot(fit, type = "density"))
+  expect_s3_class(out, "gg")
 })
 
 

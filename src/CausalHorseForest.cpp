@@ -1,5 +1,6 @@
 #include "CausalHorseForest.h"
 #include "ForestEngine.h"
+#include <cmath>
 
 // [[Rcpp::export]]
 Rcpp::List CausalHorseForest_cpp(
@@ -54,9 +55,12 @@ Rcpp::List CausalHorseForest_cpp(
   SEXP N_postSEXP, 
   SEXP N_burnSEXP, 
   SEXP delayed_proposalSEXP,
-  SEXP store_posterior_sample_controlSEXP, 
-  SEXP store_posterior_sample_treatSEXP, 
-  SEXP verboseSEXP
+  SEXP store_posterior_sample_controlSEXP,
+  SEXP store_posterior_sample_treatSEXP,
+  SEXP verboseSEXP,
+  SEXP treatment_codingSEXP,
+  SEXP propensity_trainSEXP,
+  SEXP propensity_testSEXP
 ) {
 
   // Conversion of function arguments //
@@ -146,8 +150,47 @@ Rcpp::List CausalHorseForest_cpp(
   // Verbose
   bool verbose = Rcpp::as<bool>(verboseSEXP);
 
+  // Treatment coding
+  string treatment_coding = Rcpp::as<string>(treatment_codingSEXP);
+  Rcpp::NumericVector propensity_train_vector(propensity_trainSEXP);
+  double* propensity_train = &propensity_train_vector[0];
+  Rcpp::NumericVector propensity_test_vector(propensity_testSEXP);
+  double* propensity_test = &propensity_test_vector[0];
 
-  // Declare storage containers // 
+  // Precompute treatment coding weights b_train[i] and b_test[i]
+  double* b_train = new double[n];
+  double* b_test = new double[n_test];
+
+  bool invariant = (treatment_coding == "invariant");
+  double b0 = -0.5, b1 = 0.5;  // initial values for invariant coding
+
+  if (treatment_coding == "binary") {
+    for (size_t k = 0; k < n; k++)
+      b_train[k] = (treatment_indicator[k] == 1) ? 1.0 : 0.0;
+    for (size_t k = 0; k < n_test; k++)
+      b_test[k] = (treatment_indicator_test[k] == 1) ? 1.0 : 0.0;
+  } else if (treatment_coding == "adaptive") {
+    for (size_t k = 0; k < n; k++)
+      b_train[k] = static_cast<double>(treatment_indicator[k]) - propensity_train[k];
+    for (size_t k = 0; k < n_test; k++)
+      b_test[k] = static_cast<double>(treatment_indicator_test[k]) - propensity_test[k];
+  } else {
+    // Default (centered) and invariant both start at (-0.5, 0.5)
+    for (size_t k = 0; k < n; k++)
+      b_train[k] = (treatment_indicator[k] == 1) ? 0.5 : -0.5;
+    for (size_t k = 0; k < n_test; k++)
+      b_test[k] = (treatment_indicator_test[k] == 1) ? 0.5 : -0.5;
+  }
+
+  // Storage for invariant coding posterior draws of b0 and b1
+  Rcpp::NumericVector store_b0, store_b1;
+  if (invariant) {
+    store_b0 = Rcpp::NumericVector(N_post);
+    store_b1 = Rcpp::NumericVector(N_post);
+  }
+
+
+  // Declare storage containers //
 
   // Storage for training and test predictions (posterior mean)
   Rcpp::NumericVector train_predictions_mean(n);
@@ -207,6 +250,7 @@ Rcpp::List CausalHorseForest_cpp(
   // These need to be updated after each update of the other model
   double* augmented_outcome_treat = new double[n];      // (y_i - m(x_i))/b_i
   double* augmented_outcome_control = new double[n];    //  y_i - b_i * tau(x_i)
+  double* treat_weights = new double[n];                // b_i^2 weights for treatment forest
 
   // Initialize the augmented outcome for both models
   for (size_t i = 0; i < n; i++) {
@@ -414,13 +458,23 @@ Rcpp::List CausalHorseForest_cpp(
     );
     */
 
-    // Update the augmented outcome for the treatment effect model
+    // Update the augmented outcome and weights for the treatment effect model
+    // The augmented outcome is (y - mu(x)) / b, which has noise sigma/|b|.
+    // To correct for this heteroscedasticity, we use weights w_i = b_i^2
+    // so that weighted sufficient statistics yield the correct posterior.
     for (size_t k = 0; k < n; k++) {
-      double b = (treatment_indicator[k] == 1) ? 0.5 : -0.5;
-      augmented_outcome_treat[k] = (y[k] - forest_control.GetPrediction(k)) / b;
+      double b = b_train[k];
+      treat_weights[k] = b * b;
+      if (std::abs(b) < 1e-10) {
+        augmented_outcome_treat[k] = 0.0;
+        treat_weights[k] = 0.0;
+      } else {
+        augmented_outcome_treat[k] = (y[k] - forest_control.GetPrediction(k)) / b;
+      }
     }
+    forest_treat.SetWeights(treat_weights);
 
-    // Update the treatment effect forest 
+    // Update the treatment effect forest
     forest_treat.UpdateForest(
       sigma, 
       scale_mixture_treat, 
@@ -429,9 +483,10 @@ Rcpp::List CausalHorseForest_cpp(
       random, 
       accepted_treat
     );
+    forest_treat.SetWeights(nullptr);  // Clear weights after treatment forest update
 
     /*
-    // Update the forestwide shrinkage parameter of the treatment effect forest, if applicable 
+    // Update the forestwide shrinkage parameter of the treatment effect forest, if applicable
     UpdateForestwideShrinkage(
       prior_type_treat,
       trees_treat, 
@@ -444,13 +499,25 @@ Rcpp::List CausalHorseForest_cpp(
 
     // Update the augmented outcome for the prognostic model
     for (size_t k = 0; k < n; k++) {
-      double b = (treatment_indicator[k] == 1) ? 0.5 : -0.5;
+      double b = b_train[k];
       augmented_outcome_control[k] = y[k] - b * forest_treat.GetPrediction(k);
+    }
+
+    // Update b0, b1 for invariant treatment coding (outer Gibbs step)
+    if (invariant) {
+      UpdateInvariantCoding(
+        b0, b1, b_train, b_test,
+        y,
+        forest_control.GetPredictions(),
+        forest_treat.GetPredictions(),
+        treatment_indicator, treatment_indicator_test,
+        n, n_test, sigma, random
+      );
     }
 
     // Compute the current predictions of the (total) outcome
     for (size_t k = 0; k < n; k++) {
-      double b = (treatment_indicator[k] == 1) ? 0.5 : -0.5;
+      double b = b_train[k];
       total_predictions[k] = forest_control.GetPredictions()[k] + b*forest_treat.GetPredictions()[k];
     }
 
@@ -503,34 +570,37 @@ Rcpp::List CausalHorseForest_cpp(
     // Storing the posterior info after burn-in
     if (i >= N_burn) {
 
+      // For invariant coding, the actual treatment effect is (b1 - b0) * tau_tilde(x)
+      double scale_treat = invariant ? (b1 - b0) : 1.0;
+
       // Store the posterior mean of the training predictions
       for (size_t k = 0; k < n; k++) {
-        double b = (treatment_indicator[k] == 1) ? 0.5 : -0.5;
+        double b = b_train[k];
         train_predictions_mean[k] += forest_control.GetPrediction(k) + b * forest_treat.GetPrediction(k);
         train_predictions_mean_control[k] += forest_control.GetPrediction(k);
-        train_predictions_mean_treat[k] += forest_treat.GetPrediction(k);
+        train_predictions_mean_treat[k] += scale_treat * forest_treat.GetPrediction(k);
       }
-    
+
       // Store the posterior sample of training predictions
       if (store_posterior_sample_control) {
         for (size_t k = 0; k < n; k++) {
           train_predictions_sample_control(i - N_burn, k) = forest_control.GetPrediction(k);
         }
       }
-    
+
       // Store the posterior sample of training predictions
       if (store_posterior_sample_treat) {
         for (size_t k = 0; k < n; k++) {
-          train_predictions_sample_treat(i - N_burn, k) = forest_treat.GetPrediction(k);
+          train_predictions_sample_treat(i - N_burn, k) = scale_treat * forest_treat.GetPrediction(k);
         }
       }
-    
+
       // Predict test set outcomes
       if (n_test > 0) {
         forest_control.Predict(p_control, n_test, X_test_control, testpred_control);
         forest_treat.Predict(p_treat, n_test, X_test_treat, testpred_treat);
-      } 
-    
+      }
+
       // Store posterior sample of test predictions
       if (store_posterior_sample_control && n_test > 0) {
         for (size_t k = 0; k < n_test; k++) {
@@ -541,16 +611,22 @@ Rcpp::List CausalHorseForest_cpp(
       // Store posterior sample of test predictions
       if (store_posterior_sample_treat && n_test > 0) {
         for (size_t k = 0; k < n_test; k++) {
-          test_predictions_sample_treat(i - N_burn, k) = testpred_treat[k];
+          test_predictions_sample_treat(i - N_burn, k) = scale_treat * testpred_treat[k];
         }
       }
-    
+
       // Store posterior mean of test predictions
       for (size_t k = 0; k < n_test; k++) {
-        double b = (treatment_indicator_test[k] == 1) ? 0.5 : -0.5;
+        double b = b_test[k];
         test_predictions_mean[k] += testpred_control[k] + b * testpred_treat[k];
         test_predictions_mean_control[k] += testpred_control[k];
-        test_predictions_mean_treat[k] += testpred_treat[k];
+        test_predictions_mean_treat[k] += scale_treat * testpred_treat[k];
+      }
+
+      // Store b0, b1 posterior draws for invariant coding
+      if (invariant) {
+        store_b0[i - N_burn] = b0;
+        store_b1[i - N_burn] = b1;
       }
 
       // Track acceptance of the prognostic model
@@ -672,7 +748,11 @@ Rcpp::List CausalHorseForest_cpp(
   if (prior_type_control == "standard-halfcauchy") {
     results["global_parameters_control"] = store_global_parameters_control;
   }
-  
+  if (invariant) {
+    results["b0"] = store_b0;
+    results["b1"] = store_b1;
+  }
+
   // Clean up memory
   if (testpred_control) delete[] testpred_control;
   if (testpred_treat) delete[] testpred_treat;
@@ -681,6 +761,9 @@ Rcpp::List CausalHorseForest_cpp(
   delete[] total_predictions;
   delete[] augmented_outcome_control;
   delete[] augmented_outcome_treat;
+  delete[] treat_weights;
+  delete[] b_train;
+  delete[] b_test;
 
   return results;
 }

@@ -127,9 +127,12 @@ public:
 
   
 
+  // Set per-observation weights for weighted regression (e.g., b_i^2 in BCF)
+  void SetWeights(double* w) { data.SetWeights(w); }
+
   // Methods
-  void Predict(size_t p, size_t n, double *X, double *predictions);  
-  void UpdateForest(const double& sigma, ScaleMixture& scale_mixture, bool reversible, 
+  void Predict(size_t p, size_t n, double *X, double *predictions);
+  void UpdateForest(const double& sigma, ScaleMixture& scale_mixture, bool reversible,
                     const size_t& delayed_proposal,
                     Random& random, bool* accepted);
   void PrintForest(size_t tree_index = std::numeric_limits<size_t>::max());

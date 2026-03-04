@@ -5,10 +5,12 @@
 \title{General Shrinkage Regression Trees (ShrinkageTrees)}
 \usage{
 ShrinkageTrees(
-  y,
+  y = NULL,
   status = NULL,
   X_train,
   X_test = NULL,
+  left_time = NULL,
+  right_time = NULL,
   outcome_type = "continuous",
   timescale = "time",
   number_of_trees = 200,
@@ -35,10 +37,14 @@ ShrinkageTrees(
 }
 \arguments{
 \item{y}{Outcome vector. Numeric. Can represent continuous outcomes, binary
-outcomes (0/1), or follow-up times for survival data.}
+outcomes (0/1), or follow-up times for survival data. Set to \code{NULL}
+when using \code{outcome_type = "interval-censored"}, as values are derived
+from \code{left_time} and \code{right_time}.}
 
 \item{status}{Optional censoring indicator vector (1 = event occurred,
-0 = censored). Required if \code{outcome_type = "right-censored"}.}
+0 = censored). Required if \code{outcome_type = "right-censored"}.
+For interval-censored outcomes, this is derived automatically from
+\code{left_time} and \code{right_time}.}
 
 \item{X_train}{Covariate matrix for training. Each row corresponds to an
 observation, and each column to a covariate.}
@@ -46,13 +52,24 @@ observation, and each column to a covariate.}
 \item{X_test}{Optional covariate matrix for test data. If NULL, defaults to
 the mean of the training covariates.}
 
-\item{outcome_type}{Type of outcome. One of \code{"continuous"}, \code{"binary"}, or
-\code{"right-censored"}.}
+\item{left_time}{Optional numeric vector of left (lower) time boundaries.
+Required when \code{outcome_type = "interval-censored"}. Exact events
+have \code{left_time == right_time}; right-censored observations have
+\code{right_time = Inf}; interval-censored observations have finite
+\code{left_time < right_time}.}
+
+\item{right_time}{Optional numeric vector of right (upper) time boundaries.
+Required when \code{outcome_type = "interval-censored"}. Use \code{Inf}
+for right-censored observations.}
+
+\item{outcome_type}{Type of outcome. One of \code{"continuous"},
+\code{"binary"}, \code{"right-censored"}, or \code{"interval-censored"}.}
 
 \item{timescale}{Indicates the scale of follow-up times. Options are
-\code{"time"} (nonnegative follow-up times, will be log-transformed internally)
-or \code{"log"} (already log-transformed). Only used when
-\code{outcome_type = "right-censored"}.}
+\code{"time"} (nonnegative follow-up times, will be log-transformed
+internally) or \code{"log"} (already log-transformed). Used when
+\code{outcome_type} is \code{"right-censored"} or
+\code{"interval-censored"}.}
 
 \item{number_of_trees}{Number of trees in the ensemble. Default is 200.}
 
@@ -145,6 +162,7 @@ probabilities (only for \code{outcome_type = "binary"} and if
 Fits a Bayesian Shrinkage Tree model with flexible global-local priors on the
 step heights. This function generalizes \code{\link{HorseTrees}} by allowing
 different global-local shrinkage priors on the step heights.
+Supports continuous, binary, right-censored, and interval-censored outcomes.
 }
 \details{
 This function is a flexible generalization of \code{HorseTrees}.
@@ -232,6 +250,26 @@ post_mean_halfcauchy <- rowMeans(fit_halfcauchy$train_predictions_sample)
 # Posterior mean prediction averages
 mean_pred_horseshoe <- mean(post_mean_horseshoe)
 mean_pred_halfcauchy <- mean(post_mean_halfcauchy)
+
+# Example: Interval-censored survival outcome
+n <- 50; p <- 3
+X_ic <- matrix(rnorm(n * p), ncol = p)
+true_t <- rexp(n, rate = exp(-X_ic[, 1]))
+left_t  <- true_t * runif(n, 0.5, 1)
+right_t <- true_t * runif(n, 1, 1.5)
+exact <- sample(n, 15)
+left_t[exact] <- true_t[exact]; right_t[exact] <- true_t[exact]
+rc <- sample(setdiff(seq_len(n), exact), 10); right_t[rc] <- Inf
+
+fit_ic <- ShrinkageTrees(left_time = left_t, right_time = right_t,
+                         X_train = X_ic,
+                         outcome_type = "interval-censored",
+                         prior_type = "horseshoe",
+                         local_hp = 0.1 / sqrt(5),
+                         global_hp = 0.1 / sqrt(5),
+                         number_of_trees = 5,
+                         N_post = 10, N_burn = 5,
+                         verbose = FALSE)
 
 }
 \references{

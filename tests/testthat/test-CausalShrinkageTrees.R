@@ -281,6 +281,139 @@ test_that("CausalShrinkageForest works for continuous outcome with horseshoe_fw 
 })
 
 
+# ── treatment_coding ──────────────────────────────────────────────────────────
+
+test_that("CausalShrinkageForest works with treatment_coding = 'binary'", {
+  n <- 50; p <- 3
+  X <- matrix(runif(n * p), ncol = p)
+  treatment <- rbinom(n, 1, 0.5)
+  y <- X[, 1] + treatment * 2 + rnorm(n)
+  lh <- 0.1 / sqrt(5)
+
+  set.seed(1)
+  fit <- CausalShrinkageForest(
+    y = y,
+    X_train_control = X, X_train_treat = X,
+    treatment_indicator_train = treatment,
+    outcome_type = "continuous",
+    treatment_coding = "binary",
+    number_of_trees_control = 5, number_of_trees_treat = 5,
+    prior_type_control = "horseshoe", prior_type_treat = "horseshoe",
+    local_hp_control = lh, global_hp_control = lh,
+    local_hp_treat  = lh, global_hp_treat  = lh,
+    N_post = 10, N_burn = 5,
+    store_posterior_sample = TRUE,
+    verbose = FALSE
+  )
+
+  expect_s3_class(fit, "CausalShrinkageForest")
+  expect_equal(fit$treatment_coding, "binary")
+  expect_length(fit$train_predictions, n)
+  fit_numeric <- unlist(fit[vapply(fit, is.numeric, logical(1))])
+  expect_false(any(is.na(fit_numeric)))
+  expect_true(all(is.finite(fit_numeric)))
+  expect_true(sd(fit$train_predictions) > 0)
+})
+
+test_that("CausalShrinkageForest works with treatment_coding = 'adaptive'", {
+  n <- 50; p <- 3
+  X <- matrix(runif(n * p), ncol = p)
+  treatment <- rbinom(n, 1, X[, 1])
+  y <- X[, 1] + treatment * 2 + rnorm(n)
+  propensity <- X[, 1]  # true propensity
+  lh <- 0.1 / sqrt(5)
+
+  set.seed(1)
+  fit <- CausalShrinkageForest(
+    y = y,
+    X_train_control = X, X_train_treat = X,
+    treatment_indicator_train = treatment,
+    outcome_type = "continuous",
+    treatment_coding = "adaptive",
+    propensity = propensity,
+    number_of_trees_control = 5, number_of_trees_treat = 5,
+    prior_type_control = "horseshoe", prior_type_treat = "horseshoe",
+    local_hp_control = lh, global_hp_control = lh,
+    local_hp_treat  = lh, global_hp_treat  = lh,
+    N_post = 10, N_burn = 5,
+    store_posterior_sample = TRUE,
+    verbose = FALSE
+  )
+
+  expect_s3_class(fit, "CausalShrinkageForest")
+  expect_equal(fit$treatment_coding, "adaptive")
+  expect_length(fit$train_predictions, n)
+  fit_numeric <- unlist(fit[vapply(fit, is.numeric, logical(1))])
+  expect_false(any(is.na(fit_numeric)))
+  expect_true(all(is.finite(fit_numeric)))
+  expect_true(sd(fit$train_predictions) > 0)
+})
+
+test_that("CausalShrinkageForest errors when adaptive coding used without propensity", {
+  n <- 30; p <- 3
+  X <- matrix(runif(n * p), ncol = p)
+  treatment <- rbinom(n, 1, 0.5)
+  y <- X[, 1] + treatment * 2 + rnorm(n)
+  lh <- 0.1 / sqrt(5)
+
+  expect_error(
+    CausalShrinkageForest(
+      y = y,
+      X_train_control = X, X_train_treat = X,
+      treatment_indicator_train = treatment,
+      outcome_type = "continuous",
+      treatment_coding = "adaptive",
+      number_of_trees_control = 5, number_of_trees_treat = 5,
+      prior_type_control = "horseshoe", prior_type_treat = "horseshoe",
+      local_hp_control = lh, global_hp_control = lh,
+      local_hp_treat  = lh, global_hp_treat  = lh,
+      N_post = 10, N_burn = 5,
+      verbose = FALSE
+    ),
+    "propensity"
+  )
+})
+
+test_that("CausalShrinkageForest works with treatment_coding = 'invariant'", {
+  n <- 50; p <- 3
+  X <- matrix(runif(n * p), ncol = p)
+  treatment <- rbinom(n, 1, 0.5)
+  y <- X[, 1] + treatment * 2 + rnorm(n)
+  lh <- 0.1 / sqrt(5)
+
+  set.seed(1)
+  fit <- CausalShrinkageForest(
+    y = y,
+    X_train_control = X, X_train_treat = X,
+    treatment_indicator_train = treatment,
+    outcome_type = "continuous",
+    treatment_coding = "invariant",
+    number_of_trees_control = 5, number_of_trees_treat = 5,
+    prior_type_control = "horseshoe", prior_type_treat = "horseshoe",
+    local_hp_control = lh, global_hp_control = lh,
+    local_hp_treat  = lh, global_hp_treat  = lh,
+    N_post = 10, N_burn = 5,
+    store_posterior_sample = TRUE,
+    verbose = FALSE
+  )
+
+  expect_s3_class(fit, "CausalShrinkageForest")
+  expect_equal(fit$treatment_coding, "invariant")
+  expect_length(fit$train_predictions, n)
+
+  # b0 and b1 posterior draws should be returned
+  expect_length(fit$b0, 10)
+  expect_length(fit$b1, 10)
+  expect_true(all(is.finite(fit$b0)))
+  expect_true(all(is.finite(fit$b1)))
+
+  fit_numeric <- unlist(fit[vapply(fit, is.numeric, logical(1))])
+  expect_false(any(is.na(fit_numeric)))
+  expect_true(all(is.finite(fit_numeric)))
+  expect_true(sd(fit$train_predictions) > 0)
+})
+
+
 # ── S3 class and methods ──────────────────────────────────────────────────────
 
 test_that("CausalShrinkageForest returns CausalShrinkageForest S3 object with working methods", {

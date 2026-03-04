@@ -15,7 +15,7 @@ FixedVariance::FixedVariance(double _eta) : eta(_eta) {}
 void FixedVariance::Propose(Parameters& parameters, 
                             const Parameters& global_parameters, 
                             const double& residual, 
-                            const size_t& number_of_observations, 
+                            const double& number_of_observations, 
                             const double& sigma,
                             const double& omega,  
                             Random& random) {
@@ -38,7 +38,7 @@ void FixedVariance::GlobalUpdate(Parameters& global_parameters,
 double FixedVariance::LogProposeDensity(const Parameters& parameters, 
                                         const Parameters& global_parameters, 
                                         const double& residual, 
-                                        const size_t& number_of_observations, 
+                                        const double& number_of_observations, 
                                         const double& sigma,
                                         const double& omega) {
   // No proposal density for fixed variance, return 0.
@@ -81,7 +81,7 @@ HalfCauchy::HalfCauchy(double _alpha, double _tau)
 void HalfCauchy::Propose(Parameters& parameters, 
                          const Parameters& global_parameters, 
                          const double& residual, 
-                         const size_t& number_of_observations, 
+                         const double& number_of_observations, 
                          const double& sigma,
                          const double& omega, 
                          Random& random) {
@@ -109,7 +109,7 @@ void HalfCauchy::GlobalUpdate(Parameters& global_parameters,
 double HalfCauchy::LogProposeDensity(const Parameters& parameters, 
                                      const Parameters& global_parameters, 
                                      const double& residual, 
-                                     const size_t& number_of_observations, 
+                                     const double& number_of_observations, 
                                      const double& sigma,
                                      const double& omega) {
   
@@ -164,7 +164,7 @@ Horseshoe::Horseshoe(double _alpha_local, double _alpha_global)
 void Horseshoe::Propose(Parameters& parameters, 
                         const Parameters& global_parameters, 
                         const double& residual, 
-                        const size_t& number_of_observations, 
+                        const double& number_of_observations, 
                         const double& sigma,
                         const double& omega, 
                         Random& random) {
@@ -186,7 +186,7 @@ void Horseshoe::Propose(Parameters& parameters,
 double Horseshoe::LogProposeDensity(const Parameters& parameters, 
                                     const Parameters& global_parameters, 
                                     const double& residual, 
-                                    const size_t& number_of_observations, 
+                                    const double& number_of_observations, 
                                     const double& sigma,
                                     const double& omega) {
   
@@ -281,7 +281,7 @@ Horseshoe_fw::Horseshoe_fw(double _alpha_local)
 void Horseshoe_fw::Propose(Parameters& parameters, 
                         const Parameters& global_parameters, 
                         const double& residual, 
-                        const size_t& number_of_observations, 
+                        const double& number_of_observations, 
                         const double& sigma,
                         const double& omega, 
                         Random& random) {
@@ -303,7 +303,7 @@ void Horseshoe_fw::Propose(Parameters& parameters,
 double Horseshoe_fw::LogProposeDensity(const Parameters& parameters, 
                                     const Parameters& global_parameters, 
                                     const double& residual, 
-                                    const size_t& number_of_observations, 
+                                    const double& number_of_observations, 
                                     const double& sigma,
                                     const double& omega) {
   
@@ -394,7 +394,7 @@ ScaleMixture::~ScaleMixture() {
 void ScaleMixture::Propose(Parameters& parameters, 
                            const Parameters& global_parameters, 
                            const double& residual, 
-                           const size_t& number_of_observations, 
+                           const double& number_of_observations, 
                            const double& sigma, 
                            const double& omega, 
                            Random& random) {
@@ -420,7 +420,7 @@ void ScaleMixture::Propose(Parameters& parameters,
 double ScaleMixture::LogProposeDensity(const Parameters& parameters, 
                                        const Parameters& global_parameters, 
                                        const double& residual, 
-                                       const size_t& number_of_observations, 
+                                       const double& number_of_observations, 
                                        const double& sigma,
                                        const double& omega) {
   
@@ -470,7 +470,7 @@ double ScaleMixture::LogPrior(const Parameters& parameters,
 double ScaleMixture::LogLikelihood(const Parameters& parameters, 
                                    const Parameters& global_parameters, 
                                    const double& sum_of_observations, 
-                                   const size_t& number_of_observations, 
+                                   const double& number_of_observations, 
                                    const double& sigma) {
   
   // Retrieve proposed mean and variance

@@ -1,5 +1,48 @@
 # ShrinkageTrees 2.0.0
 
+## Treatment coding for causal models (`treatment_coding`)
+
+All causal model functions — `CausalHorseForest()`, `CausalShrinkageForest()`,
+`SurvivalBCF()`, and `SurvivalShrinkageBCF()` — now accept a `treatment_coding`
+argument controlling how the treatment indicator enters the BCF decomposition
+y = f(x) + b * tau(x) + epsilon. Four options are available:
+
+- `"centered"` (default): b_i in {-1/2, 1/2}. This is the original behaviour.
+- `"binary"`: b_i in {0, 1}. Standard binary coding.
+- `"adaptive"`: b_i = z_i - e_hat(x_i), where e_hat(x_i) is the estimated
+  propensity score. This follows Hahn, Murray & Carvalho (2020) and is
+  implemented in the `bcf` package. Requires a `propensity` vector.
+- `"invariant"`: Parameter-expanded (invariant) treatment coding. The coding
+  parameters b_0 and b_1 are assigned N(0, 1/2) priors and estimated within
+  the Gibbs sampler via conjugate normal updates, yielding a parameterisation
+  that is invariant to the coding of the treatment indicator (Hahn et al.,
+  2020, Section 5.2). The treatment effect is tau(x) = (b_1 - b_0) * tau_tilde(x).
+  Posterior draws of b_0 and b_1 are returned in the fitted object.
+
+The `predict()` method for `CausalShrinkageForest` objects automatically
+carries forward the treatment coding used at training time. A `propensity_test`
+argument is available for supplying test-set propensity scores (defaults to 0.5).
+
+## Interval-censored survival outcomes
+
+All survival-capable functions now support **interval-censored** data in
+addition to right-censored data. Supply `left_time` and `right_time`
+vectors (with `outcome_type = "interval-censored"`) instead of `y` and
+`status`. Three censoring types are distinguished:
+
+- **Exact events**: `left_time == right_time`.
+- **Interval-censored**: finite `left_time < right_time`.
+- **Right-censored**: `right_time = Inf`.
+
+This convention follows `survival::Surv(type = "interval2")`. Censored
+event times are imputed via truncated-normal data augmentation within the
+AFT Gibbs sampler. The following functions are affected:
+
+- `HorseTrees()`, `ShrinkageTrees()` (single-forest models)
+- `CausalHorseForest()`, `CausalShrinkageForest()` (causal models)
+- `SurvivalBART()`, `SurvivalDART()`, `SurvivalBCF()`,
+  `SurvivalShrinkageBCF()` (survival wrappers)
+
 ## Multi-chain MCMC (`n_chains`)
 
 All four primary model-fitting functions — `ShrinkageTrees`, `HorseTrees`,
@@ -33,7 +76,7 @@ argument (default `1`). When `n_chains > 1`:
 ## Posterior visualisation (`plot`)
 
 S3 `plot()` methods added for `ShrinkageTrees` and `CausalShrinkageForest`.
-Requires the suggested packages `bayesplot` and `ggplot2`.
+Requires the suggested package `ggplot2`.
 
 - `plot(fit, type = "trace")` — sigma traceplot; one line per chain, useful for assessing mixing.
 - `plot(fit, type = "density")` — overlaid posterior density of sigma, one curve per chain.

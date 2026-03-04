@@ -30,16 +30,17 @@ class Data {
   size_t n;   // Number of observations
   double* X;  // Pointer to contiguous row array of data (n x p)
   double* y;  // Pointer to array with outcomes (n x 1)
+  double* weights;  // Per-observation weights for weighted regression (nullptr = all 1.0)
 
  public:
   double* residual;  // Pointer to array of residuals (n x 1)
 
   // Default constructor initializing data pointers to nullptr
-  Data() : p(0), n(0), X(nullptr), y(nullptr), residual(nullptr) {}
+  Data() : p(0), n(0), X(nullptr), y(nullptr), weights(nullptr), residual(nullptr) {}
 
   // Constructor that initializes with given dimensions and pointers for X and y
   Data(size_t _p, size_t _n, double* _X, double* _y)
-      : p(_p), n(_n), X(_X), y(_y), residual(nullptr) {}
+      : p(_p), n(_n), X(_X), y(_y), weights(nullptr), residual(nullptr) {}
 
   // Getter and Setter for the number of variables (p)
   size_t GetP() const { return p; }
@@ -69,6 +70,12 @@ class Data {
 
   // Retrieve the residual for a specific observation
   double GetResidual(size_t i) const { return residual[i]; }
+
+  // Per-observation weights for weighted regression (e.g., b_i^2 in BCF)
+  void SetWeights(double* w) { weights = w; }
+  double* GetWeights() const { return weights; }
+  bool HasWeights() const { return weights != nullptr; }
+  double GetWeight(size_t i) const { return weights ? weights[i] : 1.0; }
 
   // Function to print the contents of the data object
   void Print() const;

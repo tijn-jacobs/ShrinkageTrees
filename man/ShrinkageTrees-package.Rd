@@ -5,11 +5,7 @@
 \alias{ShrinkageTrees-package}
 \title{ShrinkageTrees: Bayesian Tree Ensembles for Survival Analysis and Causal Inference}
 \description{
-Bayesian regression tree ensembles for survival analysis and causal
-inference. Implements BART, DART, Bayesian Causal Forests (BCF), and
-Horseshoe Forests models. Supports right-censored survival outcomes via
-accelerated failure time (AFT) formulations. Designed for high-dimensional
-prediction and heterogeneous treatment effect estimation in causal inference.
+Bayesian regression tree ensembles for survival analysis and causal inference. Implements BART, DART, Bayesian Causal Forests (BCF), and Horseshoe Forest models. Supports right-censored and interval-censored survival outcomes via accelerated failure time (AFT) formulations. Designed for high-dimensional prediction and heterogeneous treatment effect estimation.
 }
 \seealso{
 Useful links:
@@ -23,3 +19,4 @@ Useful links:
 \strong{Maintainer}: Tijn Jacobs \email{t.jacobs@vu.nl} (\href{https://orcid.org/0009-0003-6188-9296}{ORCID})
 
 }
+\keyword{internal}

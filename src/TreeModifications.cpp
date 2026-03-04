@@ -233,14 +233,14 @@ bool Grow(Tree& tree,
   // Likelihood part
   // -------------------------------
 
-  size_t nl, nr;
+  double nl, nr;
   double rl, rr;
   SufficientStatistics(tree, nx, v, c, cutpoints, data,
                        nl, rl, nr, rr);
 
   double log_alpha = -std::numeric_limits<double>::infinity();
 
-  if ((nl >= 5) && (nr >= 5)) {
+  if ((nl >= 5.0) && (nr >= 5.0)) {
     double lhl = LogPostLikelihood(nl, rl, sigma, tree_prior.eta);
     double lhr = LogPostLikelihood(nr, rr, sigma, tree_prior.eta);
     double lht =
@@ -410,7 +410,7 @@ bool Prune(Tree& tree,
      PD_cur * Pnog_cur);
 
   // Likelihood: combine children into parent
-  size_t nl, nr;
+  double nl, nr;
   double rl, rr;
   SufficientStatistics(tree,
                        nx->GetLeft(), nx->GetRight(),
@@ -452,25 +452,25 @@ bool Change(Tree& tree, Cutpoints& cutpoints, Data& data, TreePrior& tree_prior,
   Tree* c_node = nog_nodes[c_node_id]; // Selected NOG node for modification
 
   // Compute sufficient statistics for the current split
-  size_t count_left_current, count_right_current; // Counts in the child nodes
-  double residual_left_current, residual_right_current; // Sums at child nodes
-  SufficientStatistics(tree, c_node->GetLeft(), c_node->GetRight(), 
-                       cutpoints, data, count_left_current, 
-                       residual_left_current, count_right_current, 
+  double count_left_current, count_right_current; // Effective counts in the child nodes
+  double residual_left_current, residual_right_current; // Weighted sums at child nodes
+  SufficientStatistics(tree, c_node->GetLeft(), c_node->GetRight(),
+                       cutpoints, data, count_left_current,
+                       residual_left_current, count_right_current,
                        residual_right_current);
 
   // Compute log-likelihood ratios for the current state
-  double log_lik_left_current = LogPostLikelihood(count_left_current, 
-                                                   residual_left_current, 
+  double log_lik_left_current = LogPostLikelihood(count_left_current,
+                                                   residual_left_current,
                                                    sigma, tree_prior.eta);
-  double log_lik_right_current = LogPostLikelihood(count_right_current, 
-                                                    residual_right_current, 
+  double log_lik_right_current = LogPostLikelihood(count_right_current,
+                                                    residual_right_current,
                                                     sigma, tree_prior.eta);
 
   // Get all variables that can be split and draw a new variable for the split
-  std::vector<size_t> variables; 
+  std::vector<size_t> variables;
   GetSplittableVariables(*c_node, cutpoints, variables);
-  random.SetInclusionWeights(variable_inclusion_prob);    
+  random.SetInclusionWeights(variable_inclusion_prob);
   size_t proposed_split_var = random.discrete(); // Draw new split variable
 
   // Draw a cut value for the proposed splitting variable
@@ -484,15 +484,15 @@ bool Change(Tree& tree, Cutpoints& cutpoints, Data& data, TreePrior& tree_prior,
     proposed_cut_val = c_node->FindSameCut(proposed_split_var);
   } else {
     // If the variable is valid for splitting, select a random cutpoint
-    c_node->PossibleCuts(proposed_split_var, &lower_bound_index, 
+    c_node->PossibleCuts(proposed_split_var, &lower_bound_index,
                          &upper_bound_index);
-    proposed_cut_val = lower_bound_index + 
+    proposed_cut_val = lower_bound_index +
                        floor(random.uniform() * (upper_bound_index - lower_bound_index + 1));
   }
 
   // Compute sufficient statistics for the proposed split
-  size_t count_left_proposed, count_right_proposed; // Counts for proposed nodes
-  double residual_left_proposed, residual_right_proposed; // Sums for proposed nodes
+  double count_left_proposed, count_right_proposed; // Effective counts for proposed nodes
+  double residual_left_proposed, residual_right_proposed; // Weighted sums for proposed nodes
   SufficientStatistics(tree, c_node, proposed_split_var, proposed_cut_val, 
                        cutpoints, data, count_left_proposed, 
                        residual_left_proposed, count_right_proposed, 
@@ -564,18 +564,18 @@ bool RJ_Grow(Tree& tree, Cutpoints& cutpoints, Data& data, TreePrior& tree_prior
       floor(random.uniform() * (upper_bound_index - lower_bound_index + 1));
 
   // Compute sufficient statistics for the proposed split
-  size_t left_count, right_count;  // Counts for the left and right child nodes
-  double left_residual, right_residual; // Sums of outcomes for proposed nodes
-  SufficientStatistics(tree, g_node, split_var, cut_val, cutpoints, data, left_count, 
+  double left_count, right_count;  // Effective counts for the left and right child nodes
+  double left_residual, right_residual; // Weighted sums of outcomes for proposed nodes
+  SufficientStatistics(tree, g_node, split_var, cut_val, cutpoints, data, left_count,
                        left_residual, right_count, right_residual);
 
   // Initialize parameters for the proposed child nodes
-  Parameters par_left(g_node->GetParameters()), 
+  Parameters par_left(g_node->GetParameters()),
              par_right(g_node->GetParameters());
 
   // Calculate the acceptance ratio (alpha) based on sufficient statistics
   double alpha = 0.0, log_alpha = 0.0;
-  if ((left_count >= 5) && (right_count >= 5)) {  // Ensure minimum node size
+  if ((left_count >= 5.0) && (right_count >= 5.0)) {  // Ensure minimum node size
     size_t depth = g_node->NodeDepth(); // Depth of the selected node
     double grow_prob = (g_node->GetParent() == nullptr) ? 
                        1.0 : tree_prior.p_GROW;
@@ -655,10 +655,10 @@ bool RJ_Prune(Tree& tree, Cutpoints& cutpoints, Data& data, TreePrior& tree_prio
   Tree* p_node = nog_nodes[p_node_id];
 
   // Compute sufficient statistics for the current child nodes of the selected node
-  size_t left_count, right_count; // Counts for left and right child nodes
-  double left_residual, right_residual; // Sums of outcomes for child nodes
-  SufficientStatistics(tree, p_node->GetLeft(), p_node->GetRight(), cutpoints, 
-                       data, left_count, left_residual, right_count, 
+  double left_count, right_count; // Effective counts for left and right child nodes
+  double left_residual, right_residual; // Weighted sums of outcomes for child nodes
+  SufficientStatistics(tree, p_node->GetLeft(), p_node->GetRight(), cutpoints,
+                       data, left_count, left_residual, right_count,
                        right_residual);
 
   // Retrieve global parameters from the tree
@@ -744,37 +744,37 @@ bool RJ_Change(Tree& tree, Cutpoints& cutpoints, Data& data, TreePrior& tree_pri
   Tree* c_node = nog_nodes[c_node_id];
 
   // Compute sufficient statistics for the current child nodes of the selected node
-  size_t count_left_current, count_right_current; // Counts in left and right child nodes
-  double residual_left_current, residual_right_current; // Sums at child nodes
-  SufficientStatistics(tree, c_node->GetLeft(), c_node->GetRight(), 
-                       cutpoints, data, count_left_current, 
-                       residual_left_current, count_right_current, 
+  double count_left_current, count_right_current; // Effective counts in child nodes
+  double residual_left_current, residual_right_current; // Weighted sums at child nodes
+  SufficientStatistics(tree, c_node->GetLeft(), c_node->GetRight(),
+                       cutpoints, data, count_left_current,
+                       residual_left_current, count_right_current,
                        residual_right_current);
 
   // Retrieve global parameters from the tree
   Parameters global_parameters = tree.GetParameters();
 
   // Compute log-likelihood for the current split
-  double log_lik_current = scale_mixture.LogLikelihood(c_node->GetLeft()->GetParameters(), 
-        global_parameters, residual_left_current, count_left_current, sigma) + 
-        scale_mixture.LogLikelihood(c_node->GetRight()->GetParameters(), 
+  double log_lik_current = scale_mixture.LogLikelihood(c_node->GetLeft()->GetParameters(),
+        global_parameters, residual_left_current, count_left_current, sigma) +
+        scale_mixture.LogLikelihood(c_node->GetRight()->GetParameters(),
         global_parameters, residual_right_current, count_right_current, sigma);
 
   // Compute log prior density at current parameter values
-  double prior_current = scale_mixture.LogPrior(c_node->GetLeft()->GetParameters(), 
-        global_parameters, sigma, omega) + scale_mixture.LogPrior(c_node->GetRight()->GetParameters(), 
+  double prior_current = scale_mixture.LogPrior(c_node->GetLeft()->GetParameters(),
+        global_parameters, sigma, omega) + scale_mixture.LogPrior(c_node->GetRight()->GetParameters(),
         global_parameters, sigma, omega);
 
   // Compute log density at current parameter values
-  double proposed_density_current = scale_mixture.LogProposeDensity(c_node->GetLeft()->GetParameters(), 
-        global_parameters, residual_left_current, count_left_current, sigma, omega) + 
-        scale_mixture.LogProposeDensity(c_node->GetRight()->GetParameters(), 
+  double proposed_density_current = scale_mixture.LogProposeDensity(c_node->GetLeft()->GetParameters(),
+        global_parameters, residual_left_current, count_left_current, sigma, omega) +
+        scale_mixture.LogProposeDensity(c_node->GetRight()->GetParameters(),
         global_parameters, residual_right_current, count_right_current, sigma, omega);
 
   // Select all variables that can be split and draw a new variable to split on
-  std::vector<size_t> variables; 
+  std::vector<size_t> variables;
   GetSplittableVariables(*c_node, cutpoints, variables);
-  random.SetInclusionWeights(variable_inclusion_prob); // Update weights based on inclusion probabilities
+  random.SetInclusionWeights(variable_inclusion_prob);
   size_t proposed_split_var = random.discrete(); // Draw new split variable
 
   // Draw a cut value for the proposed splitting variable
@@ -784,18 +784,16 @@ bool RJ_Change(Tree& tree, Cutpoints& cutpoints, Data& data, TreePrior& tree_pri
 
   // Check if the selected variable can be split
   if (!std::binary_search(variables.begin(), variables.end(), proposed_split_var)) {
-    // If the variable cannot be split, use the cutpoint of the closest ancestor
     proposed_cut_val = c_node->FindSameCut(proposed_split_var);
   } else {
-    // If the variable is valid for splitting, select a random cutpoint
     c_node->PossibleCuts(proposed_split_var, &lower_bound_index, &upper_bound_index);
-    proposed_cut_val = lower_bound_index + 
+    proposed_cut_val = lower_bound_index +
                        floor(random.uniform() * (upper_bound_index - lower_bound_index + 1));
   }
 
   // Compute sufficient statistics for the proposed split
-  size_t count_left_proposed, count_right_proposed; // Counts for proposed child nodes
-  double residual_left_proposed, residual_right_proposed; // Sums for proposed child nodes
+  double count_left_proposed, count_right_proposed; // Effective counts for proposed nodes
+  double residual_left_proposed, residual_right_proposed; // Weighted sums for proposed nodes
   SufficientStatistics(tree, c_node, proposed_split_var, proposed_cut_val, 
                        cutpoints, data, count_left_proposed, 
                        residual_left_proposed, count_right_proposed, 

@@ -80,8 +80,19 @@ predict.ShrinkageTrees <- function(object, newdata, level = 0.95, ...) {
   } else {
 
     y_std    <- (object$data$y_train - pre$y_mean) / pre$sigma_hat
-    survival <- object$outcome_type == "right-censored"
+    survival <- object$outcome_type %in% c("right-censored", "interval-censored")
     status   <- if (survival) object$data$status_train else rep(1L, n_train)
+
+    # Reconstruct interval-censored boundaries if applicable
+    if (object$outcome_type == "interval-censored") {
+      left_std  <- (object$data$left_time_train  - pre$y_mean) / pre$sigma_hat
+      right_std <- (object$data$right_time_train - pre$y_mean) / pre$sigma_hat
+      ic_ind    <- object$data$ic_indicator_train
+    } else {
+      left_std  <- numeric(n_train)
+      right_std <- y_std + 0
+      ic_ind    <- numeric(n_train)
+    }
 
     fit <- HorseTrees_cpp(
       nSEXP                    = n_train,
@@ -91,9 +102,9 @@ predict.ShrinkageTrees <- function(object, newdata, level = 0.95, ...) {
       ySEXP                    = y_std,
       status_indicatorSEXP     = status,
       is_survivalSEXP          = survival,
-      observed_left_timeSEXP   = numeric(n_train),
-      observed_right_timeSEXP  = y_std + 0,
-      interval_censoring_indicatorSEXP = numeric(n_train),
+      observed_left_timeSEXP   = left_std,
+      observed_right_timeSEXP  = right_std,
+      interval_censoring_indicatorSEXP = ic_ind,
       X_testSEXP               = X_new,
       number_of_treesSEXP      = object$mcmc$number_of_trees,
       N_postSEXP               = object$mcmc$N_post,
@@ -162,8 +173,9 @@ print.ShrinkageTreesPrediction <- function(x, n_head = 6, digits = 3, ...) {
   ci_pct <- paste0(round(x$level * 100), "%")
   scale_label <- switch(
     x$outcome_type,
-    "binary"        = "probability",
-    "right-censored" = if (x$timescale == "time") "survival time" else "log survival time",
+    "binary"            = "probability",
+    "right-censored"    = if (x$timescale == "time") "survival time" else "log survival time",
+    "interval-censored" = if (x$timescale == "time") "survival time" else "log survival time",
     "fitted value"
   )
 
@@ -274,6 +286,8 @@ print.ShrinkageTrees <- function(x, ...) {
     "binary" = "Binary (probit)",
     "right-censored" = paste0("Right-censored (AFT, timescale = ",
                               x$timescale, ")"),
+    "interval-censored" = paste0("Interval-censored (AFT, timescale = ",
+                                  x$timescale, ")"),
     x$outcome_type
   )
 
@@ -315,10 +329,12 @@ print.ShrinkageTrees <- function(x, ...) {
 .outcome_label <- function(outcome_type, timescale) {
   switch(
     outcome_type,
-    "continuous"     = "Continuous",
-    "binary"         = "Binary (probit)",
-    "right-censored" = paste0("Right-censored (AFT, timescale = ",
-                               timescale, ")"),
+    "continuous"        = "Continuous",
+    "binary"            = "Binary (probit)",
+    "right-censored"    = paste0("Right-censored (AFT, timescale = ",
+                                  timescale, ")"),
+    "interval-censored" = paste0("Interval-censored (AFT, timescale = ",
+                                  timescale, ")"),
     outcome_type
   )
 }
@@ -363,7 +379,7 @@ print.ShrinkageTrees <- function(x, ...) {
 #'   \describe{
 #'     \item{call}{The original model call.}
 #'     \item{outcome_type}{Outcome type (\code{"continuous"}, \code{"binary"},
-#'       or \code{"right-censored"}).}
+#'       \code{"right-censored"}, or \code{"interval-censored"}).}
 #'     \item{timescale}{Timescale for survival outcomes (\code{"time"} or
 #'       \code{"log"}).}
 #'     \item{prior}{Prior specification.}
@@ -818,7 +834,7 @@ predict.CausalShrinkageForest <- function(object, newdata_control, newdata_treat
   n_train  <- object$data_info$n_train
   pre      <- object$preprocess
   args     <- object$args
-  survival <- object$outcome_type == "right-censored"
+  survival <- object$outcome_type %in% c("right-censored", "interval-censored")
 
   # Reconstruct standardised training response (inverse of fit-time transforms)
   y      <- as.numeric(object$data$y_train)
@@ -835,7 +851,34 @@ predict.CausalShrinkageForest <- function(object, newdata_control, newdata_treat
   trt_train       <- as.integer(object$data$treatment_indicator_train)
   trt_test        <- as.integer(rep(1L, n_new))  # placeholder; not used in predictions
 
+  # Treatment coding and propensity for C++
+  tc <- if (!is.null(object$treatment_coding)) object$treatment_coding else "centered"
+  prop_train_cpp <- if (!is.null(object$data$propensity_train)) {
+    as.numeric(object$data$propensity_train)
+  } else {
+    numeric(n_train)
+  }
+  prop_test_cpp <- rep(0.5, n_new)
+
   alpha <- (1 - level) / 2
+
+  # Reconstruct interval-censored boundaries if applicable
+  if (object$outcome_type == "interval-censored") {
+    # For causal functions, stored raw values are on original scale
+    lt_raw <- object$data$left_time_train
+    rt_raw <- object$data$right_time_train
+    if (object$timescale == "time") {
+      lt_raw <- log(lt_raw)
+      rt_raw <- log(rt_raw)
+    }
+    left_std_c  <- (lt_raw - pre$y_mean) / pre$sigma_hat
+    right_std_c <- (rt_raw - pre$y_mean) / pre$sigma_hat
+    ic_ind_c    <- object$data$ic_indicator_train
+  } else {
+    left_std_c  <- numeric(n_train)
+    right_std_c <- y + 0
+    ic_ind_c    <- numeric(n_train)
+  }
 
   fit <- CausalHorseForest_cpp(
     nSEXP                              = n_train,
@@ -846,9 +889,9 @@ predict.CausalShrinkageForest <- function(object, newdata_control, newdata_treat
     ySEXP                              = y,
     status_indicatorSEXP               = status,
     is_survivalSEXP                    = survival,
-    observed_left_timeSEXP             = numeric(n_train),
-    observed_right_timeSEXP            = y + 0,
-    interval_censoring_indicatorSEXP   = numeric(n_train),
+    observed_left_timeSEXP             = left_std_c,
+    observed_right_timeSEXP            = right_std_c,
+    interval_censoring_indicatorSEXP   = ic_ind_c,
     treatment_indicatorSEXP            = trt_train,
     n_testSEXP                         = n_new,
     X_test_controlSEXP                 = X_test_control,
@@ -891,7 +934,10 @@ predict.CausalShrinkageForest <- function(object, newdata_control, newdata_treat
     delayed_proposalSEXP               = args$delayed_proposal,
     store_posterior_sample_controlSEXP = TRUE,
     store_posterior_sample_treatSEXP   = TRUE,
-    verboseSEXP                        = FALSE
+    verboseSEXP                        = FALSE,
+    treatment_codingSEXP               = tc,
+    propensity_trainSEXP               = prop_train_cpp,
+    propensity_testSEXP                = prop_test_cpp
   )
 
   # C++ does not return a combined total sample; reconstruct from components.
@@ -953,7 +999,7 @@ predict.CausalShrinkageForest <- function(object, newdata_control, newdata_treat
 print.CausalShrinkageForestPrediction <- function(x, n_head = 6, digits = 3, ...) {
 
   ci_pct     <- paste0(round(x$level * 100), "%")
-  time_scale <- x$outcome_type == "right-censored" && x$timescale == "time"
+  time_scale <- x$outcome_type %in% c("right-censored", "interval-censored") && x$timescale == "time"
 
   cat("\n")
   cat("CausalShrinkageForest predictions\n")
@@ -1035,7 +1081,7 @@ summary.CausalShrinkageForestPrediction <- function(object, ...) {
 print.summary.CausalShrinkageForestPrediction <- function(x, digits = 3, ...) {
 
   ci_pct     <- paste0(round(x$level * 100), "%")
-  time_scale <- x$outcome_type == "right-censored" && x$timescale == "time"
+  time_scale <- x$outcome_type %in% c("right-censored", "interval-censored") && x$timescale == "time"
 
   cat("\n")
   cat("CausalShrinkageForest prediction summary\n")

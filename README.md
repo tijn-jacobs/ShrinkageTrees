@@ -5,7 +5,7 @@
 
 **ShrinkageTrees** provides a unified framework for survival analysis using Bayesian regression tree ensembles, with a particular focus on **causal inference and high-dimensional data**.
 
-The package implements Horseshoe Trees, Causal Horseshoe Forests, and their more general counterparts — Shrinkage Trees and Causal Shrinkage Forests — alongside well-known Bayesian tree models such as BART, DART, and BCF. All models are adapted to right-censored data via accelerated failure time (AFT) formulations.
+The package implements Horseshoe Trees, Causal Horseshoe Forests, and their more general counterparts — Shrinkage Trees and Causal Shrinkage Forests — alongside well-known Bayesian tree models such as BART, DART, and BCF. All models are adapted to right-censored and interval-censored data via accelerated failure time (AFT) formulations.
 
 Its central methodological innovation is the **Horseshoe regularisation mechanism applied directly to tree step heights**, enabling adaptive global–local shrinkage in high-dimensional settings. In addition to classical BART priors, the package supports:
 
@@ -25,7 +25,7 @@ Supported outcome types:
 
 - Continuous outcomes  
 - Binary outcomes  
-- **Right-censored survival times (AFT framework)**  
+- **Right-censored and interval-censored survival times (AFT framework)**
 
 All models are implemented with an efficient C++ backend via Rcpp, allowing scalable MCMC sampling in high-dimensional settings.
 
@@ -62,10 +62,10 @@ ShrinkageTrees implements a modular family of Bayesian tree models:
 
 - **CausalHorseForest** — Prognostic + treatment forests with Horseshoe shrinkage  
 - **CausalShrinkageForest** — General shrinkage framework  
-- **BCF** — Bayesian Causal Forest for right-censored AFT models  
+- **BCF** — Bayesian Causal Forest for right-censored and interval-censored AFT models
 - **Shrinkage BCF** — Combined structural and magnitude shrinkage  
 
-All causal models support right-censored survival data and heterogeneous treatment effect (CATE) estimation.
+All causal models support right-censored and interval-censored survival data and heterogeneous treatment effect (CATE) estimation.
 
 ## 🌲 Tree Regularisation Strategies
 
@@ -157,7 +157,7 @@ The package includes a **demo analysis** based on the TCGA PAAD (pancreatic canc
 
 The demo:
 - Estimates propensity scores for treatment assignment  
-- Fits a Causal Horseshoe Forest to the survival times with right-censoring  
+- Fits a Causal Horseshoe Forest to the survival times with right-censoring or interval-censoring
 - Computes the posterior mean ATE and individual CATEs with 95% credible intervals  
 - Produces diagnostic plots (propensity score overlap, posterior ATE, CATE estimates, sigma trace)
 
@@ -171,7 +171,7 @@ demo("pdac_analysis", package = "ShrinkageTrees")
 
 ShrinkageTrees provides:
 
-- Bayesian Causal Forests for right-censored survival data  
+- Bayesian Causal Forests for right-censored and interval-censored survival data
 - Dirichlet splitting priors for structural sparsity  
 - Horseshoe shrinkage applied directly to tree step heights  
 - A unified AFT-based framework for heterogeneous treatment effects  

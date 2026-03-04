@@ -21,6 +21,7 @@ knitr::opts_chunk$set(
   fig.width = 7,
   fig.height = 4.5
 )
+library(ShrinkageTrees)
 set.seed(42)
 ```
 
@@ -29,8 +30,8 @@ set.seed(42)
 **ShrinkageTrees** is an R package for Bayesian regression tree ensembles
 designed for two challenging settings in modern statistics:
 
-- **High-dimensional survival analysis** — right-censored outcomes with many
-  more covariates than observations.
+- **High-dimensional survival analysis** — right-censored and
+  interval-censored outcomes with many more covariates than observations.
 - **Causal inference with heterogeneous treatment effects** — estimating
   patient-level conditional average treatment effects (CATEs) and the
   population-level average treatment effect (ATE).
@@ -43,9 +44,9 @@ The package builds on the well-known **BART** framework
    strong signals to retain their magnitude while noise is aggressively
    shrunk toward zero.
 
-2. **AFT survival models.** Right-censored survival times are handled through
-   an accelerated failure time (AFT) formulation with Bayesian data
-   augmentation, enabling full posterior inference without
+2. **AFT survival models.** Right-censored and interval-censored survival
+   times are handled through an accelerated failure time (AFT) formulation
+   with Bayesian data augmentation, enabling full posterior inference without
    proportional-hazards assumptions.
 
 3. **BCF-style causal decomposition.** Following Hahn, Murray & Carvalho
@@ -57,17 +58,233 @@ The package builds on the well-known **BART** framework
 
 | Function | Task | Prior |
 |---|---|---|
-| `HorseTrees()` | Prediction (continuous / binary / survival) | Horseshoe |
-| `ShrinkageTrees()` | Prediction — flexible prior choice | Horseshoe, DART, BART, … |
-| `SurvivalBART()` | Survival prediction | Classical BART |
-| `SurvivalDART()` | Sparse survival prediction | DART (Dirichlet) |
-| `SurvivalBCF()` | Causal survival inference | BCF (classical) |
-| `SurvivalShrinkageBCF()` | Sparse causal survival inference | BCF + DART |
-| `CausalHorseForest()` | Causal inference (all outcomes) | Horseshoe |
-| `CausalShrinkageForest()` | Causal inference — flexible prior | Horseshoe, DART, BART, … |
+| `HorseTrees()` | Prediction (continuous / binary / survival*) | Horseshoe |
+| `ShrinkageTrees()` | Prediction — flexible prior choice* | Horseshoe, DART, BART, … |
+| `SurvivalBART()` | Survival prediction* | Classical BART |
+| `SurvivalDART()` | Sparse survival prediction* | DART (Dirichlet) |
+| `SurvivalBCF()` | Causal survival inference* | BCF (classical) |
+| `SurvivalShrinkageBCF()` | Sparse causal survival inference* | BCF + DART |
+| `CausalHorseForest()` | Causal inference (all outcomes*) | Horseshoe |
+| `CausalShrinkageForest()` | Causal inference — flexible prior* | Horseshoe, DART, BART, … |
+
+\* All survival functions support both right-censored and interval-censored outcomes.
 
 All model-fitting functions return an S3 object with consistent
 `print()`, `summary()`, `predict()`, and `plot()` methods.
+
+---
+
+## Key Concepts
+
+Before diving into examples, we clarify a few concepts that appear throughout
+the package interface.
+
+### Outcome types and the `timescale` parameter
+
+Every model-fitting function accepts an `outcome_type` argument:
+
+- `"continuous"` — standard regression (default for most functions).
+- `"binary"` — probit BART for binary outcomes (0/1).
+- `"right-censored"` — accelerated failure time model for survival data.
+  The outcome `y` contains (possibly censored) follow-up times, and the
+  `status` vector indicates events (1) vs. censored observations (0).
+- `"interval-censored"` — AFT model for interval-censored survival data.
+  Instead of `y` and `status`, provide `left_time` and `right_time` vectors
+  specifying the lower and upper bounds of the observation window for each
+  individual. Three cases are distinguished:
+    - **Exact events**: `left_time == right_time` (event observed exactly).
+    - **Interval-censored**: `left_time < right_time` with finite
+      `right_time` (event occurred somewhere in the interval).
+    - **Right-censored**: `right_time = Inf` (event not yet observed).
+
+  This convention follows `survival::Surv(type = "interval2")`.
+
+For survival outcomes, the `timescale` argument controls how the package
+treats the times:
+
+- `timescale = "time"` (default): the supplied values are on the
+  **original time scale** (positive numbers).
+  The package internally applies a log-transform, i.e. models
+  $\log(T) = f(\mathbf{x}) + \varepsilon$.
+  Predictions from `summary()` and `predict()` are back-transformed
+  to the time scale automatically.
+- `timescale = "log"`: the supplied values are **already
+  log-transformed**. No further transformation is applied.
+  Predictions stay on the log scale.
+
+In most applications you should use `timescale = "time"` and pass the
+raw survival times directly.
+
+### Hyperparameter selection
+
+The two most important hyperparameters are `local_hp` and `global_hp`.
+These control the horseshoe prior on the step heights (leaf parameters):
+
+$$
+\mu_{jl} \mid \lambda_{jl}, \tau_j \sim \mathcal{N}(0, \lambda_{jl}^2 \tau_j^2),
+\qquad \lambda_{jl} \sim \text{C}^+(0, \texttt{local\_hp}),
+\qquad \tau_j \sim \text{C}^+(0, \texttt{global\_hp}),
+$$
+
+where $\text{C}^+$ denotes the half-Cauchy distribution.  Smaller values
+produce stronger shrinkage toward zero; larger values allow more
+variation.
+
+**`HorseTrees()` and `CausalHorseForest()`** provide a convenience
+parameter `k` that sets both scales automatically:
+`local_hp = global_hp = k / sqrt(number_of_trees)`. The default
+`k = 0.1` works well in many settings and is a good starting point.
+
+**`ShrinkageTrees()` and `CausalShrinkageForest()`** expose `local_hp`
+and `global_hp` directly (no `k`).  A common rule of thumb is:
+
+- `local_hp = k / sqrt(number_of_trees)` with `k` in [0.05, 0.5].
+- `global_hp = local_hp` (symmetric) or a larger value if you want
+  less overall shrinkage.
+
+The **survival wrappers** (`SurvivalBART`, `SurvivalDART`) use `k` to
+calibrate the standard BART leaf prior:
+`local_hp = range(log(y)) / (2 * k * sqrt(number_of_trees))`.
+The default `k = 2` follows Chipman et al. (2010).
+
+### The `store_posterior_sample` flag
+
+When `store_posterior_sample = TRUE`, the fitted object stores the full
+$N_\text{post} \times n$ matrix of posterior draws for predictions.
+This is needed for:
+
+- `predict()` on new data (it re-runs the sampler internally, so
+  posterior samples are always produced);
+- `plot(fit, type = "ate")` and `plot(fit, type = "cate")`, which
+  require the full posterior distribution;
+- `plot(fit, type = "survival")` — full posterior credible bands over
+  both $\mu_i$ and $\sigma$ (without samples, only sigma-uncertainty
+  bands are available);
+- any custom posterior analysis (e.g. computing posterior credible
+  intervals for individual predictions).
+
+When `FALSE`, only posterior *means* and $\sigma$ draws are stored,
+saving memory.  `print()` and `summary()` work in both cases, but
+`predict()` will not be available.
+
+### Treatment coding (`treatment_coding`)
+
+All causal model functions — `CausalHorseForest()`,
+`CausalShrinkageForest()`, `SurvivalBCF()`, and
+`SurvivalShrinkageBCF()` — decompose the outcome as
+$$
+Y_i = \mu(\mathbf{x}_i) + b_i \cdot \tau(\mathbf{x}_i) + \varepsilon_i,
+$$
+where $b_i$ is a scalar that depends on the treatment assignment $Z_i$.
+The `treatment_coding` argument controls how $b_i$ is defined.
+Four options are available:
+
+**`"centered"`** (default).
+$b_i = Z_i - 1/2$, so that $b_i \in \{-1/2,\; 1/2\}$.
+This is the original BCF parameterisation.
+
+**`"binary"`**.
+$b_i = Z_i$, so that $b_i \in \{0,\; 1\}$.
+Standard binary coding; the treatment forest captures the full
+effect of treatment on the treated.
+
+**`"adaptive"`**.
+$b_i = Z_i - \hat{e}(\mathbf{x}_i)$, where $\hat{e}(\mathbf{x}_i)$
+is the estimated propensity score. This follows Hahn, Murray &
+Carvalho (2020) and is the coding used in the `bcf` R package.
+When using this option, a `propensity` vector must be supplied.
+
+**`"invariant"`**.
+Parameter-expanded (invariant) treatment coding. The coding
+parameters $b_0$ and $b_1$ are assigned $N(0,\; 1/2)$ priors and
+estimated within the Gibbs sampler via conjugate normal updates:
+$$
+Y_i = \mu(\mathbf{x}_i) + b_{Z_i} \cdot \tilde{\tau}(\mathbf{x}_i) + \varepsilon_i,
+\qquad b_0,\; b_1 \sim N(0,\; 1/2).
+$$
+The treatment effect is $\tau(\mathbf{x}_i) = (b_1 - b_0) \cdot
+\tilde{\tau}(\mathbf{x}_i)$, and the posterior draws of $b_0$ and $b_1$
+are returned in the fitted object.  This parameterisation is invariant
+to the coding of the treatment indicator (Hahn et al., 2020,
+Section 5.2).
+
+The examples below illustrate each option on a simple continuous-outcome
+causal model.
+
+```{r tc-data}
+set.seed(50)
+n_tc <- 60;  p_tc <- 5
+X_tc <- matrix(rnorm(n_tc * p_tc), n_tc, p_tc)
+W_tc <- rbinom(n_tc, 1, 0.5)
+tau_tc <- 1.5 * (X_tc[, 1] > 0)
+y_tc <- X_tc[, 1] + W_tc * tau_tc + rnorm(n_tc, sd = 0.5)
+```
+
+```{r tc-centered}
+# Centered (default)
+fit_tc_cen <- CausalHorseForest(
+  y = y_tc,
+  X_train_control = X_tc, X_train_treat = X_tc,
+  treatment_indicator_train = W_tc,
+  treatment_coding = "centered",
+  number_of_trees = 5, N_post = 50, N_burn = 25,
+  store_posterior_sample = TRUE, verbose = FALSE
+)
+cat("Centered — ATE:",
+    round(mean(fit_tc_cen$train_predictions_treat), 3), "\n")
+```
+
+```{r tc-binary}
+# Binary
+fit_tc_bin <- CausalHorseForest(
+  y = y_tc,
+  X_train_control = X_tc, X_train_treat = X_tc,
+  treatment_indicator_train = W_tc,
+  treatment_coding = "binary",
+  number_of_trees = 5, N_post = 50, N_burn = 25,
+  store_posterior_sample = TRUE, verbose = FALSE
+)
+cat("Binary — ATE:",
+    round(mean(fit_tc_bin$train_predictions_treat), 3), "\n")
+```
+
+```{r tc-adaptive}
+# Adaptive (requires propensity scores)
+ps_tc <- pnorm(0.3 * X_tc[, 1])   # simple propensity model for illustration
+
+fit_tc_ada <- CausalHorseForest(
+  y = y_tc,
+  X_train_control = X_tc, X_train_treat = X_tc,
+  treatment_indicator_train = W_tc,
+  treatment_coding = "adaptive",
+  propensity = ps_tc,
+  number_of_trees = 5, N_post = 50, N_burn = 25,
+  store_posterior_sample = TRUE, verbose = FALSE
+)
+cat("Adaptive — ATE:",
+    round(mean(fit_tc_ada$train_predictions_treat), 3), "\n")
+```
+
+```{r tc-invariant}
+# Invariant (parameter-expanded)
+fit_tc_inv <- CausalHorseForest(
+  y = y_tc,
+  X_train_control = X_tc, X_train_treat = X_tc,
+  treatment_indicator_train = W_tc,
+  treatment_coding = "invariant",
+  number_of_trees = 5, N_post = 50, N_burn = 25,
+  store_posterior_sample = TRUE, verbose = FALSE
+)
+cat("Invariant — ATE:",
+    round(mean(fit_tc_inv$train_predictions_treat), 3), "\n")
+
+# Posterior draws of b0 and b1 are stored in the fitted object
+cat("b0 posterior mean:", round(mean(fit_tc_inv$b0), 3), "\n")
+cat("b1 posterior mean:", round(mean(fit_tc_inv$b1), 3), "\n")
+```
+
+The survival wrappers inherit `treatment_coding` support. For example,
+`SurvivalBCF(..., treatment_coding = "invariant")` works out of the box.
 
 ---
 
@@ -161,7 +378,10 @@ cat("Propensity scores — range: [",
 ### HorseTrees — survival outcome
 
 `HorseTrees()` handles right-censored data via an AFT model.
-Pass `outcome_type = "right-censored"` and provide the `status` vector.
+Pass `outcome_type = "right-censored"` and provide the `status` vector
+(1 = event, 0 = censored). When `timescale = "time"` (the default),
+the package log-transforms survival times internally and returns
+predictions on the log scale (see *Key Concepts* above).
 
 ```{r horsetrees-survival}
 set.seed(2)
@@ -187,6 +407,84 @@ cat("Posterior mean log-time (first 5 obs):",
     round(ht_surv$train_predictions[1:5], 3), "\n")
 cat("Posterior sigma — mean:",
     round(mean(ht_surv$sigma), 3), "\n")
+```
+
+---
+
+### HorseTrees — interval-censored outcome
+
+When event times are not observed exactly but known to lie within an
+interval, the package supports **interval censoring**. Instead of
+providing `y` and `status`, pass `left_time` and `right_time` with
+`outcome_type = "interval-censored"`.
+
+The three censoring types are encoded as follows:
+
+- **Exact event**: `left_time[i] == right_time[i]`
+- **Interval-censored**: `left_time[i] < right_time[i]` (both finite)
+- **Right-censored**: `right_time[i] = Inf`
+
+This convention matches `survival::Surv(type = "interval2")`.
+
+```{r horsetrees-ic}
+set.seed(20)
+
+# Generate true event times
+true_T <- rexp(n, rate = exp(-0.5 * X_syn[, 1]))
+
+# Create interval-censored observations
+left_syn  <- true_T * runif(n, 0.5, 1.0)
+right_syn <- true_T * runif(n, 1.0, 1.5)
+
+# Mark some as exact observations and some as right-censored
+exact_idx <- sample(n, 25)
+left_syn[exact_idx]  <- true_T[exact_idx]
+right_syn[exact_idx] <- true_T[exact_idx]
+
+rc_idx <- sample(setdiff(seq_len(n), exact_idx), 15)
+right_syn[rc_idx] <- Inf
+
+cat("Exact events:", sum(left_syn == right_syn), "\n")
+cat("Interval-censored:", sum(left_syn < right_syn & is.finite(right_syn)), "\n")
+cat("Right-censored:", sum(!is.finite(right_syn)), "\n")
+
+ht_ic <- HorseTrees(
+  left_time       = left_syn,
+  right_time      = right_syn,
+  X_train         = X_syn,
+  outcome_type    = "interval-censored",
+  timescale       = "time",
+  number_of_trees = 5,
+  N_post          = 50,
+  N_burn          = 25,
+  store_posterior_sample = TRUE,
+  verbose         = FALSE
+)
+
+cat("Posterior mean log-time (first 5 obs):",
+    round(ht_ic$train_predictions[1:5], 3), "\n")
+cat("Posterior sigma — mean:",
+    round(mean(ht_ic$sigma), 3), "\n")
+```
+
+All survival wrappers (`SurvivalBART`, `SurvivalDART`, `SurvivalBCF`,
+`SurvivalShrinkageBCF`) and their underlying functions (`ShrinkageTrees`,
+`CausalShrinkageForest`, `CausalHorseForest`) accept `left_time` and
+`right_time` in the same way. For example, using `SurvivalBART`:
+
+```{r sbart-ic}
+set.seed(21)
+fit_sbart_ic <- SurvivalBART(
+  left_time       = left_syn,
+  right_time      = right_syn,
+  X_train         = X_syn,
+  number_of_trees = 5,
+  N_post          = 50,
+  N_burn          = 25,
+  verbose         = FALSE
+)
+
+cat("SurvivalBART (IC) class:", class(fit_sbart_ic), "\n")
 ```
 
 ---
@@ -361,7 +659,7 @@ the posterior distribution of each predictor's splitting probability.
 With only 50 posterior draws the top-10 plot below should already concentrate
 most probability mass near the three truly active predictors.
 
-```{r hd-vi, eval=requireNamespace("bayesplot", quietly=TRUE) && requireNamespace("ggplot2", quietly=TRUE)}
+```{r hd-vi, eval=requireNamespace("ggplot2", quietly=TRUE)}
 plot(fit_hd_dart, type = "vi", n_vi = 10)
 ```
 
@@ -656,28 +954,66 @@ head(data.frame(
 ))
 ```
 
+#### Causal predictions
+
+For causal models (`CausalShrinkageForest` and `CausalHorseForest`),
+`predict()` returns three sets of posterior summaries:
+
+- **prognostic**: the control-forest prediction $\mu(\mathbf{x})$ — the
+  expected outcome under control.
+- **cate**: the Conditional Average Treatment Effect $\tau(\mathbf{x})$ —
+  the additional effect of treatment for each individual.
+- **total**: the combined prediction $\mu(\mathbf{x}) + \tau(\mathbf{x})$
+  — the expected outcome under treatment.
+
+For survival models with `timescale = "time"`, the prognostic and total
+components are back-transformed to the original time scale (via
+$\exp(\cdot)$), and the CATE becomes a **multiplicative time ratio**:
+$\exp(\tau) > 1$ means treatment prolongs survival.
+
+The `predict()` method requires two covariate matrices — one for each
+forest — matching the columns used at fit time.
+
+```{r predict-causal}
+X_new_ctrl  <- matrix(rnorm(10 * p), 10, p)
+X_new_treat <- matrix(rnorm(10 * p), 10, p)
+
+pred_c <- predict(fit_chf, newdata_control = X_new_ctrl,
+                  newdata_treat = X_new_treat)
+print(pred_c)
+```
+
+```{r predict-causal-detail}
+# Extract individual components
+head(data.frame(
+  prognostic = round(pred_c$prognostic$mean, 3),
+  cate       = round(pred_c$cate$mean, 3),
+  total      = round(pred_c$total$mean, 3)
+))
+```
+
 ---
 
 ### plot()
 
 The `plot()` method produces diagnostic and inferential graphics using the
-**bayesplot** and **ggplot2** packages (both are suggested dependencies).
+**ggplot2** package (a suggested dependency).
 
 #### Sigma traceplot
 
-```{r plot-trace, eval=requireNamespace("bayesplot", quietly=TRUE) && requireNamespace("ggplot2", quietly=TRUE)}
+```{r plot-trace, eval=requireNamespace("ggplot2", quietly=TRUE)}
 plot(fit_hs, type = "trace")
 ```
 
 #### Posterior ATE distribution (causal models)
 
-```{r plot-ate, eval=requireNamespace("bayesplot", quietly=TRUE) && requireNamespace("ggplot2", quietly=TRUE)}
+```{r plot-ate, eval=requireNamespace("ggplot2", quietly=TRUE)}
 plot(fit_chf, type = "ate")
 ```
 
 #### CATE caterpillar plot
 
-```{r plot-cate, eval=requireNamespace("bayesplot", quietly=TRUE) && requireNamespace("ggplot2", quietly=TRUE)}
+```{r plot-cate, eval=requireNamespace("ggplot2", quietly=TRUE)}
 plot(fit_chf, type = "cate")
 ```
 
@@ -703,9 +1039,65 @@ fit_dart <- ShrinkageTrees(
 )
 ```
 
-```{r plot-vi, eval=requireNamespace("bayesplot", quietly=TRUE) && requireNamespace("ggplot2", quietly=TRUE)}
+```{r plot-vi, eval=requireNamespace("ggplot2", quietly=TRUE)}
 plot(fit_dart, type = "vi", n_vi = 10)
 ```
+
+#### Survival curves
+
+For survival models (`outcome_type = "right-censored"` or
+`"interval-censored"`), the `plot()` method can draw posterior survival
+curves derived from the fitted AFT log-normal model:
+$$
+S(t \mid \mathbf{x}_i) = 1 - \Phi\!\left(\frac{\log t - \mu_i}{\sigma}\right),
+$$
+where $\mu_i = f(\mathbf{x}_i)$ is the BART ensemble prediction and $\sigma$
+is the residual standard deviation on the log-time scale.
+
+The `type = "survival"` option supports two modes controlled by the `obs`
+argument:
+
+- **Population-averaged curve** (`obs = NULL`, the default): computes
+  $\bar{S}(t) = n^{-1}\sum_i S(t \mid \mathbf{x}_i)$ at each MCMC
+  iteration, giving credible bands that reflect full posterior uncertainty.
+- **Individual curves** (`obs = c(1, 5, ...)`): one curve per selected
+  training observation with its own credible band.
+
+Additional options:
+
+| Argument | Description |
+|---|---|
+| `level` | Width of the pointwise credible band (default `0.95`). |
+| `t_grid` | Custom time grid (original scale). Auto-generated if `NULL`. |
+| `km` | If `TRUE`, overlay the Kaplan–Meier estimate (population-average only). |
+
+We use the survival fit from the earlier section:
+
+```{r surv-curve-pop, eval=requireNamespace("ggplot2", quietly=TRUE)}
+# Population-averaged survival curve with 95% credible band
+plot(ht_surv, type = "survival")
+```
+
+```{r surv-curve-km, eval=requireNamespace("ggplot2", quietly=TRUE) && requireNamespace("survival", quietly=TRUE)}
+# Same curve with the Kaplan-Meier estimate overlaid for comparison
+plot(ht_surv, type = "survival", km = TRUE)
+```
+
+```{r surv-curve-ind, eval=requireNamespace("ggplot2", quietly=TRUE)}
+# Individual survival curves for observations 1, 20, 40, 60, and 80
+plot(ht_surv, type = "survival", obs = c(1, 20, 40, 60, 80))
+```
+
+```{r surv-curve-single, eval=requireNamespace("ggplot2", quietly=TRUE)}
+# Single individual with a narrower 90% credible band
+plot(ht_surv, type = "survival", obs = 1, level = 0.90)
+```
+
+When `store_posterior_sample = FALSE`, the credible bands only reflect
+uncertainty in $\sigma$ (using plug-in posterior mean $\hat{\mu}_i$).
+The survival wrappers (`SurvivalBART`, `SurvivalDART`, etc.) store
+posterior samples by default, so full posterior bands are available
+out of the box.
 
 ---
 
@@ -772,13 +1164,65 @@ With multiple chains the traceplot shows one line per chain, and the
 overlaid density plot compares the marginal posterior of $\sigma$ across
 chains — both require `n_chains > 1`.
 
-```{r plot-trace-2chain, eval=requireNamespace("bayesplot", quietly=TRUE) && requireNamespace("ggplot2", quietly=TRUE)}
+```{r plot-trace-2chain, eval=requireNamespace("ggplot2", quietly=TRUE)}
 plot(fit_2chain, type = "trace")
 ```
 
-```{r plot-density-2chain, eval=requireNamespace("bayesplot", quietly=TRUE) && requireNamespace("ggplot2", quietly=TRUE)}
+```{r plot-density-2chain, eval=requireNamespace("ggplot2", quietly=TRUE)}
 plot(fit_2chain, type = "density")
 ```
+
+---
+
+## Convergence Diagnostics
+
+MCMC methods require careful assessment of convergence before trusting
+the posterior summaries. Here are practical guidelines for
+**ShrinkageTrees** models.
+
+### Sigma traceplot
+
+The traceplot of the error standard deviation $\sigma$ (via
+`plot(fit, type = "trace")`) is the primary diagnostic. A well-mixing
+chain should show:
+
+- **No trend**: the trace should fluctuate around a stable level after
+  burn-in. A persistent upward or downward drift indicates the sampler
+  has not yet converged — increase `N_burn`.
+- **Good mixing**: the chain should move freely across its stationary
+  range. If the trace is "sticky" (stays in the same region for long
+  stretches), this indicates poor mixing.
+- **Chain agreement** (when `n_chains > 1`): separate chains should
+  overlap substantially. The density overlay
+  (`plot(fit, type = "density")`) makes this easy to check visually.
+
+### Acceptance ratio
+
+The `summary()` output reports the average Metropolis–Hastings acceptance
+ratio for the tree structure proposals (grow/prune moves). As a rough
+guide:
+
+- **0.15–0.50** is typical and healthy for tree-based MCMC.
+- **Very low** (< 0.05) means most proposals are rejected. The sampler
+  is barely exploring tree space. Consider increasing `N_burn` and
+  `N_post`, or relaxing the tree structure prior (lower `power`, higher
+  `base`).
+- **Very high** (> 0.70) means almost all proposals are accepted, which
+  typically indicates the trees are staying very small (e.g. stumps).
+  This is less concerning but may limit the model's expressiveness.
+
+### Recommended MCMC settings
+
+The examples in this vignette use very small `N_post` and `N_burn` to
+keep build time low. For a real analysis:
+
+- **Minimum**: `N_post = 2000, N_burn = 2000`.
+- **Recommended**: `N_post = 5000, N_burn = 5000`.
+- **High-dimensional or survival**: `N_post = 5000, N_burn = 10000`
+  (the AFT data augmentation step can slow mixing, so a longer burn-in
+  helps).
+- **Multiple chains**: `n_chains = 2` or `4` to verify convergence and
+  produce pooled posterior samples.
 
 ---
 
@@ -882,13 +1326,7 @@ plot(fit_pdac, type = "ate")
 plot(fit_pdac, type = "cate")
 ```
 
----
 
-## Session Info
-
-```{r session-info}
-sessionInfo()
-```
 
 ## References
 

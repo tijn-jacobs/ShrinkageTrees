@@ -3,8 +3,10 @@ remove.packages("ShrinkageTrees")
 setwd("/Users/tijnjacobs/Library/CloudStorage/OneDrive-VrijeUniversiteitAmsterdam/Documents/GitHub/ShrinkageTrees")
 devtools::install()
 devtools::load_all()
+devtools::test()
 devtools::document()
-library(ShrinkageTrees)
+devtools::check()
+?library(ShrinkageTrees)
 
 n <- 50
 p <- 3
@@ -33,9 +35,6 @@ summary(fit_horseshoe)
 # Predict on new data
 pred <- predict(fit_horseshoe, newdata = X_test)
 str(pred)
-
-
-
 
 
 
@@ -179,3 +178,80 @@ plot(fit_causal, type = "trace")    # sigma mixing
 plot(fit_causal, type = "density")  # sigma posterior
 plot(fit_causal, type = "ate")      # ATE posterior density
 plot(fit_causal, type = "cate") 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+library(ShrinkageTrees)
+
+set.seed(42)
+n <- 200; p <- 5
+X <- matrix(rnorm(n * p), n, p)
+W <- rbinom(n, 1, 0.5) 
+
+# True CATE: heterogeneous, depends on X[,1] and X[,2]
+tau_true <- 1.0 + 1.5 * X[, 1] - 0.8 * X[, 2]
+mu_true  <- 2.0 * X[, 1] + X[, 3]
+y <- mu_true + (W-0.5) * tau_true + rnorm(n, sd = 0.5)
+
+# Propensity scores for adaptive coding
+ps <- rep(0.5, n)  # known RCT design
+
+# Common MCMC settings
+args_common <- list(
+  X_train_control = X, X_train_treat = X,
+  treatment_indicator_train = W,
+  number_of_trees = 50, N_post = 2000, N_burn = 2000,
+  store_posterior_sample = TRUE, verbose = TRUE
+)
+
+# --- Centered ---
+set.seed(1)
+fit_cen <- do.call(CausalHorseForest, c(list(y = y, treatment_coding = "centered"), args_common))
+
+# --- Binary ---
+set.seed(1)
+fit_bin <- do.call(CausalHorseForest, c(list(y = y, treatment_coding = "binary"), args_common))
+
+# --- Adaptive ---
+set.seed(1)
+fit_ada <- do.call(CausalHorseForest, c(list(y = y, treatment_coding = "adaptive", propensity = ps), args_common))
+
+# --- Invariant ---
+set.seed(1)
+fit_inv <- do.call(CausalHorseForest, c(list(y = y, treatment_coding = "invariant"), args_common))
+
+# --- RMSE of CATE ---
+rmse <- function(fit) sqrt(mean((fit$train_predictions_treat - tau_true)^2))
+
+cat("\n=== CATE RMSE ===\n")
+cat(sprintf("Centered:  %.4f\n", rmse(fit_cen)))
+cat(sprintf("Binary:    %.4f\n", rmse(fit_bin)))
+cat(sprintf("Adaptive:  %.4f\n", rmse(fit_ada)))
+cat(sprintf("Invariant: %.4f\n", rmse(fit_inv)))
+
+# --- ATE comparison ---
+ate <- function(fit) mean(fit$train_predictions_treat)
+cat("\n=== ATE (true:", round(mean(tau_true), 3), ") ===\n")
+cat(sprintf("Centered:  %.4f\n", ate(fit_cen)))
+cat(sprintf("Binary:    %.4f\n", ate(fit_bin)))
+cat(sprintf("Adaptive:  %.4f\n", ate(fit_ada)))
+cat(sprintf("Invariant: %.4f\n", ate(fit_inv)))
+
+# --- Invariant: inspect b0/b1 ---
+cat("\n=== Invariant coding parameters ===\n")
+cat(sprintf("b0: mean = %.3f, sd = %.3f\n", mean(fit_inv$b0), sd(fit_inv$b0)))
+cat(sprintf("b1: mean = %.3f, sd = %.3f\n", mean(fit_inv$b1), sd(fit_inv$b1)))
+cat(sprintf("b1 - b0: mean = %.3f\n", mean(fit_inv$b1 - fit_inv$b0)))

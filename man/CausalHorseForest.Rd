@@ -5,7 +5,7 @@
 \title{Causal Horseshoe Forests}
 \usage{
 CausalHorseForest(
-  y,
+  y = NULL,
   status = NULL,
   X_train_control,
   X_train_treat,
@@ -13,6 +13,8 @@ CausalHorseForest(
   X_test_control = NULL,
   X_test_treat = NULL,
   treatment_indicator_test = NULL,
+  left_time = NULL,
+  right_time = NULL,
   outcome_type = "continuous",
   timescale = "time",
   number_of_trees = 200,
@@ -28,16 +30,23 @@ CausalHorseForest(
   N_burn = 5000,
   delayed_proposal = 5,
   store_posterior_sample = FALSE,
+  treatment_coding = "centered",
+  propensity = NULL,
+  propensity_test = NULL,
   n_chains = 1,
   verbose = TRUE
 )
 }
 \arguments{
 \item{y}{Outcome vector. For survival, represents follow-up times (can be on
-original or log scale depending on \code{timescale}).}
+original or log scale depending on \code{timescale}). Set to \code{NULL}
+when using \code{outcome_type = "interval-censored"}, as values are derived
+from \code{left_time} and \code{right_time}.}
 
 \item{status}{Optional event indicator vector (1 = event occurred,
-0 = censored). Required when \code{outcome_type = "right-censored"}.}
+0 = censored). Required when \code{outcome_type = "right-censored"}.
+For interval-censored outcomes, this is derived automatically from
+\code{left_time} and \code{right_time}.}
 
 \item{X_train_control}{Covariate matrix for the control forest. Rows
 correspond to samples, columns to covariates.}
@@ -57,11 +66,24 @@ training samples (1 = treated, 0 = control).}
 \item{treatment_indicator_test}{Optional vector indicating treatment
 assignment for test samples.}
 
-\item{outcome_type}{Type of outcome: one of \code{"continuous"} or
-\code{"right-censored"}. Default is \code{"continuous"}.}
+\item{left_time}{Optional numeric vector of left (lower) time boundaries.
+Required when \code{outcome_type = "interval-censored"}. Exact events
+have \code{left_time == right_time}; right-censored observations have
+\code{right_time = Inf}; interval-censored observations have finite
+\code{left_time < right_time}.}
+
+\item{right_time}{Optional numeric vector of right (upper) time boundaries.
+Required when \code{outcome_type = "interval-censored"}. Use \code{Inf}
+for right-censored observations.}
+
+\item{outcome_type}{Type of outcome: one of \code{"continuous"},
+\code{"right-censored"}, or \code{"interval-censored"}.
+Default is \code{"continuous"}.}
 
 \item{timescale}{For survival outcomes: either \code{"time"} (original time
-scale, log-transformed internally) or \code{"log"} (already log-transformed).}
+scale, log-transformed internally) or \code{"log"} (already log-transformed).
+Used when \code{outcome_type} is \code{"right-censored"} or
+\code{"interval-censored"}.}
 
 \item{number_of_trees}{Number of trees in each forest. Default is 200.}
 
@@ -92,6 +114,25 @@ Default is 5.}
 
 \item{store_posterior_sample}{Logical; whether to store posterior samples of
 predictions. Default is \code{FALSE}.}
+
+\item{treatment_coding}{Treatment coding scheme for the two-forest model.
+One of \code{"centered"} (default), \code{"binary"}, \code{"adaptive"},
+or \code{"invariant"}.
+\code{"centered"} uses \eqn{b_i \in \{-1/2, 1/2\}};
+\code{"binary"} uses \eqn{b_i \in \{0, 1\}};
+\code{"adaptive"} uses \eqn{b_i = A_i - \hat{e}(x_i)} where
+\eqn{\hat{e}(x_i)} is the estimated propensity score;
+\code{"invariant"} treats \eqn{b_0, b_1} as parameters estimated within
+the Gibbs sampler with \eqn{b_j \sim N(0, 1/2)} priors, yielding a
+parameterisation-invariant model (Hahn et al., 2020, Section 5.2).}
+
+\item{propensity}{Optional numeric vector of propensity scores
+\eqn{\hat{e}(x_i)} for training observations. Required when
+\code{treatment_coding = "adaptive"}.}
+
+\item{propensity_test}{Optional numeric vector of propensity scores for
+test observations. Only used when \code{treatment_coding = "adaptive"}.
+Defaults to \code{0.5} for all test observations if not provided.}
 
 \item{n_chains}{Number of independent MCMC chains to run. Default is
 \code{1} (standard single-chain behaviour). When \code{n_chains > 1} the
@@ -138,13 +179,18 @@ It can be used for estimation of conditional average treatments effects of
 survival data given high-dimensional covariates. The outcome is decomposed in
 a prognostic part (control) and a treatment effect part. For both of these,
 we specify a Horseshoe Trees regression function.
+Supports continuous, right-censored, and interval-censored outcomes.
 }
 \details{
 The model separately regularizes the control and treatment trees using
 Horseshoe priors with global-local shrinkage on the step heights.
 This approach is designed for robust estimation of heterogeneous treatment
 effects in high-dimensional settings.
-It supports continuous and right-censored survival outcomes.
+It supports continuous, right-censored, and interval-censored survival
+outcomes. For interval-censored data, provide \code{left_time} and
+\code{right_time} instead of \code{y} and \code{status}; the event
+indicators are derived internally following the
+\code{survival::Surv(type = "interval2")} convention.
 }
 \examples{
 # Example: Continuous outcome and homogenuous treatment effect

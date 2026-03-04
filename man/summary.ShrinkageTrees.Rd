@@ -16,7 +16,7 @@ A \code{summary.ShrinkageTrees} object with elements:
 \describe{
 \item{call}{The original model call.}
 \item{outcome_type}{Outcome type (\code{"continuous"}, \code{"binary"},
-or \code{"right-censored"}).}
+\code{"right-censored"}, or \code{"interval-censored"}).}
 \item{timescale}{Timescale for survival outcomes (\code{"time"} or
 \code{"log"}).}
 \item{prior}{Prior specification.}

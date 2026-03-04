@@ -21,6 +21,9 @@ NewShrinkageTrees <- function(
   y_train,
   X_train,
   status_train,
+  left_time_train = NULL,
+  right_time_train = NULL,
+  ic_indicator_train = NULL,
   # Hyperparameters stored for predict()
   power,
   base,
@@ -66,9 +69,12 @@ NewShrinkageTrees <- function(
       latent_threshold = latent_threshold
     ),
     data = list(
-      y_train      = y_train,
-      X_train      = X_train,
-      status_train = status_train
+      y_train            = y_train,
+      X_train            = X_train,
+      status_train       = status_train,
+      left_time_train    = left_time_train,
+      right_time_train   = right_time_train,
+      ic_indicator_train = ic_indicator_train
     ),
     args = list(
       power            = power,
@@ -124,6 +130,9 @@ NewCausalShrinkageForest <- function(
   X_train_treat,
   treatment_indicator_train,
   status_train,
+  left_time_train = NULL,
+  right_time_train = NULL,
+  ic_indicator_train = NULL,
   # Hyperparameters stored for predict()
   p_grow,
   p_prune,
@@ -147,7 +156,9 @@ NewCausalShrinkageForest <- function(
   reversible_treat,
   a_dirichlet_treat,
   b_dirichlet_treat,
-  rho_dirichlet_treat
+  rho_dirichlet_treat,
+  treatment_coding = "centered",
+  propensity_train = NULL
 ) {
 
   meta <- list(
@@ -195,8 +206,14 @@ NewCausalShrinkageForest <- function(
       X_train_control          = X_train_control,
       X_train_treat            = X_train_treat,
       treatment_indicator_train = treatment_indicator_train,
-      status_train             = status_train
+      status_train             = status_train,
+      left_time_train          = left_time_train,
+      right_time_train         = right_time_train,
+      ic_indicator_train       = ic_indicator_train,
+      propensity_train         = propensity_train
     ),
+
+    treatment_coding = treatment_coding,
 
     args = list(
       p_grow           = p_grow,

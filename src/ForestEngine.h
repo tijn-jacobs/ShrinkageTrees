@@ -53,6 +53,14 @@ struct ForestEngine {
     }
   }
 
+  // Set per-observation weights for weighted regression (e.g., b_i^2 in BCF)
+  void SetWeights(double* w) {
+    if (type == ForestEngineType::forest_type) {
+      forest->SetWeights(w);
+    }
+    // StanForest does not currently support per-observation weights
+  }
+
   void StartDirichlet() {
     if (type == ForestEngineType::stan_forest_type) {
       stan_forest->ToggleDart();

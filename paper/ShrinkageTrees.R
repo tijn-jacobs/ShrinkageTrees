@@ -8,34 +8,167 @@ library(ShrinkageTrees)
 
 ## ----pkg-comparison, echo=FALSE-----------------------------------------------
 df <- data.frame(
-  Package        = c("BART", "dbarts", "bcf", "stochtree", "ShrinkageTrees"),
-  `Survival`     = c("Discrete hazard", "No", "No", "No", "AFT (right-censored)"),
-  `Causal`       = c("No", "No", "Yes", "Yes", "Yes"),
-  `Shrinkage`    = c("Normal leaf prior", "Normal leaf prior", "Normal leaf prior", "Normal leaf prior", "Horseshoe / Dirichlet"),
-  `Causal + Survival` = c("No", "No", "No", "No", "Yes"),
-  check.names    = FALSE
+  Package             = c("BART", "dbarts", "bcf", "stochtree", "SoftBart", "ShrinkageTrees"),
+  `Survival`          = c("Yes", "No", "No", "No", "No", "Yes"),
+  `Interval censoring` = c("No", "No", "No", "No", "No", "Yes"),
+  `Causal (BCF)`      = c("No", "No", "Yes", "Yes", "No", "Yes"),
+  `Causal + Survival` = c("No", "No", "No", "No", "No", "Yes"),
+  `Horseshoe prior`   = c("No", "No", "No", "No", "No", "Yes"),
+  `Dirichlet (DART)`  = c("Yes", "No", "No", "No", "No", "Yes"),
+  check.names         = FALSE
 )
-knitr::kable(df, caption = "Comparison of Bayesian tree ensemble packages in R.", booktabs = TRUE)
+knitr::kable(df, caption = "Comparison of Bayesian tree ensemble packages in R.",
+             booktabs = TRUE)
 
 
-## ----data, echo=TRUE----------------------------------------------------------
-# Load data
-# data(...)
+## ----fitting-functions, echo=FALSE--------------------------------------------
+df <- data.frame(
+  Function = c("`ShrinkageTrees()`", "`HorseTrees()`",
+               "`CausalShrinkageForest()`", "`CausalHorseForest()`",
+               "`SurvivalBART()`", "`SurvivalDART()`",
+               "`SurvivalBCF()`", "`SurvivalShrinkageBCF()`"),
+  Description = c("General shrinkage tree ensemble",
+                   "Horseshoe Forest (convenience wrapper with default horseshoe scale)",
+                   "Causal forest with flexible priors",
+                   "Causal Horseshoe Forest",
+                   "Standard BART for AFT survival",
+                   "DART for AFT survival",
+                   "BCF for AFT survival",
+                   "Shrinkage BCF for AFT survival"),
+  Class = c(rep("`ShrinkageTrees`", 4), rep("`CausalShrinkageForest`", 4)),
+  check.names = FALSE
+)
+knitr::kable(df, caption = "Fitting functions in \\pkg{ShrinkageTrees}. The first four are primary functions; the last four are convenience wrappers.", booktabs = TRUE)
 
 
-## ----survival-fit, echo=TRUE--------------------------------------------------
-# fit <- horseshoe_forest(
-#   x = X, time = time, status = status,
-#   n_tree = 50, n_iter = 2000, n_burn = 500
+## ----data, echo=TRUE, eval=FALSE----------------------------------------------
+# library(ShrinkageTrees)
+# data("pdac")
+# 
+# time      <- pdac$time
+# status    <- pdac$status
+# treatment <- pdac$treatment
+# X         <- as.matrix(pdac[, !(names(pdac) %in% c("time", "status", "treatment"))])
+# 
+# cat("n =", nrow(pdac), "| p =", ncol(X),
+#     "| censoring rate =", round(1 - mean(status), 2),
+#     "| treated =", sum(treatment), "/ control =", sum(1 - treatment), "\n")
+
+
+## ----survival-bart, echo=TRUE, eval=FALSE-------------------------------------
+# set.seed(2025)
+# fit_bart <- SurvivalBART(
+#   time            = time,
+#   status          = status,
+#   X_train         = X,
+#   number_of_trees = 200,
+#   N_post          = 5000,
+#   N_burn          = 5000,
+#   n_chains        = 2,
+#   verbose         = FALSE
 # )
-# summary(fit)
 
 
-## ----causal-fit, echo=TRUE----------------------------------------------------
-# fit_bcf <- horseshoe_bcf(
-#   x = X, z = treatment, time = time, status = status,
-#   n_tree_mu = 50, n_tree_tau = 20,
-#   n_iter = 2000, n_burn = 500
+## ----survival-horse, echo=TRUE, eval=FALSE------------------------------------
+# set.seed(2025)
+# fit_horse <- HorseTrees(
+#   y               = time,
+#   status          = status,
+#   X_train         = X,
+#   outcome_type    = "right-censored",
+#   timescale       = "time",
+#   number_of_trees = 200,
+#   k               = 0.1,
+#   N_post          = 5000,
+#   N_burn          = 5000,
+#   n_chains        = 2,
+#   store_posterior_sample = TRUE,
+#   verbose         = FALSE
 # )
-# plot(fit_bcf, type = "cate")
+
+
+## ----survival-summary, echo=TRUE, eval=FALSE----------------------------------
+# print(fit_horse)
+# summary(fit_horse)
+
+
+## ----convergence, echo=TRUE, eval=FALSE---------------------------------------
+# plot(fit_horse, type = "trace")
+# plot(fit_horse, type = "density")
+
+
+## ----vi, echo=TRUE, eval=FALSE------------------------------------------------
+# plot(fit_bart,  type = "vi", n_vi = 15)
+# plot(fit_horse, type = "vi", n_vi = 15)
+
+
+## ----prediction, echo=TRUE, eval=FALSE----------------------------------------
+# pred <- predict(fit_horse, newdata = X)
+# print(pred)
+# summary(pred)
+
+
+## ----propensity, echo=TRUE, eval=FALSE----------------------------------------
+# set.seed(2025)
+# ps_fit <- HorseTrees(
+#   y            = treatment,
+#   X_train      = X,
+#   outcome_type = "binary",
+#   k            = 0.1,
+#   N_post       = 5000,
+#   N_burn       = 5000,
+#   verbose      = FALSE
+# )
+# propensity <- pnorm(ps_fit$train_predictions)
+# X_control  <- cbind(propensity, X)
+
+
+## ----causal-fit, echo=TRUE, eval=FALSE----------------------------------------
+# set.seed(2025)
+# fit_causal <- CausalHorseForest(
+#   y                         = time,
+#   status                    = status,
+#   X_train_control           = X_control,
+#   X_train_treat             = X,
+#   treatment_indicator_train = treatment,
+#   outcome_type              = "right-censored",
+#   timescale                 = "time",
+#   number_of_trees           = 200,
+#   k                         = 0.1,
+#   N_post                    = 5000,
+#   N_burn                    = 5000,
+#   n_chains                  = 2,
+#   store_posterior_sample     = TRUE,
+#   verbose                   = FALSE
+# )
+# summary(fit_causal)
+
+
+## ----treatment-effects, echo=TRUE, eval=FALSE---------------------------------
+# # Posterior ATE density
+# plot(fit_causal, type = "ate")
+# 
+# # Observation-level CATEs with 95% credible intervals
+# plot(fit_causal, type = "cate")
+# 
+# # Variable importance for both forests
+# plot(fit_causal, type = "vi", forest = "both")
+
+
+## ----comparison, echo=TRUE, eval=FALSE----------------------------------------
+# set.seed(2025)
+# fit_shrinkage_bcf <- SurvivalShrinkageBCF(
+#   time            = time,
+#   status          = status,
+#   X_train         = X,
+#   treatment       = treatment,
+#   number_of_trees_control = 200,
+#   number_of_trees_treat   = 50,
+#   N_post          = 5000,
+#   N_burn          = 5000,
+#   n_chains        = 2,
+#   store_posterior_sample = TRUE,
+#   verbose         = FALSE
+# )
+# summary(fit_shrinkage_bcf)
 

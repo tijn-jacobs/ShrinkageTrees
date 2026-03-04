@@ -98,7 +98,7 @@ public:
   virtual void Propose(Parameters& parameters, 
                        const Parameters& global_parameters,
                        const double& residual, 
-                       const size_t& number_of_observations,
+                       const double& number_of_observations,
                        const double& sigma,
                        const double& omega,
                        Random& random) = 0;
@@ -114,7 +114,7 @@ public:
   virtual double LogProposeDensity(const Parameters& parameters,
                                    const Parameters& global_parameters,
                                    const double& residual,
-                                   const size_t& number_of_observations,
+                                   const double& number_of_observations,
                                    const double& sigma,
                                    const double& omega) = 0;
   
@@ -156,7 +156,7 @@ public:
   void Propose(Parameters& parameters, 
                const Parameters& global_parameters,
                const double& residual, 
-               const size_t& number_of_observations,
+               const double& number_of_observations,
                const double& sigma, 
                const double& omega,
                Random& random);
@@ -172,7 +172,7 @@ public:
   double LogProposeDensity(const Parameters& parameters,
                            const Parameters& global_parameters,
                            const double& residual,
-                           const size_t& number_of_observations,
+                           const double& number_of_observations,
                            const double& sigma,
                            const double& omega);
   
@@ -187,7 +187,7 @@ public:
   double LogLikelihood(const Parameters& parameters,
                        const Parameters& global_parameters,
                        const double& sum_of_observations,
-                       const size_t& number_of_observations,
+                       const double& number_of_observations,
                        const double& sigma);
   
   // Return whether the prior requires global updates
@@ -217,7 +217,7 @@ public:
   void Propose(Parameters& parameters, 
                const Parameters& global_parameters,
                const double& residual, 
-               const size_t& number_of_observations,
+               const double& number_of_observations,
                const double& sigma,
                const double& omega,
               Random& random) override;
@@ -233,7 +233,7 @@ public:
   double LogProposeDensity(const Parameters& parameters,
                            const Parameters& global_parameters,
                            const double& residual,
-                           const size_t& number_of_observations,
+                           const double& number_of_observations,
                            const double& sigma,
                            const double& omega) override;
   
@@ -270,7 +270,7 @@ public:
   void Propose(Parameters& parameters, 
                const Parameters& global_parameters,
                const double& residual, 
-               const size_t& number_of_observations,
+               const double& number_of_observations,
                const double& sigma, 
                const double& omega,
                Random& random) override;
@@ -286,7 +286,7 @@ public:
   double LogProposeDensity(const Parameters& parameters,
                            const Parameters& global_parameters,
                            const double& residual,
-                           const size_t& number_of_observations,
+                           const double& number_of_observations,
                            const double& sigma,
                            const double& omega) override;
   
@@ -323,7 +323,7 @@ public:
   void Propose(Parameters& parameters, 
                const Parameters& global_parameters,
                const double& residual, 
-               const size_t& number_of_observations,
+               const double& number_of_observations,
                const double& sigma, 
                const double& omega,
                Random& random) override;
@@ -339,7 +339,7 @@ public:
   double LogProposeDensity(const Parameters& parameters,
                            const Parameters& global_parameters,
                            const double& residual,
-                           const size_t& number_of_observations,
+                           const double& number_of_observations,
                            const double& sigma,
                            const double& omega) override;
   
@@ -375,7 +375,7 @@ public:
   void Propose(Parameters& parameters, 
                const Parameters& global_parameters,
                const double& residual, 
-               const size_t& number_of_observations,
+               const double& number_of_observations,
                const double& sigma, 
                const double& omega,
                Random& random) override;
@@ -391,7 +391,7 @@ public:
   double LogProposeDensity(const Parameters& parameters,
                            const Parameters& global_parameters,
                            const double& residual,
-                           const size_t& number_of_observations,
+                           const double& number_of_observations,
                            const double& sigma,
                            const double& omega) override;
   

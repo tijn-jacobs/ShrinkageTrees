@@ -3,25 +3,40 @@
 #' Fits a (Bayesian) Causal Shrinkage Forest model for estimating heterogeneous treatment effects.
 #' This function generalizes \code{\link{CausalHorseForest}} by allowing flexible
 #' global-local shrinkage priors on the step heights in both the control and treatment forests.
-#' It supports continuous and right-censored survival outcomes.
+#' It supports continuous, right-censored, and interval-censored survival outcomes.
 #'
 #' @param y Outcome vector. Numeric. Represents continuous outcomes or follow-up times.
-#' @param status Optional event indicator vector (1 = event occurred, 0 = censored). 
-#' Required when \code{outcome_type = "right-censored"}.
+#' Set to \code{NULL} when using \code{outcome_type = "interval-censored"}, as
+#' values are derived from \code{left_time} and \code{right_time}.
+#' @param status Optional event indicator vector (1 = event occurred, 0 = censored).
+#' Required when \code{outcome_type = "right-censored"}. For interval-censored
+#' outcomes, this is derived automatically from \code{left_time} and
+#' \code{right_time}.
 #' @param X_train_control Covariate matrix for the control forest. Rows correspond to samples,
 #' columns to covariates.
 #' @param X_train_treat Covariate matrix for the treatment forest.
-#' @param treatment_indicator_train Vector indicating treatment assignment for training samples 
+#' @param treatment_indicator_train Vector indicating treatment assignment for training samples
 #' (1 = treated, 0 = control).
-#' @param X_test_control Optional covariate matrix for control forest test data. Defaults to 
+#' @param X_test_control Optional covariate matrix for control forest test data. Defaults to
 #' column means of \code{X_train_control} if NULL.
-#' @param X_test_treat Optional covariate matrix for treatment forest test data. Defaults to 
+#' @param X_test_treat Optional covariate matrix for treatment forest test data. Defaults to
 #' column means of \code{X_train_treat} if NULL.
 #' @param treatment_indicator_test Optional vector indicating treatment assignment for test data.
-#' @param outcome_type Type of outcome: one of \code{"continuous"} or \code{"right-censored"}. 
+#' @param left_time Optional numeric vector of left (lower) time boundaries.
+#' Required when \code{outcome_type = "interval-censored"}. Exact events
+#' have \code{left_time == right_time}; right-censored observations have
+#' \code{right_time = Inf}; interval-censored observations have finite
+#' \code{left_time < right_time}.
+#' @param right_time Optional numeric vector of right (upper) time boundaries.
+#' Required when \code{outcome_type = "interval-censored"}. Use \code{Inf}
+#' for right-censored observations.
+#' @param outcome_type Type of outcome: one of \code{"continuous"},
+#' \code{"right-censored"}, or \code{"interval-censored"}.
 #' Default is \code{"continuous"}.
-#' @param timescale For survival outcomes: either \code{"time"} (original scale, log-transformed 
+#' @param timescale For survival outcomes: either \code{"time"} (original scale, log-transformed
 #' internally) or \code{"log"} (already log-transformed). Default is \code{"time"}.
+#' Used when \code{outcome_type} is \code{"right-censored"} or
+#' \code{"interval-censored"}.
 #' @param number_of_trees_control Number of trees in the control forest. Default is 200.
 #' @param number_of_trees_treat Number of trees in the treatment forest. Default is 200.
 #' @param prior_type_control Type of prior on control forest step heights. One of 
@@ -67,6 +82,22 @@
 #' @param delayed_proposal Number of delayed iterations before proposal updates. Default is 5.
 #' @param store_posterior_sample Logical; whether to store posterior samples of predictions.
 #' Default is \code{FALSE}.
+#' @param treatment_coding Treatment coding scheme for the two-forest model.
+#'   One of \code{"centered"} (default), \code{"binary"}, \code{"adaptive"},
+#'   or \code{"invariant"}.
+#'   \code{"centered"} uses \eqn{b_i \in \{-1/2, 1/2\}};
+#'   \code{"binary"} uses \eqn{b_i \in \{0, 1\}};
+#'   \code{"adaptive"} uses \eqn{b_i = A_i - \hat{e}(x_i)} where
+#'   \eqn{\hat{e}(x_i)} is the estimated propensity score;
+#'   \code{"invariant"} treats \eqn{b_0, b_1} as parameters estimated within
+#'   the Gibbs sampler with \eqn{b_j \sim N(0, 1/2)} priors, yielding a
+#'   parameterisation-invariant model (Hahn et al., 2020, Section 5.2).
+#' @param propensity Optional numeric vector of propensity scores
+#'   \eqn{\hat{e}(x_i)} for training observations. Required when
+#'   \code{treatment_coding = "adaptive"}.
+#' @param propensity_test Optional numeric vector of propensity scores for
+#'   test observations. Only used when \code{treatment_coding = "adaptive"}.
+#'   Defaults to \code{0.5} for all test observations if not provided.
 #' @param n_chains Number of independent MCMC chains to run. Default is
 #'   \code{1} (standard single-chain behaviour). When \code{n_chains > 1} the
 #'   chains are run in parallel via \code{parallel::mclapply} and their
@@ -205,8 +236,30 @@
 #' # Posterior mean ATE
 #' ATE_horseshoe <- mean(post_ATE_horseshoe)
 #' ATE_halfcauchy <- mean(post_ATE_halfcauchy)
-#' 
-#' 
+#'
+#' # Example: Interval-censored causal survival outcome
+#' n <- 50; p <- 3
+#' X_ic <- matrix(rnorm(n * p), ncol = p)
+#' treat_ic <- rbinom(n, 1, 0.5)
+#' true_t <- rexp(n, rate = exp(-X_ic[, 1] - 0.5 * treat_ic))
+#' left_t  <- true_t * runif(n, 0.5, 1)
+#' right_t <- true_t * runif(n, 1, 1.5)
+#' exact <- sample(n, 15)
+#' left_t[exact] <- true_t[exact]; right_t[exact] <- true_t[exact]
+#' rc <- sample(setdiff(seq_len(n), exact), 10); right_t[rc] <- Inf
+#'
+#' fit_ic <- CausalShrinkageForest(
+#'   left_time = left_t, right_time = right_t,
+#'   X_train_control = X_ic, X_train_treat = X_ic,
+#'   treatment_indicator_train = treat_ic,
+#'   outcome_type = "interval-censored",
+#'   number_of_trees_control = 5, number_of_trees_treat = 5,
+#'   prior_type_control = "horseshoe", prior_type_treat = "horseshoe",
+#'   local_hp_control = 0.1/sqrt(5), local_hp_treat = 0.1/sqrt(5),
+#'   global_hp_control = 0.1/sqrt(5), global_hp_treat = 0.1/sqrt(5),
+#'   N_post = 10, N_burn = 5,
+#'   store_posterior_sample = TRUE, verbose = FALSE)
+#'
 #' @seealso
 #' Model family: \code{\link{CausalHorseForest}} (causal, horseshoe prior),
 #' \code{\link{ShrinkageTrees}} (non-causal, flexible prior),
@@ -224,7 +277,7 @@
 #' @importFrom stats sd qchisq qnorm runif coef
 #' @importFrom parallel mclapply detectCores
 #' @export
-CausalShrinkageForest <- function(y,
+CausalShrinkageForest <- function(y = NULL,
                                   status = NULL,
                                   X_train_control,
                                   X_train_treat,
@@ -232,6 +285,8 @@ CausalShrinkageForest <- function(y,
                                   X_test_control = NULL,
                                   X_test_treat = NULL,
                                   treatment_indicator_test = NULL,
+                                  left_time = NULL,
+                                  right_time = NULL,
                                   outcome_type = "continuous",
                                   timescale = "time",
                                   number_of_trees_control = 200,
@@ -261,6 +316,9 @@ CausalShrinkageForest <- function(y,
                                   N_burn = 5000,
                                   delayed_proposal = 5,
                                   store_posterior_sample = FALSE,
+                                  treatment_coding = "centered",
+                                  propensity = NULL,
+                                  propensity_test = NULL,
                                   n_chains = 1,
                                   verbose = TRUE) {
 
@@ -277,6 +335,8 @@ CausalShrinkageForest <- function(y,
       X_test_control            = X_test_control,
       X_test_treat              = X_test_treat,
       treatment_indicator_test  = treatment_indicator_test,
+      left_time                 = left_time,
+      right_time                = right_time,
       outcome_type              = outcome_type,
       timescale                 = timescale,
       number_of_trees_control   = number_of_trees_control,
@@ -306,6 +366,9 @@ CausalShrinkageForest <- function(y,
       N_burn                    = N_burn,
       delayed_proposal          = delayed_proposal,
       store_posterior_sample    = store_posterior_sample,
+      treatment_coding          = treatment_coding,
+      propensity                = propensity,
+      propensity_test           = propensity_test,
       n_chains                  = 1,
       verbose                   = FALSE
     )
@@ -462,29 +525,46 @@ CausalShrinkageForest <- function(y,
   } 
 
   # Check outcome_type value
-  allowed_types <- c("continuous", "right-censored")
+  allowed_types <- c("continuous", "right-censored", "interval-censored")
   if (!outcome_type %in% allowed_types) {
-    stop("Invalid outcome_type. Please choose 'continuous' or 
-         'right-censored'.")
+    stop("Invalid outcome_type. Please choose 'continuous', 'right-censored',
+         or 'interval-censored'.")
   }
-  
+
+  # Check that y is provided for non-interval-censored types
+  if (is.null(y) && outcome_type != "interval-censored") {
+    stop("'y' is required when outcome_type is not 'interval-censored'.")
+  }
+
+  # Check interval-censored arguments
+  if (outcome_type == "interval-censored") {
+    if (is.null(left_time) || is.null(right_time))
+      stop("outcome_type = 'interval-censored' requires 'left_time' and 'right_time'.")
+    if (length(left_time) != length(right_time))
+      stop("'left_time' and 'right_time' must have the same length.")
+    if (any(left_time > right_time))
+      stop("All 'left_time' values must be <= corresponding 'right_time' values.")
+    if (timescale == "time" && any(left_time <= 0))
+      stop("left_time contains non-positive values, but timescale = 'time' requires strictly positive times.")
+  }
+
   # Check consistency with status argument
   if (outcome_type == "right-censored" && is.null(status)) {
     stop("You specified outcome_type = 'right-censored', but did not provide a
          'status' vector.")
   }
-  if (!is.null(status) && length(status) != length(y)) {
+  if (!is.null(status) && !is.null(y) && length(status) != length(y)) {
     stop("The length of 'status' must match the length of 'y'.")
   }
 
-  if (outcome_type != "right-censored" && !is.null(status)) {
+  if (!outcome_type %in% c("right-censored", "interval-censored") && !is.null(status)) {
     warning("You provided a 'status' vector, but outcome_type is not
-            'right-censored'. The 'status' vector will be ignored.")
+            'right-censored' or 'interval-censored'. The 'status' vector will be ignored.")
   }
-  
+
   # Check survival data and timescale
   if (outcome_type == "right-censored" && timescale == "time" && any(y < 0)) {
-    stop("Outcome contains negative values, but timescale = 'time' for survival 
+    stop("Outcome contains negative values, but timescale = 'time' for survival
          data requires non-negative times.")
   }
   
@@ -498,21 +578,34 @@ CausalShrinkageForest <- function(y,
   p_treat   <- ncol(X_train_treat)
 
   # Check matching row numbers
-  if (nrow(X_train_control) != length(y)) {
-    stop("X_train_control rows must match length of y.")
+  n_obs <- if (outcome_type == "interval-censored") length(left_time) else length(y)
+  if (nrow(X_train_control) != n_obs) {
+    stop("X_train_control rows must match length of outcome data.")
   }
-  if (nrow(X_train_treat) != length(y)) {
-    stop("X_train_treat rows must match length of y.")
+  if (nrow(X_train_treat) != n_obs) {
+    stop("X_train_treat rows must match length of outcome data.")
   }
-  if (length(treatment_indicator_train) != length(y)) {
-    stop("treatment_indicator_train must match length of y.")
+  if (length(treatment_indicator_train) != n_obs) {
+    stop("treatment_indicator_train must match length of outcome data.")
   }
   if (!all(treatment_indicator_train %in% c(0, 1))) {
     stop("treatment_indicator_train must contain only 0 and 1.")
   }
   if (p_control < 1L) stop("X_train_control must have at least one column.")
   if (p_treat   < 1L) stop("X_train_treat must have at least one column.")
-  
+
+  # Validate treatment_coding
+  treatment_coding <- match.arg(treatment_coding, c("centered", "binary", "adaptive", "invariant"))
+  if (treatment_coding == "adaptive" && is.null(propensity)) {
+    stop("propensity scores are required when treatment_coding = 'adaptive'.")
+  }
+  if (!is.null(propensity) && length(propensity) != n_obs) {
+    stop("Length of 'propensity' must match the number of training observations.")
+  }
+
+  # Prepare propensity vectors for C++
+  propensity_train_cpp <- if (!is.null(propensity)) as.numeric(propensity) else numeric(n_obs)
+
   # If test provided, check
   test_provided_flag <- !is.null(X_test_control) && !is.null(X_test_treat)
   if (!is.null(X_test_control) && !is.null(X_test_treat)) {
@@ -541,7 +634,14 @@ CausalShrinkageForest <- function(y,
   } else {
     treatment_indicator_test <- as.integer(treatment_indicator_test)
   }
-  
+
+  # Prepare propensity for test data
+  propensity_test_cpp <- if (!is.null(propensity_test)) {
+    as.numeric(propensity_test)
+  } else {
+    rep(0.5, n_test)
+  }
+
   # Force data types to be numeric and plain arrays
   N_post <- as.integer(N_post)[1]
   N_burn <- as.integer(N_burn)[1]
@@ -564,9 +664,27 @@ CausalShrinkageForest <- function(y,
     rho_dirichlet_treat <- p_treat
   }
   
+  # For interval-censored: derive y/status/ic_indicator from left_time/right_time
+  if (outcome_type == "interval-censored") {
+    left_time <- as.numeric(left_time)
+    right_time <- as.numeric(right_time)
+
+    status <- as.integer(left_time == right_time)
+    ic_indicator <- as.integer(left_time < right_time & is.finite(right_time))
+
+    y <- ifelse(status == 1, left_time,
+                ifelse(ic_indicator == 1, (left_time + right_time) / 2,
+                       left_time))
+
+    # C++ expects finite boundary for right-censored obs
+    right_time[!is.finite(right_time)] <- left_time[!is.finite(right_time)]
+  }
+
   # Save originals for data slot (used by predict())
   y_causal_raw      <- y
   status_causal_raw <- status
+  left_time_raw     <- if (outcome_type == "interval-censored") left_time else NULL
+  right_time_raw    <- if (outcome_type == "interval-censored") right_time else NULL
 
   if (outcome_type == "right-censored") {
 
@@ -676,7 +794,10 @@ CausalShrinkageForest <- function(y,
       delayed_proposalSEXP = delayed_proposal,
       store_posterior_sample_controlSEXP = store_posterior_sample,
       store_posterior_sample_treatSEXP = store_posterior_sample,
-      verboseSEXP = verbose
+      verboseSEXP = verbose,
+      treatment_codingSEXP = treatment_coding,
+      propensity_trainSEXP = propensity_train_cpp,
+      propensity_testSEXP = propensity_test_cpp
     )
     
     if (timescale == "time") {
@@ -735,17 +856,172 @@ CausalShrinkageForest <- function(y,
       }
     }
     
+  # If interval-censored
+  } else if (outcome_type == "interval-censored") {
+
+    y <- as.numeric(y)
+
+    # Log-transform if timescale = "time"
+    if (timescale == "time") {
+      y <- log(y)
+      left_time <- log(left_time)
+      right_time <- log(right_time)
+    }
+
+    # Estimate mu and sd
+    cens_inf <- censored_info(y, status, left_time = left_time,
+                              right_time = right_time, ic_indicator = ic_indicator)
+
+    y_mean <- cens_inf$mu
+    y <- y - y_mean
+    left_time <- left_time - y_mean
+    right_time <- right_time - y_mean
+
+    if (is.null(sigma)) {
+      sigma_hat <- cens_inf$sd
+      sigma_known <- FALSE
+    } else {
+      sigma_hat <- sigma
+      sigma_known <- TRUE
+    }
+
+    if (prior_type_control %in% c("standard-halfcauchy")) {
+      if (is.null(local_hp_control)) {
+        local_hp_control <- 2.0
+      } else {
+        local_hp_control <- local_hp_control / sigma_hat
+      }
+    }
+
+    if (prior_type_treat %in% c("standard-halfcauchy")) {
+      if (is.null(local_hp_treat)) {
+        local_hp_treat <- 2.0
+      } else {
+        local_hp_treat <- local_hp_treat / sigma_hat
+      }
+    }
+
+    y <- y / sigma_hat
+    left_time <- left_time / sigma_hat
+    right_time <- right_time / sigma_hat
+
+    survival <- TRUE
+
+    qchi <- qchisq(1.0 - q, nu)
+    lambda <- (sigma_hat^2 * qchi) / nu
+
+    fit <- CausalHorseForest_cpp(
+      nSEXP = n_train,
+      p_treatSEXP = p_treat,
+      p_controlSEXP = p_control,
+      X_train_treatSEXP = X_train_treat,
+      X_train_controlSEXP = X_train_control,
+      ySEXP = y,
+      status_indicatorSEXP = status,
+      is_survivalSEXP = survival,
+      observed_left_timeSEXP = left_time,
+      observed_right_timeSEXP = right_time,
+      interval_censoring_indicatorSEXP = ic_indicator,
+      treatment_indicatorSEXP = treatment_indicator_train,
+      n_testSEXP = n_test,
+      X_test_controlSEXP = X_test_control,
+      X_test_treatSEXP = X_test_treat,
+      treatment_indicator_testSEXP = treatment_indicator_test,
+      no_trees_treatSEXP = number_of_trees_treat,
+      power_treatSEXP = power_treat,
+      base_treatSEXP = base_treat,
+      p_grow_treatSEXP = p_grow,
+      p_prune_treatSEXP = p_prune,
+      omega_treatSEXP = 1/2,
+      prior_type_treatSEXP = prior_type_treat,
+      param1_treatSEXP = local_hp_treat,
+      param2_treatSEXP = global_hp_treat,
+      reversible_treatSEXP = reversible_flag_treat,
+      dirichlet_bool_treatSEXP = dirichlet_bool_treat,
+      a_dirichlet_treatSEXP = a_dirichlet_treat,
+      b_dirichlet_treatSEXP = b_dirichlet_treat,
+      rho_dirichlet_treatSEXP = rho_dirichlet_treat,
+      no_trees_controlSEXP = number_of_trees_control,
+      power_controlSEXP = power_control,
+      base_controlSEXP = base_control,
+      p_grow_controlSEXP = p_grow,
+      p_prune_controlSEXP = p_prune,
+      omega_controlSEXP = 1/2,
+      prior_type_controlSEXP = prior_type_control,
+      param1_controlSEXP = local_hp_control,
+      param2_controlSEXP = global_hp_control,
+      reversible_controlSEXP = reversible_flag_control,
+      dirichlet_bool_controlSEXP = dirichlet_bool_control,
+      a_dirichlet_controlSEXP = a_dirichlet_control,
+      b_dirichlet_controlSEXP = b_dirichlet_control,
+      rho_dirichlet_controlSEXP = rho_dirichlet_control,
+      sigma_knownSEXP = sigma_known,
+      sigmaSEXP = sigma_hat,
+      lambdaSEXP = lambda,
+      nuSEXP = nu,
+      N_postSEXP = N_post,
+      N_burnSEXP = N_burn,
+      delayed_proposalSEXP = delayed_proposal,
+      store_posterior_sample_controlSEXP = store_posterior_sample,
+      store_posterior_sample_treatSEXP = store_posterior_sample,
+      verboseSEXP = verbose,
+      treatment_codingSEXP = treatment_coding,
+      propensity_trainSEXP = propensity_train_cpp,
+      propensity_testSEXP = propensity_test_cpp
+    )
+
+    # Back-transform (identical to right-censored)
+    if (timescale == "time") {
+      fit$train_predictions <- exp(fit$train_predictions * sigma_hat + y_mean)
+      fit$test_predictions <- exp(fit$test_predictions * sigma_hat + y_mean)
+      fit$train_predictions_control <- exp(fit$train_predictions_control *
+                                             sigma_hat + y_mean)
+      fit$test_predictions_control <- exp(fit$test_predictions_control *
+                                            sigma_hat + y_mean)
+      fit$train_predictions_treat <- exp(fit$train_predictions_treat * sigma_hat)
+      fit$test_predictions_treat <- exp(fit$test_predictions_treat * sigma_hat)
+      if (store_posterior_sample) {
+        fit$train_predictions_sample_control <-
+          exp(fit$train_predictions_sample_control * sigma_hat + y_mean)
+        fit$test_predictions_sample_control <-
+          exp(fit$test_predictions_sample_control * sigma_hat + y_mean)
+        fit$train_predictions_sample_treat <-
+          exp(fit$train_predictions_sample_treat * sigma_hat)
+        fit$test_predictions_sample_treat <-
+          exp(fit$test_predictions_sample_treat * sigma_hat)
+      }
+    } else {
+      fit$train_predictions <- fit$train_predictions * sigma_hat + y_mean
+      fit$test_predictions <- fit$test_predictions * sigma_hat + y_mean
+      fit$train_predictions_control <-
+        fit$train_predictions_control * sigma_hat + y_mean
+      fit$test_predictions_control <-
+        fit$test_predictions_control * sigma_hat + y_mean
+      fit$train_predictions_treat <- fit$train_predictions_treat * sigma_hat
+      fit$test_predictions_treat <- fit$test_predictions_treat * sigma_hat
+      if (store_posterior_sample) {
+        fit$train_predictions_sample_control <-
+          fit$train_predictions_sample_control * sigma_hat + y_mean
+        fit$test_predictions_sample_control <-
+          fit$test_predictions_sample_control * sigma_hat + y_mean
+        fit$train_predictions_sample_treat <-
+          fit$train_predictions_sample_treat * sigma_hat
+        fit$test_predictions_sample_treat <-
+          fit$test_predictions_sample_treat * sigma_hat
+      }
+    }
+
     # Otherwise, continuous
   } else {
-    
+
     # Force outcome to plain numeric vector
     y <- as.numeric(y)
-    
+
     # Create dummy status vector (not used for continuous)
     status <- rep(1, n_train)
     survival <- FALSE
-    
-    # Determine prior guess of sigma 
+
+    # Determine prior guess of sigma
     if (is.null(sigma)) {
       sigma_hat <- sd(y)      # Estimate sigma from data
       sigma_known <- FALSE
@@ -835,7 +1111,10 @@ CausalShrinkageForest <- function(y,
       delayed_proposalSEXP = delayed_proposal,
       store_posterior_sample_controlSEXP = store_posterior_sample,
       store_posterior_sample_treatSEXP = store_posterior_sample,
-      verboseSEXP = verbose
+      verboseSEXP = verbose,
+      treatment_codingSEXP = treatment_coding,
+      propensity_trainSEXP = propensity_train_cpp,
+      propensity_testSEXP = propensity_test_cpp
     )
     
     # Total
@@ -909,7 +1188,10 @@ CausalShrinkageForest <- function(y,
     X_train_control           = X_control_mat,
     X_train_treat             = X_treat_mat,
     treatment_indicator_train = treatment_indicator_train,
-    status_train              = status_causal_raw,
+    status_train              = if (outcome_type %in% c("right-censored", "interval-censored")) status_causal_raw else NULL,
+    left_time_train           = left_time_raw,
+    right_time_train          = right_time_raw,
+    ic_indicator_train        = if (outcome_type == "interval-censored") ic_indicator else NULL,
     # Hyperparameters stored for predict()
     p_grow           = p_grow,
     p_prune          = p_prune,
@@ -933,7 +1215,9 @@ CausalShrinkageForest <- function(y,
     reversible_treat     = reversible_flag_treat,
     a_dirichlet_treat    = a_dirichlet_treat,
     b_dirichlet_treat    = b_dirichlet_treat,
-    rho_dirichlet_treat  = rho_dirichlet_treat
+    rho_dirichlet_treat  = rho_dirichlet_treat,
+    treatment_coding     = treatment_coding,
+    propensity_train     = propensity
   )
 
   return(obj)
