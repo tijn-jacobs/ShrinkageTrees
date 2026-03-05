@@ -76,6 +76,16 @@ if (requireNamespace("survival", quietly = TRUE)) {
   print(plot(fit_surv, type = "survival", km = TRUE))
 }
 
+# Posterior predictive survival curves (predict object)
+X_test <- matrix(rnorm(20 * p), ncol = p)
+pred_surv <- predict(fit_surv, newdata = X_test)
+
+cat("7. Posterior predictive survival curve (population avg)...\n")
+print(plot(pred_surv, type = "survival"))
+
+cat("8. Posterior predictive survival curves (individuals)...\n")
+print(plot(pred_surv, type = "survival", obs = c(1, 5, 10)))
+
 # ── 2. CausalShrinkageForest plots ─────────────────────────────────────────
 
 treatment <- rbinom(n, 1, 0.5)
@@ -93,16 +103,16 @@ fit_causal <- CausalHorseForest(
   verbose = FALSE
 )
 
-cat("7. Causal sigma traceplot (2 chains)...\n")
+cat("9. Causal sigma traceplot (2 chains)...\n")
 print(plot(fit_causal, type = "trace"))
 
-cat("8. Causal sigma density (2 chains)...\n")
+cat("10. Causal sigma density (2 chains)...\n")
 print(plot(fit_causal, type = "density"))
 
-cat("9. ATE posterior...\n")
+cat("11. ATE posterior...\n")
 print(plot(fit_causal, type = "ate"))
 
-cat("10. CATE caterpillar plot...\n")
+cat("12. CATE caterpillar plot...\n")
 print(plot(fit_causal, type = "cate"))
 
 dev.off()

@@ -6,6 +6,10 @@ knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
 library(ShrinkageTrees)
 
 
+## ----ExampleTree, echo=FALSE, fig.cap="Schematic of a single regression tree. Interior nodes contain binary splitting rules of the form $x_\\rho \\leq c$; terminal nodes (leaves) contain step heights $h_\\ell$. An observation traverses the tree from root to leaf, and its prediction is the step height of the leaf it reaches.", out.width="85%", fig.align='center'----
+knitr::include_graphics("figures/ExampleTree_standalone.pdf")
+
+
 ## ----pkg-comparison, echo=FALSE-----------------------------------------------
 df <- data.frame(
   Package             = c("BART", "dbarts", "bcf", "stochtree", "SoftBart", "ShrinkageTrees"),

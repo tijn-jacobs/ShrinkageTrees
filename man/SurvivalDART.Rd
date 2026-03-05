@@ -126,9 +126,16 @@ X_new <- matrix(rnorm(10 * p), ncol = p)
 pred <- predict(fit, newdata = X_new)
 print(pred)
 
-# Variable importance plot (requires ggplot2)
+# Variable importance and survival plots (requires ggplot2)
 if (requireNamespace("ggplot2", quietly = TRUE)) {
   plot(fit, type = "vi", n_vi = 5)
+
+  # Posterior survival curves for training data
+  plot(fit, type = "survival")
+
+  # Posterior predictive survival curves for new data
+  plot(pred, type = "survival")
+  plot(pred, type = "survival", obs = c(1, 5))
 }
 
 # Interval-censored example

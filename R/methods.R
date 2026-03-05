@@ -18,10 +18,15 @@
 #'     \item{level}{Credible level used.}
 #'     \item{outcome_type}{Outcome type inherited from the fitted model.}
 #'     \item{timescale}{Timescale inherited from the fitted model (survival only).}
+#'     \item{predictions_sample}{(Survival only) \code{N_post} x \code{n}
+#'       matrix of posterior predictive draws on the original scale.}
+#'     \item{sigma}{(Survival only) Posterior draws of sigma on the log-time
+#'       scale (length \code{N_post}).}
 #'   }
 #' @seealso \code{\link{HorseTrees}}, \code{\link{ShrinkageTrees}},
 #'   \code{\link{print.ShrinkageTreesPrediction}},
-#'   \code{\link{summary.ShrinkageTreesPrediction}}
+#'   \code{\link{summary.ShrinkageTreesPrediction}},
+#'   \code{\link{plot.ShrinkageTreesPrediction}}
 #' @export
 predict.ShrinkageTrees <- function(object, newdata, level = 0.95, ...) {
 
@@ -150,6 +155,13 @@ predict.ShrinkageTrees <- function(object, newdata, level = 0.95, ...) {
       outcome_type = object$outcome_type,
       timescale    = object$timescale
     )
+
+    # Store posterior samples for survival curve plotting
+    if (survival) {
+      out$predictions_sample <- sample_pred   # N_post x n_new
+      out$sigma <- fit$sigma * pre$sigma_hat  # posterior sigma on log-time scale
+    }
+
     class(out) <- "ShrinkageTreesPrediction"
     out
   }
@@ -392,8 +404,12 @@ print.ShrinkageTrees <- function(x, ...) {
 #'     \item{variable_importance}{Named vector of posterior inclusion
 #'       probabilities, sorted decreasingly (if available).}
 #'     \item{acceptance_ratio}{MCMC acceptance ratio vector.}
+#'     \item{diagnostics}{(When \pkg{coda} is installed) A list with
+#'       \code{ess} (effective sample size) and, for multi-chain fits,
+#'       \code{rhat} (Gelman--Rubin \eqn{\hat{R}}).}
 #'   }
 #' @seealso \code{\link{print.summary.ShrinkageTrees}},
+#'   \code{\link{as.mcmc.list.ShrinkageTrees}},
 #'   \code{\link{HorseTrees}}, \code{\link{ShrinkageTrees}}
 #' @export
 summary.ShrinkageTrees <- function(object, ...) {
@@ -424,6 +440,8 @@ summary.ShrinkageTrees <- function(object, ...) {
   out$acceptance_ratio <- object$acceptance_ratio
   if (!is.null(object$chains))
     out$chains <- object$chains
+
+  out$diagnostics <- .mcmc_diagnostics(object)
 
   class(out) <- "summary.ShrinkageTrees"
   out
@@ -492,6 +510,17 @@ print.summary.ShrinkageTrees <- function(x, n_vi = 10, ...) {
   } else if (!is.null(x$acceptance_ratio)) {
     cat("\nMCMC acceptance ratio: ", round(mean(x$acceptance_ratio), 3), "\n",
         sep = "")
+  }
+
+  if (!is.null(x$diagnostics)) {
+    cat("\nConvergence diagnostics (coda):\n")
+    if (!is.null(x$diagnostics$rhat))
+      cat("  Gelman-Rubin R-hat: ",
+          paste(names(x$diagnostics$rhat), round(x$diagnostics$rhat, 3),
+                sep = " = ", collapse = ", "), "\n", sep = "")
+    cat("  Effective sample size: ",
+        paste(names(x$diagnostics$ess), round(x$diagnostics$ess, 0),
+              sep = " = ", collapse = ", "), "\n", sep = "")
   }
 
   cat("\n")
@@ -746,6 +775,85 @@ print.CausalShrinkageForest <- function(x, ...) {
 
   cat("\n")
   invisible(x)
+}
+
+# ── as.mcmc.list.ShrinkageTrees ───────────────────────────────────────────────
+
+#' Convert MCMC output to a coda mcmc.list
+#'
+#' Converts the posterior draws stored in a \code{ShrinkageTrees} object into
+#' a \code{\link[coda]{mcmc.list}} for use with the \pkg{coda} package's
+#' convergence diagnostics (Gelman--Rubin \eqn{\hat{R}}, effective sample
+#' size, Geweke test, etc.).
+#'
+#' @param x A fitted \code{ShrinkageTrees} object.
+#' @param ... Currently unused.
+#' @return A \code{\link[coda]{mcmc.list}} object.
+#'   Each chain is an \code{\link[coda]{mcmc}} object whose columns include:
+#'   \describe{
+#'     \item{sigma}{Posterior draws of the residual standard deviation
+#'       (continuous and survival outcomes only).}
+#'   }
+#' @details
+#' Requires the suggested package \pkg{coda}.
+#' For single-chain fits the returned object contains one chain.
+#' @seealso \code{\link{summary.ShrinkageTrees}} which reports R-hat and ESS
+#'   automatically when coda is available.
+#' @examples
+#' \dontrun{
+#' fit <- ShrinkageTrees(y = rnorm(50), X_train = matrix(rnorm(250), 50, 5),
+#'                       N_post = 200, N_burn = 100, n_chains = 2)
+#' if (requireNamespace("coda", quietly = TRUE)) {
+#'   mcmc_obj <- as.mcmc.list(fit)
+#'   coda::gelman.diag(mcmc_obj)
+#'   coda::effectiveSize(mcmc_obj)
+#' }
+#' }
+#' @export
+as.mcmc.list.ShrinkageTrees <- function(x, ...) {
+
+  if (!requireNamespace("coda", quietly = TRUE))
+    stop("Package 'coda' is needed for as.mcmc.list(). ",
+         "Install it with: install.packages('coda')", call. = FALSE)
+
+  N_post   <- x$mcmc$N_post
+  n_chains <- if (!is.null(x$mcmc$n_chains)) x$mcmc$n_chains else 1L
+
+  # Build a matrix of parameters for each chain
+  chain_list <- vector("list", n_chains)
+  for (ch in seq_len(n_chains)) {
+    idx <- ((ch - 1L) * N_post + 1L):(ch * N_post)
+    params <- list()
+
+    if (!is.null(x$sigma))
+      params$sigma <- x$sigma[idx]
+
+    mat <- do.call(cbind, params)
+    if (!is.matrix(mat)) mat <- matrix(mat, ncol = 1, dimnames = list(NULL, names(params)))
+    chain_list[[ch]] <- coda::mcmc(mat, start = 1, end = N_post, thin = 1)
+  }
+
+  coda::mcmc.list(chain_list)
+}
+
+# ── MCMC diagnostics helpers ─────────────────────────────────────────────────
+
+# Compute Gelman-Rubin R-hat and bulk/tail ESS using coda, if available.
+# Returns NULL when coda is not installed or only one chain was run.
+.mcmc_diagnostics <- function(object) {
+  if (!requireNamespace("coda", quietly = TRUE)) return(NULL)
+  n_chains <- if (!is.null(object$mcmc$n_chains)) object$mcmc$n_chains else 1L
+  if (is.null(object$sigma)) return(NULL)
+
+  mcmc_obj <- as.mcmc.list.ShrinkageTrees(object)
+  ess <- coda::effectiveSize(mcmc_obj)
+
+  rhat <- if (n_chains >= 2L) {
+    gr <- coda::gelman.diag(mcmc_obj, autoburnin = FALSE, multivariate = FALSE)
+    gr$psrf[, "Point est."]
+  }
+
+  list(ess = ess, rhat = rhat)
 }
 
 # ── predict.CausalShrinkageForest ─────────────────────────────────────────────

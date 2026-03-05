@@ -26,6 +26,10 @@ A \code{ShrinkageTreesPrediction} object with elements:
 \item{level}{Credible level used.}
 \item{outcome_type}{Outcome type inherited from the fitted model.}
 \item{timescale}{Timescale inherited from the fitted model (survival only).}
+\item{predictions_sample}{(Survival only) \code{N_post} x \code{n}
+matrix of posterior predictive draws on the original scale.}
+\item{sigma}{(Survival only) Posterior draws of sigma on the log-time
+scale (length \code{N_post}).}
 }
 }
 \description{
@@ -36,5 +40,6 @@ interval bounds.
 \seealso{
 \code{\link{HorseTrees}}, \code{\link{ShrinkageTrees}},
 \code{\link{print.ShrinkageTreesPrediction}},
-\code{\link{summary.ShrinkageTreesPrediction}}
+\code{\link{summary.ShrinkageTreesPrediction}},
+\code{\link{plot.ShrinkageTreesPrediction}}
 }

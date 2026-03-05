@@ -288,10 +288,23 @@ The survival wrappers inherit `treatment_coding` support. For example,
 
 ---
 
-## The PDAC Dataset
+## Included Datasets
 
-The package ships with `pdac`, a processed subset of the TCGA pancreatic
-ductal adenocarcinoma (PAAD) cohort. The dataset contains overall survival
+The package ships with two TCGA datasets for high-dimensional survival
+analysis and causal inference:
+
+- **`pdac`** — TCGA pancreatic ductal adenocarcinoma (PAAD) cohort
+  (n = 178). A data frame with overall survival times, a binary treatment
+  indicator (radiation therapy vs. control), clinical covariates, and
+  expression values of ~3,000 genes selected by median absolute deviation.
+- **`ovarian`** — TCGA ovarian cancer (OV) cohort (n = 357). A list with
+  `X` (357 x 2,000 gene expression matrix, log2-normalised TPM) and
+  `clinical` (data frame with OS time/event, age, FIGO stage, tumor grade,
+  and treatment: carboplatin vs cisplatin). See `?ovarian` for details.
+
+### The PDAC Dataset
+
+The `pdac` dataset contains overall survival
 times, a binary treatment indicator (radiation therapy vs. control), clinical
 covariates, and expression values of approximately 3,000 genes selected by
 median absolute deviation.
@@ -1099,6 +1112,37 @@ The survival wrappers (`SurvivalBART`, `SurvivalDART`, etc.) store
 posterior samples by default, so full posterior bands are available
 out of the box.
 
+#### Posterior predictive survival curves
+
+The survival curves above are based on the **training** data — they show
+$S(t \mid \mathbf{x}_i)$ for the observations used to fit the model.
+For **new** (out-of-sample) data, call `predict()` first and then
+`plot()` on the prediction object.  This produces *posterior
+predictive* survival curves that propagate full parameter uncertainty
+through to the new covariate values:
+
+```{r surv-pred-setup}
+# New observations for prediction
+set.seed(99)
+X_new <- matrix(rnorm(20 * p), ncol = p)
+pred_surv <- predict(ht_surv, newdata = X_new)
+```
+
+```{r surv-pred-pop, eval=requireNamespace("ggplot2", quietly=TRUE)}
+# Population-averaged posterior predictive survival curve
+plot(pred_surv, type = "survival")
+```
+
+```{r surv-pred-ind, eval=requireNamespace("ggplot2", quietly=TRUE)}
+# Individual posterior predictive curves for selected new observations
+plot(pred_surv, type = "survival", obs = c(1, 5, 10))
+```
+
+The same `level` and `t_grid` arguments are available as for the
+training-data survival curves.  The Kaplan–Meier overlay (`km = TRUE`)
+is not available for prediction objects, since observed event times are
+only known for the training set.
+
 ---
 
 ## Multi-Chain MCMC
@@ -1210,6 +1254,37 @@ guide:
 - **Very high** (> 0.70) means almost all proposals are accepted, which
   typically indicates the trees are staying very small (e.g. stumps).
   This is less concerning but may limit the model's expressiveness.
+
+### Formal diagnostics with coda
+
+When the suggested package **coda** is installed, `summary()` automatically
+reports **effective sample size** (ESS) and — for multi-chain fits — the
+**Gelman–Rubin $\hat{R}$**.
+
+```{r coda-summary, eval=requireNamespace("coda", quietly=TRUE)}
+# summary() includes convergence diagnostics when coda is available
+summary(fit_2chain)
+```
+
+For more detailed diagnostics, convert the fitted object to a
+`coda::mcmc.list` with `as.mcmc.list()`:
+
+```{r coda-diagnostics, eval=requireNamespace("coda", quietly=TRUE)}
+mcmc_obj <- as.mcmc.list(fit_2chain)
+
+# Gelman-Rubin R-hat (values near 1 indicate convergence)
+coda::gelman.diag(mcmc_obj)
+
+# Effective sample size
+coda::effectiveSize(mcmc_obj)
+
+# Geweke diagnostic (per chain)
+coda::geweke.diag(mcmc_obj[[1]])
+
+# Autocorrelation and Gelman plots
+coda::autocorr.plot(mcmc_obj)
+coda::gelman.plot(mcmc_obj)
+```
 
 ### Recommended MCMC settings
 

@@ -29,6 +29,9 @@ prediction summaries (mean, SD, range).}
 \item{variable_importance}{Named vector of posterior inclusion
 probabilities, sorted decreasingly (if available).}
 \item{acceptance_ratio}{MCMC acceptance ratio vector.}
+\item{diagnostics}{(When \pkg{coda} is installed) A list with
+\code{ess} (effective sample size) and, for multi-chain fits,
+\code{rhat} (Gelman--Rubin \eqn{\hat{R}}).}
 }
 }
 \description{
@@ -38,5 +41,6 @@ MCMC diagnostics.
 }
 \seealso{
 \code{\link{print.summary.ShrinkageTrees}},
+\code{\link{as.mcmc.list.ShrinkageTrees}},
 \code{\link{HorseTrees}}, \code{\link{ShrinkageTrees}}
 }

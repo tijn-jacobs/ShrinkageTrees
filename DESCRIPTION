@@ -27,6 +27,7 @@ Imports:
 LinkingTo:
     Rcpp (>= 1.0.11)
 Suggests:
+    coda,
     ggplot2,
     knitr,
     rmarkdown,
@@ -36,7 +37,7 @@ VignetteBuilder:
     knitr
 Roxygen:
     list(markdown = TRUE)
-RoxygenNote: 7.3.2
+RoxygenNote: 7.3.3
 Encoding: UTF-8
 LazyData: true
 LazyDataCompression: xz

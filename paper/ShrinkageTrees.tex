@@ -26,27 +26,48 @@ The remainder of this paper is organised as follows. Section 2 provides a brief 
 
 \subsection{Bayesian Additive Regression Trees}\label{bayesian-additive-regression-trees}
 
-BART \citep{chipman2010bart} models the response \(y_i\) for observation \(i = 1, \ldots, n\) with covariates \(\mathbf{x}_i \in \mathbb{R}^p\) as
+We adapt the Bayesian Additive Regression Trees (BART) model, originally introduced by \citet{chipman2010bart} to estimate the conditional mean function \(\mathbb{E}[Y_i \mid \mathbf{x}_i]\) in regression settings with continuous uncensored outcomes. The model assumes
 \[
-y_i = \sum_{j=1}^{m} g(\mathbf{x}_i;\, T_j, H_j) + \varepsilon_i, \quad \varepsilon_i \sim \mathcal{N}(0, \sigma^2),
+Y_i = \sum_{j=1}^{m} g(\mathbf{x}_i;\, \mathcal{T}_j, \mathcal{H}_j) + \varepsilon_i, \quad \varepsilon_i \sim \mathcal{N}(0, \sigma^2),
 \]
-where \(m\) is the number of trees, \(T_j\) is the topology of the \(j\)-th binary decision tree, and \(H_j = \{h_{j1}, \ldots, h_{jL_j}\}\) is the set of step heights for its \(L_j\) leaves. Each tree assigns an observation to exactly one leaf, so that \(g(\mathbf{x}_i;\, T_j, H_j) = \sum_{\ell=1}^{L_j} h_{j\ell}\, \mathbb{1}(\mathbf{x}_i;\, T_j, \ell)\), where \(\mathbb{1}(\mathbf{x}_i;\, T_j, \ell) = 1\) if \(\mathbf{x}_i\) falls in leaf \(\ell\) of tree \(T_j\).
+where each \(\mathcal{T}_j\) is a binary decision tree that defines recursive partitioning rules over the covariate space, and \(\mathcal{H}_j = \{h_{j1}, \ldots, h_{jL_j}\}\) denotes the set of step heights associated with the \(L_j\) leaves of tree \(\mathcal{T}_j\).
 
-\subsection{Single-learner and two-learner models}\label{single-learner-and-two-learner-models}
-
-In the single-learner formulation above, the full ensemble estimates a single function of the covariates. For causal inference, we adopt the Bayesian Causal Forest {[}BCF; \citet{hahn2020bayesian}{]} decomposition. Given a binary treatment indicator \(A_i \in \{0, 1\}\) and an estimate of the propensity score \(\hat{e}(\mathbf{x}_i) = \hat{P}(A_i = 1 \mid \mathbf{x}_i)\), we write
+For a given input \(\mathbf{x}\), the function \(g(\mathbf{x};\, \mathcal{T}_j, \mathcal{H}_j)\) maps \(\mathbf{x}\) to a leaf node \(\ell\) in \(\mathcal{T}_j\) and returns the corresponding value \(h_{j\ell}\). Each tree partitions the covariate space into disjoint regions, assigning a constant prediction to each (see Figure \ref{fig:ExampleTree}). The prediction of the \(j\)-th tree for individual \(i\) is obtained by
 \[
-y_i = f(\mathbf{x}_i, \hat{e}(\mathbf{x}_i)) + A_i\, \tau(\mathbf{x}_i) + \varepsilon_i,
+g(\mathbf{x}_i;\, \mathcal{T}_j, \mathcal{H}_j) = \sum_{\ell=1}^{L_j} h_{j\ell} \cdot \mathbb{1}(\mathbf{x}_i;\, \mathcal{T}_j, \ell),
 \]
-where \(f\) is a prognostic function modelled by a forest of \(m_f\) trees and \(\tau\) is a treatment effect function modelled by a separate forest of \(m_\tau\) trees. This separation allows the prognostic and treatment effect components to have different regularisation and complexity. The conditional average treatment effect is \(\text{CATE}(\mathbf{x}) = \tau(\mathbf{x})\), and the average treatment effect is \(\text{ATE} = \mathbb{E}[\tau(\mathbf{X})]\).
+where \(\mathbb{1}(\mathbf{x}_i;\, \mathcal{T}_j, \ell) = 1\) if \(\mathbf{x}_i\) is assigned to leaf \(\ell\) in tree \(\mathcal{T}_j\), and zero otherwise.
 
-More generally, the scalar multiplier on \(\tau\) in the BCF decomposition need not equal the raw treatment indicator. Writing \(b_i\) for the coding applied to subject \(i\), the model becomes \(y_i = f(\mathbf{x}_i, \hat{e}(\mathbf{x}_i)) + b_i\, \tau(\mathbf{x}_i) + \varepsilon_i\). \citet{hahn2020bayesian} discuss several choices. \emph{Centered} coding sets \(b_i = A_i - 1/2\), which is the original BCF parameterisation and the default in \pkg{ShrinkageTrees}. \emph{Binary} coding uses \(b_i = A_i\). \emph{Adaptive} coding sets \(b_i = A_i - \hat{e}(\mathbf{x}_i)\), incorporating the estimated propensity score directly into the treatment multiplier; this is the parameterisation adopted in the \CRANpkg{bcf} package. Finally, the \emph{invariant} (parameter-expanded) coding of \citet[Section 5.2]{hahn2020bayesian} assigns group-specific intercepts \(b_0, b_1 \sim \mathcal{N}(0, 1/2)\) and writes \(y_i = f(\mathbf{x}_i) + b_{A_i}\, \tilde{\tau}(\mathbf{x}_i) + \varepsilon_i\), where \(b_0\) and \(b_1\) are updated within the Gibbs sampler via conjugate normal updates and the treatment effect is recovered as \(\tau(\mathbf{x}_i) = (b_1 - b_0)\, \tilde{\tau}(\mathbf{x}_i)\). This parameterisation is invariant to the labelling of treatment and control. All four options are available in \pkg{ShrinkageTrees} via the \texttt{treatment\_coding} argument.
+\begin{figure}
 
-For survival outcomes, we adopt an accelerated failure time (AFT) formulation. Let \(T_i\) denote the event time, \(C_i\) the censoring time, \(Y_i = \min(T_i, C_i)\) the observed follow-up time, and \(\delta_i \in \{0, 1\}\) the event indicator. The single-learner AFT model is
+{\centering \includegraphics[width=0.85\linewidth]{figures/ExampleTree_standalone} 
+
+}
+
+\caption{Schematic of a single regression tree. Interior nodes contain binary splitting rules of the form $x_\rho \leq c$; terminal nodes (leaves) contain step heights $h_\ell$. An observation traverses the tree from root to leaf, and its prediction is the step height of the leaf it reaches.}\label{fig:ExampleTree}
+\end{figure}
+
+A prior is specified over the ensemble \(\{(\mathcal{T}_j, \mathcal{H}_j)\}_{j=1}^m\) by independently assigning a prior on the tree structure and a conditional prior on the step heights given the tree:
 \[
-\log T_i = \sum_{j=1}^{m} g(\mathbf{x}_i;\, T_j, H_j) + \varepsilon_i, \quad \varepsilon_i \sim \mathcal{N}(0, \sigma^2).
+p(\mathcal{T}_j, \mathcal{H}_j) = p_{\mathcal{T}}(\mathcal{T}_j)\, p_{\mathcal{H}}(\mathcal{H}_j \mid \mathcal{T}_j) \quad \text{for } j = 1,\ldots,m.
 \]
-Right-censored observations (\(\delta_i = 0\)) are handled by imputing \(\log T_i\) from a truncated normal distribution within the Gibbs sampler. \pkg{ShrinkageTrees} also supports interval-censored outcomes, where the event time is known only to lie in an interval \((l_i, r_i]\); these are imputed analogously. The two-learner BCF decomposition extends directly to the AFT setting by replacing \(y_i\) with \(\log T_i\).
+These define the two key components of the BART prior. The tree structure \(\mathcal{T}\) of each tree is drawn from a prior \(p_{\mathcal{T}}(\mathcal{T})\) originally described by \citet{chipman1998bayesiancart}, based on a heterogeneous Galton--Watson branching process \citep{rockova2020theory}. The process begins at a root node and recursively decides whether to split a node based on its depth \(d\). The probability that a node at depth \(d\) is non-terminal is given by
+\[
+p(d) = \alpha\, (1 + d)^{-\beta},
+\]
+with hyperparameters \(\alpha > 0\) and \(\beta > 0\) governing the expected depth and shape of the tree. Given a tree topology, each interior node is assigned a binary decision rule of the form \([x_\rho \leq c]\), where the splitting variable \(\rho\) is selected uniformly from the available covariates and the split point \(c\) is drawn uniformly from the range of observed values for variable \(\rho\). The splitting rules are constrained to those producing valid partitions, that is, each subset contains a minimal chosen number of observations.
+
+The prior \(p_{\mathcal{H}}\) on the step heights \(\mathcal{H}\) is defined conditionally on the tree structure \(\mathcal{T}\). The step heights \(h_{j\ell}\) are assigned independent Gaussian priors of the form
+\[
+h_{j\ell} \sim \mathcal{N}\!\left(0,\, \frac{1}{4\sqrt{m}}\right),
+\]
+where the variance is scaled to ensure that the prior places approximately 95\% of its mass within the observed range of the response. This prior is conjugate, enabling efficient non-reversible updates using a Gibbs sampler.
+
+The noise is modelled as \(\varepsilon_i \sim \mathcal{N}(0, \sigma^2)\), with the error variance \(\sigma^2\) assigned a scaled inverse-chi-squared prior:
+\[
+\sigma^2 \sim \text{Inv-}\chi^2(\nu,\, \psi),
+\]
+where \(\nu\) denotes the degrees of freedom parameter and \(\psi\) the prior scale. We follow \citet{chipman2010bart}, setting \(\nu = 3\) and choosing \(\psi\) so that the prior is centred around a rough estimate of \(\sigma^2\).
 
 \subsection{Regularisation}\label{regularisation}
 
@@ -56,13 +77,40 @@ We distinguish three regularisation mechanisms, each targeting a different aspec
 
 \textbf{Dirichlet splitting priors.} DART \citep{linero2018dart} replaces the uniform distribution over splitting variables with a Dirichlet prior on the splitting probabilities \(\mathbf{s} = (s_1, \ldots, s_p)\). By concentrating the prior on sparse probability vectors, DART encourages the ensemble to split on a subset of relevant variables, achieving structural variable selection.
 
-\textbf{Global--local shrinkage priors on step heights.} The horseshoe prior \citep{carvalho2010horseshoe} places a global--local scale mixture on the leaf step heights:
+\textbf{Global--local shrinkage priors on step heights.} Rather than regularising the tree structure alone, one can place shrinkage priors directly on the leaf step heights. \pkg{ShrinkageTrees} adopts a scale mixture of normals representation,
 \[
-h_\ell \mid \lambda_\ell, \tau, \omega \sim \mathcal{N}(0,\, \omega\, \lambda_\ell^2\, \tau^2), \qquad
+h_\ell \mid \lambda_\ell, \tau, \omega \sim \mathcal{N}(0,\, \omega\, \lambda_\ell^2\, \tau^2),
+\]
+where \(\tau\) is a global shrinkage parameter shared across all leaves, \(\lambda_\ell\) is a local scale specific to leaf \(\ell\), and \(\omega\) is a fixed scaling constant. The global parameter \(\tau\) controls the overall degree of regularisation, while the local parameters \(\lambda_\ell\) allow individual leaves with strong signals to escape shrinkage.
+
+The horseshoe prior \citep{carvalho2010horseshoe} arises as a specific instantiation of this framework by placing independent half-Cauchy priors on both the local and global scales:
+\[
 \lambda_\ell \sim \text{C}^+(0, \alpha_\lambda), \qquad
 \tau \sim \text{C}^+(0, \alpha_\tau),
 \]
-where \(\text{C}^+(0, \alpha)\) denotes the half-Cauchy distribution with scale \(\alpha\), \(\tau\) is a global shrinkage parameter shared across all leaves, \(\lambda_\ell\) is a local scale allowing individual leaves to escape shrinkage, and \(\omega\) is a fixed scaling constant. This prior aggressively shrinks the contributions of uninformative leaves towards zero while preserving large, data-supported effects. We set \(\alpha_\tau = \alpha_\lambda = k / \sqrt{m}\) following \citet{jacobs2025horseshoe}. The Dirichlet and horseshoe priors address complementary aspects of regularisation --- structural sparsity and parametric shrinkage, respectively --- and can be combined within a single model in \pkg{ShrinkageTrees}.
+where \(\text{C}^+(0, \alpha)\) denotes the half-Cauchy distribution with scale \(\alpha\). The half-Cauchy has its median at \(\alpha\) and possesses heavy tails --- its mean and variance do not exist --- which allows the local scales to take very large values when the data support a strong effect \citep{polson2012halfcauchy}. This combination aggressively shrinks the contributions of uninformative leaves towards zero while preserving large, data-supported signals. Following \citet{jacobs2025horseshoe}, we set \(\alpha_\tau = \alpha_\lambda = k / \sqrt{m}\). The Dirichlet and horseshoe priors address complementary aspects of regularisation --- structural sparsity and parametric shrinkage, respectively --- and can be combined within a single model in \pkg{ShrinkageTrees}.
+
+\subsection{Prediction and causal models}\label{prediction-and-causal-models}
+
+The BART formulation above estimates a single function of the covariates --- we refer to this as the \emph{prediction model}. For causal inference, we adopt the Bayesian Causal Forest {[}BCF; \citet{hahn2020bayesian}{]} decomposition, also known as the \(\tau\)-learner \citep{caron2022estimating}. Given a binary treatment indicator \(A_i \in \{0, 1\}\) and an estimate of the propensity score \(\hat{e}(\mathbf{x}_i) = \hat{P}(A_i = 1 \mid \mathbf{x}_i)\), the \emph{causal model} writes
+\[
+y_i = f(\mathbf{x}_i, \hat{e}(\mathbf{x}_i)) + A_i\, \tau(\mathbf{x}_i) + \varepsilon_i,
+\]
+where \(f\) is a prognostic function modelled by a forest of \(m_f\) trees and \(\tau\) is a treatment effect function modelled by a separate forest of \(m_\tau\) trees. This separation allows the prognostic and treatment effect components to have different regularisation and complexity. The conditional average treatment effect is \(\text{CATE}(\mathbf{x}) = \tau(\mathbf{x})\), and the average treatment effect is \(\text{ATE} = \mathbb{E}[\tau(\mathbf{X})]\).
+
+More generally, the scalar multiplier on \(\tau\) in the BCF decomposition need not equal the raw treatment indicator. Writing \(b_i\) for the coding applied to subject \(i\), the model becomes \(y_i = f(\mathbf{x}_i, \hat{e}(\mathbf{x}_i)) + b_i\, \tau(\mathbf{x}_i) + \varepsilon_i\). \citet{hahn2020bayesian} discuss several choices. \emph{Centered} coding sets \(b_i = A_i - 1/2\), which is the original BCF parameterisation and the default in \pkg{ShrinkageTrees}. \emph{Binary} coding uses \(b_i = A_i\). \emph{Adaptive} coding sets \(b_i = A_i - \hat{e}(\mathbf{x}_i)\), incorporating the estimated propensity score directly into the treatment multiplier; this is the parameterisation adopted in the \CRANpkg{bcf} package. Finally, the \emph{invariant} (parameter-expanded) coding of \citet[Section 5.2]{hahn2020bayesian} assigns group-specific intercepts \(b_0, b_1 \sim \mathcal{N}(0, 1/2)\) and writes \(y_i = f(\mathbf{x}_i) + b_{A_i}\, \tilde{\tau}(\mathbf{x}_i) + \varepsilon_i\), where \(b_0\) and \(b_1\) are updated within the Gibbs sampler via conjugate normal updates and the treatment effect is recovered as \(\tau(\mathbf{x}_i) = (b_1 - b_0)\, \tilde{\tau}(\mathbf{x}_i)\). This parameterisation is invariant to the labelling of treatment and control. All four options are available in \pkg{ShrinkageTrees} via the \texttt{treatment\_coding} argument.
+
+For survival outcomes, we adopt an accelerated failure time (AFT) formulation. Let \(T_i\) denote the event time, \(C_i\) the censoring time, \(Y_i = \min(T_i, C_i)\) the observed follow-up time, and \(\delta_i \in \{0, 1\}\) the event indicator. The prediction model becomes
+\[
+\log T_i = \sum_{j=1}^{m} g(\mathbf{x}_i;\, T_j, H_j) + \varepsilon_i, \quad \varepsilon_i \sim \mathcal{N}(0, \sigma^2).
+\]
+Right-censored observations (\(\delta_i = 0\)) are handled by imputing \(\log T_i\) from a truncated normal distribution within the Gibbs sampler. \pkg{ShrinkageTrees} also supports interval-censored outcomes, where the event time is known only to lie in an interval \((l_i, r_i]\); these are imputed analogously. The causal model extends directly to the AFT setting by replacing \(y_i\) with \(\log T_i\).
+
+\subsection{Posterior computation}\label{posterior-computation}
+
+All models are fitted using Markov chain Monte Carlo (MCMC). The outer loop is a Gibbs sampler that cycles through updates of the tree topologies, the leaf step heights, the error variance \(\sigma^2\), and --- where applicable --- the shrinkage parameters and censored event times. Trees are updated one at a time via Bayesian backfitting \citep{chipman2010bart}: at each sweep, a partial residual is formed by subtracting the contributions of all other trees from the response, and tree \(j\) is then updated conditional on the current state of all other trees. The tree topology is modified through Metropolis--Hastings proposals that either grow a terminal node into an internal node with two new leaves, or prune an internal node back to a leaf. Each proposal is accepted or rejected according to the standard Metropolis--Hastings ratio, which balances the likelihood improvement against the prior on tree structure.
+
+Under the standard BART and Dirichlet (DART) priors, where the leaf parameters have a conjugate normal prior, the marginal likelihood of a proposed tree can be computed in closed form and the step heights are integrated out analytically. This yields the birth--death sampler described in \citet{chipman2010bart}; a detailed algorithmic exposition is given in \citet{kapelner2016bartmachine}. When global--local shrinkage priors such as the horseshoe are placed on the step heights, this conjugacy is lost: the local and global scale parameters \(\lambda_\ell\) and \(\tau\) must be sampled explicitly, and the tree proposals become reversible jump MCMC moves that account for the change in the number of scale parameters when a leaf is added or removed. The details of this reversible jump construction, including the proposal distributions and acceptance ratios, are given in \citet{jacobs2025horseshoe}.
 
 \section{Related Packages}\label{related-packages}
 
@@ -128,9 +176,9 @@ Function & Description & Class\\
 \end{tabular}
 \end{table}
 
-\texttt{ShrinkageTrees()} is the most general single-learner function. It accepts a \texttt{prior\_type} argument that selects the leaf prior: \texttt{"horseshoe"} (per-tree global scale), \texttt{"horseshoe\_fw"} (forest-wide global scale), \texttt{"half-cauchy"} (local shrinkage only), \texttt{"standard"} (conjugate normal, as in classical BART), or \texttt{"dirichlet"} (Dirichlet splitting, as in DART). \texttt{HorseTrees()} is a convenience wrapper that fixes the prior to the horseshoe and exposes a single tuning parameter \(k\) controlling the half-Cauchy scales via \(\alpha_\tau = \alpha_\lambda = k / \sqrt{m}\). The causal functions \texttt{CausalShrinkageForest()} and \texttt{CausalHorseForest()} mirror this design for the two-learner BCF formulation, with independent prior configurations for the prognostic and treatment effect forests.
+\texttt{ShrinkageTrees()} is the most general prediction model function. It accepts a \texttt{prior\_type} argument that selects the leaf prior: \texttt{"horseshoe"} (per-tree global scale), \texttt{"horseshoe\_fw"} (forest-wide global scale), \texttt{"half-cauchy"} (local shrinkage only), \texttt{"standard"} (conjugate normal, as in classical BART), or \texttt{"dirichlet"} (Dirichlet splitting, as in DART). \texttt{HorseTrees()} is a convenience wrapper that fixes the prior to the horseshoe and exposes a single tuning parameter \(k\) controlling the half-Cauchy scales via \(\alpha_\tau = \alpha_\lambda = k / \sqrt{m}\). The causal functions \texttt{CausalShrinkageForest()} and \texttt{CausalHorseForest()} mirror this design for the causal BCF formulation, with independent prior configurations for the prognostic and treatment effect forests.
 
-All single-learner functions return an object of class \texttt{"ShrinkageTrees"}; all two-learner functions return \texttt{"CausalShrinkageForest"}. Both classes provide \texttt{print()}, \texttt{summary()}, \texttt{predict()}, and \texttt{plot()} methods. The \texttt{summary()} method reports posterior summaries for \(\sigma\), variable inclusion probabilities, and --- for causal models --- the ATE with a credible interval. The \texttt{predict()} method returns a \texttt{ShrinkageTreesPrediction} object containing posterior means and credible intervals. The \texttt{plot()} method produces MCMC diagnostics (traceplots and posterior densities for \(\sigma\)), variable importance plots, and --- for causal models --- ATE and CATE visualisations. Plotting uses \CRANpkg{bayesplot} and \CRANpkg{ggplot2}, which are suggested but not required dependencies.
+All prediction model functions return an object of class \texttt{"ShrinkageTrees"}; all causal model functions return \texttt{"CausalShrinkageForest"}. Both classes provide \texttt{print()}, \texttt{summary()}, \texttt{predict()}, and \texttt{plot()} methods. The \texttt{summary()} method reports posterior summaries for \(\sigma\), variable inclusion probabilities, and --- for causal models --- the ATE with a credible interval. The \texttt{predict()} method returns a \texttt{ShrinkageTreesPrediction} object containing posterior means and credible intervals. The \texttt{plot()} method produces MCMC diagnostics (traceplots and posterior densities for \(\sigma\)), variable importance plots, and --- for causal models --- ATE and CATE visualisations. Plotting uses \CRANpkg{ggplot2}, which is a suggested but not required dependency.
 
 \subsection{Rcpp backend}\label{rcpp-backend}
 
@@ -138,13 +186,19 @@ We implement the computationally intensive components of the Gibbs sampler in C+
 
 Internally, the C++ code dispatches between two forest implementations depending on the prior. Priors that require reversible jump proposals (\texttt{"horseshoe"}, \texttt{"horseshoe\_fw"}, \texttt{"half-cauchy"}) use a \texttt{Forest} class with paired grow--prune moves that satisfy detailed balance. The \texttt{"standard"} and \texttt{"dirichlet"} priors use a separate \texttt{StanForest} class with birth--death moves, which is simpler and faster when global scale updates are not needed.
 
+The scale mixture prior on the step heights is encapsulated in a C++ class \texttt{ScaleMixture} that follows the strategy pattern. An abstract base class \texttt{EtaPrior} defines a common interface --- proposing new local parameters, computing the log prior and proposal densities needed for the Metropolis--Hastings ratio, and optionally performing a global update --- while concrete subclasses implement the prior-specific sampling logic. The current subclasses are \texttt{FixedVariance} (conjugate normal, used by BART and DART), \texttt{HalfCauchy} (local shrinkage only), \texttt{Horseshoe} (per-tree global--local shrinkage), and \texttt{Horseshoe\_fw} (forest-wide global shrinkage). A factory function selects the appropriate subclass at run time based on the user's \texttt{prior\_type} argument. Because the tree update and reversible jump routines interact with the prior only through the \texttt{ScaleMixture} interface, adding a new global--local shrinkage prior --- for example a regularised horseshoe or a Dirichlet--Laplace prior --- requires only implementing a new \texttt{EtaPrior} subclass and registering it in the factory, without modifying the sampler logic.
+
 \subsection{Multi-chain MCMC}\label{multi-chain-mcmc}
 
 All primary fitting functions accept an \texttt{n\_chains} argument. When \texttt{n\_chains\ \textgreater{}\ 1}, independent chains are dispatched in parallel via \texttt{parallel::mclapply()} using \texttt{min(n\_chains,\ parallel::detectCores())} cores. After sampling, the posterior draws from all chains are pooled: sample matrices are concatenated row-wise and posterior means are recomputed from the pooled draws. The returned object is a standard \texttt{ShrinkageTrees} or \texttt{CausalShrinkageForest} instance, so all downstream methods work without modification. Per-chain diagnostics (acceptance ratios, \(\sigma\) traces) are retained for convergence assessment.
 
+\subsection{Convergence diagnostics via coda}\label{convergence-diagnostics-via-coda}
+
+Assessing MCMC convergence is an essential part of any Bayesian workflow, yet most BART implementations leave this task entirely to the user. \pkg{ShrinkageTrees} provides a bridge to the \CRANpkg{coda} ecosystem \citep{plummer2006coda} through an \texttt{as.mcmc.list()} S3 method. This method extracts the posterior draws of \(\sigma\) --- split by chain --- and wraps each chain in a \texttt{coda::mcmc} object, returning a \texttt{coda::mcmc.list}. Because \pkg{coda} is a suggested rather than required dependency, all functionality remains available when it is not installed. When it is available, \texttt{summary()} automatically reports the effective sample size (ESS) and --- for multi-chain fits --- the Gelman--Rubin \(\hat{R}\) statistic. Users who require more detailed diagnostics can pass the \texttt{mcmc.list} object directly to any \pkg{coda} function, including \texttt{geweke.diag()}, \texttt{heidel.diag()}, \texttt{autocorr.plot()}, and \texttt{gelman.plot()}, obtaining a complete convergence assessment without custom post-processing code.
+
 \section{Worked Example}\label{worked-example}
 
-We demonstrate the package on the \texttt{pdac} dataset shipped with \pkg{ShrinkageTrees}. This dataset is a processed subset of the TCGA pancreatic ductal adenocarcinoma (PAAD) cohort and contains overall survival times, a binary treatment indicator (radiation therapy versus no radiation), clinical covariates, and expression values of approximately 3,000 genes selected by median absolute deviation. The dataset provides a high-dimensional causal survival problem that exercises the main features of the package. We first fit single-learner survival models, then extend the analysis to causal inference using the two-learner BCF formulation.
+We demonstrate the package on the \texttt{pdac} dataset shipped with \pkg{ShrinkageTrees}. This dataset is a processed subset of the TCGA pancreatic ductal adenocarcinoma (PAAD) cohort and contains overall survival times, a binary treatment indicator (radiation therapy versus no radiation), clinical covariates, and expression values of approximately 3,000 genes selected by median absolute deviation. The dataset provides a high-dimensional causal survival problem that exercises the main features of the package. We first fit prediction models for survival, then extend the analysis to causal inference using the BCF formulation.
 
 \subsection{Data and setup}\label{data-and-setup}
 
@@ -162,9 +216,9 @@ cat("n =", nrow(pdac), "| p =", ncol(X),
     "| treated =", sum(treatment), "/ control =", sum(1 - treatment), "\n")
 \end{verbatim}
 
-\subsection{Survival analysis with a single-learner model}\label{survival-analysis-with-a-single-learner-model}
+\subsection{Survival prediction models}\label{survival-prediction-models}
 
-We fit two single-learner survival models on the same data: a standard BART model via \texttt{SurvivalBART()} and a Horseshoe Forest via \texttt{HorseTrees()}. Both use an AFT formulation with right-censoring. The BART model serves as a baseline; the Horseshoe Forest applies global--local shrinkage to the leaf step heights, which is expected to improve regularisation in this high-dimensional setting.
+We fit two prediction models on the same data: a standard BART model via \texttt{SurvivalBART()} and a Horseshoe Forest via \texttt{HorseTrees()}. Both use an AFT formulation with right-censoring. The BART model serves as a baseline; the Horseshoe Forest applies global--local shrinkage to the leaf step heights, which is expected to improve regularisation in this high-dimensional setting.
 
 \begin{verbatim}
 set.seed(2025)
@@ -235,7 +289,7 @@ summary(pred)
 
 \subsection{Causal survival analysis}\label{causal-survival-analysis}
 
-We now estimate heterogeneous treatment effects using \texttt{CausalHorseForest()}, which fits a two-learner BCF model with horseshoe shrinkage on both the prognostic and treatment effect forests. We first estimate propensity scores using \texttt{HorseTrees()} with a binary outcome, then include the estimated propensity score \(\hat{e}(\mathbf{x})\) in the control covariate matrix following \citet{hahn2020bayesian}.
+We now estimate heterogeneous treatment effects using \texttt{CausalHorseForest()}, which fits a causal BCF model with horseshoe shrinkage on both the prognostic and treatment effect forests. We first estimate propensity scores using \texttt{HorseTrees()} with a binary outcome, then include the estimated propensity score \(\hat{e}(\mathbf{x})\) in the control covariate matrix following \citet{hahn2020bayesian}.
 
 \begin{verbatim}
 set.seed(2025)

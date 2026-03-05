@@ -1,5 +1,21 @@
 # ShrinkageTrees 2.0.0
 
+## TCGA ovarian cancer dataset (`ovarian`)
+
+Added the `ovarian` dataset: a processed TCGA-OV cohort (n = 357) for
+high-dimensional survival prediction and causal inference. The dataset is
+a list with two elements:
+
+- `X`: a 357 x 2000 gene expression matrix (log2-normalised TPM, top 2000
+  most variable genes by median absolute deviation).
+- `clinical`: a data frame with overall survival time and event indicator,
+  age, FIGO stage, tumor grade, and a binary treatment indicator
+  (carboplatin vs cisplatin).
+
+See `?ovarian` and `tests/manual/test-ovarian.R` for a full worked example
+covering survival prediction (SurvivalBART, SurvivalDART, HorseTrees) and
+causal inference (SurvivalBCF, SurvivalShrinkageBCF, CausalHorseForest).
+
 ## Treatment coding for causal models (`treatment_coding`)
 
 All causal model functions — `CausalHorseForest()`, `CausalShrinkageForest()`,
@@ -70,13 +86,25 @@ argument (default `1`). When `n_chains > 1`:
 - Added S3 classes `ShrinkageTrees` and `CausalShrinkageForest` with constructors in `constructors.R`.
 - Added `print` methods for both classes, displaying model specification, MCMC settings, acceptance ratio, and posterior mean sigma.
 - Added `summary` methods for both classes, returning an inspectable object with posterior sigma (mean, SD, 95% CI), prediction summaries, variable importance (posterior inclusion probabilities), and — for causal models — ATE with credible interval (when `store_posterior_sample = TRUE`) and CATE heterogeneity.
-- Added `predict` method for `ShrinkageTrees`, enabling posterior predictive inference on new data by re-running the sampler with stored training data and hyperparameters. Returns a `ShrinkageTreesPrediction` object with posterior mean and credible interval bounds.
-- Added `print` and `summary` methods for `ShrinkageTreesPrediction`, showing a formatted head-style table and a min/quartile/max distribution summary respectively.
+- Added `predict` method for `ShrinkageTrees`, enabling posterior predictive inference on new data by re-running the sampler with stored training data and hyperparameters. Returns a `ShrinkageTreesPrediction` object with posterior mean and credible interval bounds. For survival models, the prediction object additionally stores `predictions_sample` (full posterior draws on the original scale) and `sigma` (posterior draws on the log-time scale), enabling posterior predictive survival curve plotting.
+- Added `predict` method for `CausalShrinkageForest`, returning a `CausalShrinkageForestPrediction` object with three components: `prognostic` ($\mu(X)$), `cate` ($\tau(X)$), and `total` ($\mu(X) + \tau(X)$), each with posterior mean and credible interval bounds. For survival models with `timescale = "time"`, predictions are back-transformed to the original time scale and the CATE becomes a multiplicative time ratio.
+- Added `print` and `summary` methods for `ShrinkageTreesPrediction` and `CausalShrinkageForestPrediction`.
+
+## MCMC convergence diagnostics (`coda`)
+
+- Added `as.mcmc.list()` S3 method for `ShrinkageTrees` objects, converting
+  the sigma posterior (split by chain) into a `coda::mcmc.list`. This enables
+  all standard `coda` diagnostics: Gelman–Rubin R-hat, effective sample size,
+  Geweke test, Heidelberger–Welch test, autocorrelation plots, and more.
+- `summary()` now automatically reports **effective sample size** (ESS) and —
+  for multi-chain fits — the **Gelman–Rubin R-hat** when the suggested package
+  `coda` is installed.
+- Added `coda` to `Suggests` in DESCRIPTION.
 
 ## Posterior visualisation (`plot`)
 
-S3 `plot()` methods added for `ShrinkageTrees` and `CausalShrinkageForest`.
-Requires the suggested package `ggplot2`.
+S3 `plot()` methods added for `ShrinkageTrees`, `CausalShrinkageForest`,
+and `ShrinkageTreesPrediction`. Requires the suggested package `ggplot2`.
 
 - `plot(fit, type = "trace")` — sigma traceplot; one line per chain, useful for assessing mixing.
 - `plot(fit, type = "density")` — overlaid posterior density of sigma, one curve per chain.
@@ -84,6 +112,23 @@ Requires the suggested package `ggplot2`.
 - `plot(fit, type = "ate")` — posterior density of the ATE with 95 % credible region _(causal models only; requires `store_posterior_sample = TRUE`)_.
 - `plot(fit, type = "cate")` — point estimates and 95 % credible intervals for the CATE of each training observation, sorted by posterior mean _(causal models only; requires `store_posterior_sample = TRUE`)_.
 - `plot(fit, type = "vi", forest = "both")` — side-by-side VI for the control and treatment forests _(causal models only)_.
+- `plot(fit, type = "survival")` — posterior survival curves
+  $S(t | x_i) = 1 - \Phi((\log t - \mu_i) / \sigma)$ derived from the AFT
+  log-normal model _(survival outcomes only)_.
+  - **Population-averaged curve** (default, `obs = NULL`): computes
+    $\bar{S}(t) = n^{-1} \sum_i S(t | x_i)$ at each MCMC iteration with
+    pointwise credible bands.
+  - **Individual curves** (`obs = c(1, 5, ...)`): one curve per selected
+    training observation with its own credible band.
+  - `level` controls the credible band width (default 0.95).
+  - `t_grid` allows a custom time grid; auto-generated if `NULL`.
+  - `km = TRUE` overlays the Kaplan–Meier estimate as a dashed black
+    step function (population-averaged plot only; requires `survival`
+    package). Ignored with a message when `obs` is not `NULL`.
+- `plot(pred, type = "survival")` — posterior **predictive** survival curves
+  for new (out-of-sample) data from `predict()`. Same `obs`, `t_grid`, and
+  `level` arguments as above. The KM overlay is not available for prediction
+  objects.
 
 ## Vignette
 
@@ -93,6 +138,13 @@ Requires the suggested package `ggplot2`.
   `CausalHorseForest`, `CausalShrinkageForest`), all S3 methods (`print`,
   `summary`, `predict`, `plot`), multi-chain MCMC, and a full TCGA PAAD
   case study.
+
+## Survival wrapper improvements
+
+- `SurvivalBART()`, `SurvivalDART()`, `SurvivalBCF()`, and
+  `SurvivalShrinkageBCF()` now accept `store_posterior_sample` as an
+  explicit parameter (default `TRUE`), avoiding a "matched by multiple
+  actual arguments" error when passing it via `...`.
 
 ## Bug fixes
 

@@ -41,3 +41,77 @@
 #'   \item The Cancer Genome Atlas (TCGA), PAAD project, DbGaP: phs000178.
 #' }
 "pdac"
+
+
+#' TCGA Ovarian Cancer Dataset
+#'
+#' Gene expression and clinical data for ovarian cancer patients from
+#' The Cancer Genome Atlas (TCGA-OV). The dataset contains log2-normalised
+#' gene expression profiles alongside overall survival outcomes, treatment
+#' assignment, and clinical covariates.
+#'
+#' @format A list with two elements:
+#' \describe{
+#'   \item{X}{A numeric matrix of dimensions n x 2000, where rows are patients
+#'     and columns are genes. Values are log2(TPM + 1) normalised expression
+#'     levels. Genes were selected as the top 2000 most variable genes across
+#'     all TCGA-OV samples, ranked by median absolute deviation (MAD).}
+#'   \item{clinical}{A data frame with n rows and 7 columns:
+#'     \describe{
+#'       \item{bcr_patient_barcode}{Character. TCGA patient barcode (12 characters),
+#'         e.g. \code{"TCGA-04-1331"}.}
+#'       \item{OS_time}{Numeric. Overall survival time in days. Defined as days
+#'         to death for deceased patients and days to last follow-up for
+#'         censored patients.}
+#'       \item{OS_event}{Integer. Overall survival event indicator.
+#'         1 = death observed, 0 = censored.}
+#'       \item{age}{Integer. Age at initial pathologic diagnosis in years.}
+#'       \item{figo_stage}{Integer. FIGO staging score coded as
+#'         2 = Stage II, 3 = Stage III, 4 = Stage IV.}
+#'       \item{tumor_grade}{Integer. Histologic tumor grade coded as
+#'         2 = G2, 3 = G3, 4 = G4. GX (unknown grade) was coded as
+#'         \code{NA} and excluded.}
+#'       \item{treatment}{Integer. First-line platinum-based chemotherapy.
+#'         1 = carboplatin, 0 = cisplatin. Patients who received both
+#'         carboplatin and cisplatin were coded as 0 (cisplatin group).
+#'         Patients with ambiguous or missing treatment records were excluded.}
+#'     }
+#'   }
+#' }
+#' @details
+#' RNA-seq data were downloaded from the GDC portal using the
+#' \code{TCGAbiolinks} package (STAR - Counts workflow). Expression values
+#' were normalised to TPM and log2-transformed as log2(TPM + 1). Genes with
+#' median TPM <= 1 across all samples were removed prior to MAD filtering.
+#' Clinical data were obtained from the BCR Biotab clinical supplement.
+#' Treatment assignment was derived from the drug table
+#' (\code{clinical_drug_ov}), restricted to adjuvant (first-line) treatment
+#' records. Samples were matched between expression and clinical data using
+#' the 12-character TCGA patient barcode.
+#'
+#' @source \url{https://portal.gdc.cancer.gov/projects/TCGA-OV}
+#'
+#' @references
+#' Cancer Genome Atlas Research Network (2011). Integrated genomic analyses
+#' of ovarian carcinoma. \emph{Nature}, 474, 609--615.
+#' \doi{10.1038/nature10166}
+#'
+#' Colaprico, A. et al. (2016). TCGAbiolinks: an R/Bioconductor package for
+#' integrative analysis with GDC data. \emph{Nucleic Acids Research}, 44(8).
+#' \doi{10.1093/nar/gkv1507}
+#'
+#' @examples
+#' data(ovarian)
+#'
+#' # Expression matrix
+#' dim(ovarian$X)
+#'
+#' # Survival outcome
+#' head(ovarian$clinical[, c("OS_time", "OS_event", "treatment")])
+#'
+#' # KM plot by treatment
+#' library(survival)
+#' fit <- survfit(Surv(OS_time, OS_event) ~ treatment, data = ovarian$clinical)
+#' plot(fit, col = c("blue", "red"), xlab = "Time (days)", ylab = "Survival")
+#' legend("topright", c("Carboplatin", "Cisplatin"), col = c("blue", "red"), lty = 1)
+"ovarian"

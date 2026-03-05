@@ -204,3 +204,32 @@ test_that("plot.CausalShrinkageForest type='vi' errors for non-Dirichlet model",
   fit <- .causal_fit()
   expect_error(plot(fit, type = "vi"), "not available")
 })
+
+
+# -- plot.ShrinkageTreesPrediction: survival -----------------------------------
+
+test_that("plot.ShrinkageTreesPrediction type='survival' returns a ggplot", {
+  .skip_plots()
+  set.seed(1)
+  n <- 30L; p <- 3L
+  X      <- matrix(runif(n * p), ncol = p)
+  X_test <- matrix(runif(10 * p), ncol = p)
+  time   <- rexp(n, rate = exp(0.5 * X[, 1]))
+  status <- rbinom(n, 1, 0.7)
+
+  fit <- HorseTrees(
+    y = time, status = status, X_train = X, X_test = X_test,
+    outcome_type = "right-censored",
+    number_of_trees = 5, N_post = 10, N_burn = 5,
+    store_posterior_sample = TRUE, verbose = FALSE
+  )
+  pred <- predict(fit, newdata = X_test)
+
+  # Population-averaged
+  out <- expect_no_error(plot(pred, type = "survival"))
+  expect_s3_class(out, "gg")
+
+  # Individual curves
+  out2 <- expect_no_error(plot(pred, type = "survival", obs = c(1, 3)))
+  expect_s3_class(out2, "gg")
+})

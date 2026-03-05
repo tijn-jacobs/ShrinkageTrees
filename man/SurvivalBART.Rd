@@ -119,6 +119,13 @@ print(pred)
 # Diagnostic plot (requires ggplot2)
 if (requireNamespace("ggplot2", quietly = TRUE)) {
   plot(fit, type = "trace")
+
+  # Posterior survival curves for training data
+  plot(fit, type = "survival")
+
+  # Posterior predictive survival curves for new data
+  plot(pred, type = "survival")
+  plot(pred, type = "survival", obs = c(1, 5))
 }
 
 # Interval-censored example

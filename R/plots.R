@@ -193,6 +193,139 @@
 }
 
 
+# Compute posterior predictive survival curves for a ShrinkageTreesPrediction.
+# predictions_sample: N_post x n matrix, sigma: N_post vector, both on log-time
+# scale if timescale == "time".
+.survival_curves_pred <- function(x, obs, t_grid, level) {
+
+  if (!x$outcome_type %in% c("right-censored", "interval-censored"))
+    stop("Survival curve plot requires a survival outcome type.", call. = FALSE)
+  if (is.null(x$predictions_sample) || is.null(x$sigma))
+    stop("Survival curve plot requires posterior samples. ",
+         "These are stored automatically when predict() is called on a ",
+         "survival model.", call. = FALSE)
+
+  alpha     <- (1 - level) / 2
+  sigma_log <- x$sigma          # already on log-time scale
+  N_post    <- length(sigma_log)
+
+  # Log-scale mu matrix (N_post x n)
+  mu_matrix <- if (x$timescale == "time")
+    log(x$predictions_sample)
+  else
+    x$predictions_sample
+
+  n_obs <- ncol(mu_matrix)
+
+  # Auto-generate time grid on original time scale
+  if (is.null(t_grid)) {
+    orig_preds <- if (x$timescale == "time") x$mean else exp(x$mean)
+    t_lo  <- max(min(orig_preds) * 0.2, 1e-6)
+    t_hi  <- max(orig_preds) * 3
+    t_grid <- seq(t_lo, t_hi, length.out = 200)
+  }
+  log_t <- log(t_grid)
+  n_t   <- length(t_grid)
+
+  # -- Population average (obs = NULL) -----------------------------------------
+  if (is.null(obs)) {
+    S_sum <- matrix(0, N_post, n_t)
+    for (i in seq_len(n_obs)) {
+      z <- (rep(1, N_post) %o% log_t - mu_matrix[, i]) / sigma_log
+      S_sum <- S_sum + (1 - pnorm(z))
+    }
+    S_avg <- S_sum / n_obs
+
+    df <- data.frame(
+      time       = t_grid,
+      surv_mean  = colMeans(S_avg),
+      surv_lower = apply(S_avg, 2, quantile, alpha),
+      surv_upper = apply(S_avg, 2, quantile, 1 - alpha),
+      obs_id     = factor("Average")
+    )
+    return(df)
+  }
+
+  # -- Individual observations -------------------------------------------------
+  if (any(obs < 1) || any(obs > n_obs))
+    stop("obs indices must be between 1 and ", n_obs, ".", call. = FALSE)
+
+  dfs <- vector("list", length(obs))
+  for (k in seq_along(obs)) {
+    i <- obs[k]
+    mu_i <- mu_matrix[, i]
+    z <- (rep(1, N_post) %o% log_t - mu_i) / sigma_log
+    S <- 1 - pnorm(z)
+
+    dfs[[k]] <- data.frame(
+      time       = t_grid,
+      surv_mean  = colMeans(S),
+      surv_lower = apply(S, 2, quantile, alpha),
+      surv_upper = apply(S, 2, quantile, 1 - alpha),
+      obs_id     = factor(paste0("Obs ", i))
+    )
+  }
+  do.call(rbind, dfs)
+}
+
+
+# Shared ggplot2 builder for survival curve data.frames.
+# df: data.frame from .survival_curves() or .survival_curves_pred()
+# km_data: optional data.frame(time, surv) for KM overlay
+.plot_survival_curves <- function(df, obs, level, km_data = NULL,
+                                  title_prefix = "Posterior") {
+  ci_pct   <- paste0(round(level * 100), "%")
+  n_curves <- nlevels(df$obs_id)
+
+  if (n_curves == 1L) {
+    p <- ggplot2::ggplot(df, ggplot2::aes(x = .data$time, y = .data$surv_mean)) +
+      ggplot2::geom_ribbon(
+        ggplot2::aes(ymin = .data$surv_lower, ymax = .data$surv_upper),
+        fill = "steelblue", alpha = 0.3
+      ) +
+      ggplot2::geom_line(colour = "steelblue", linewidth = 0.8)
+  } else {
+    p <- ggplot2::ggplot(df, ggplot2::aes(
+      x = .data$time, y = .data$surv_mean, colour = .data$obs_id,
+      fill = .data$obs_id
+    )) +
+      ggplot2::geom_ribbon(
+        ggplot2::aes(ymin = .data$surv_lower, ymax = .data$surv_upper),
+        alpha = 0.15, colour = NA
+      ) +
+      ggplot2::geom_line(linewidth = 0.7)
+  }
+
+  title <- if (is.null(obs)) {
+    paste0(title_prefix, " population-averaged survival curve")
+  } else {
+    paste0(title_prefix, " survival curve", if (n_curves > 1) "s" else "")
+  }
+
+  if (!is.null(km_data)) {
+    p <- p +
+      ggplot2::geom_step(
+        data = km_data,
+        ggplot2::aes(x = .data$time, y = .data$surv),
+        colour = "black", linetype = "dashed", linewidth = 0.5,
+        inherit.aes = FALSE
+      )
+  }
+
+  p +
+    ggplot2::labs(
+      x        = "Time",
+      y        = "Survival probability",
+      title    = title,
+      subtitle = paste0(ci_pct, " credible band"),
+      colour   = NULL,
+      fill     = NULL
+    ) +
+    ggplot2::ylim(0, 1) +
+    ggplot2::theme_minimal()
+}
+
+
 # -- plot.ShrinkageTrees -------------------------------------------------------
 
 #' Plot diagnostics for a ShrinkageTrees model
@@ -308,31 +441,9 @@ plot.ShrinkageTrees <- function(x,
 
   if (type == "survival") {
     df <- .survival_curves(x, obs = obs, t_grid = t_grid, level = level)
-    ci_pct <- paste0(round(level * 100), "%")
-    n_curves <- nlevels(df$obs_id)
 
-    if (n_curves == 1L) {
-      p <- ggplot2::ggplot(df, ggplot2::aes(x = .data$time, y = .data$surv_mean)) +
-        ggplot2::geom_ribbon(
-          ggplot2::aes(ymin = .data$surv_lower, ymax = .data$surv_upper),
-          fill = "steelblue", alpha = 0.3
-        ) +
-        ggplot2::geom_line(colour = "steelblue", linewidth = 0.8)
-    } else {
-      p <- ggplot2::ggplot(df, ggplot2::aes(
-        x = .data$time, y = .data$surv_mean, colour = .data$obs_id,
-        fill = .data$obs_id
-      )) +
-        ggplot2::geom_ribbon(
-          ggplot2::aes(ymin = .data$surv_lower, ymax = .data$surv_upper),
-          alpha = 0.15, colour = NA
-        ) +
-        ggplot2::geom_line(linewidth = 0.7)
-    }
-
-    title <- if (is.null(obs)) "Population-averaged survival curve"
-             else paste0("Posterior survival curve", if (n_curves > 1) "s" else "")
-    # Overlay Kaplan-Meier curve for population-average plot
+    # Build KM data if requested
+    km_data <- NULL
     if (isTRUE(km) && !is.null(obs)) {
       message("km = TRUE is ignored for individual survival curves ",
               "(only available when obs = NULL).")
@@ -346,32 +457,12 @@ plot.ShrinkageTrees <- function(x,
         km_fit <- survival::survfit(
           survival::Surv(orig_times, x$data$status_train) ~ 1
         )
-        km_df <- data.frame(
-          time = km_fit$time,
-          surv = km_fit$surv
-        )
-        p <- p +
-          ggplot2::geom_step(
-            data = km_df,
-            ggplot2::aes(x = .data$time, y = .data$surv),
-            colour = "black", linetype = "dashed", linewidth = 0.5,
-            inherit.aes = FALSE
-          )
+        km_data <- data.frame(time = km_fit$time, surv = km_fit$surv)
       }
     }
 
-    p <- p +
-      ggplot2::labs(
-        x        = "Time",
-        y        = "Survival probability",
-        title    = title,
-        subtitle = paste0(ci_pct, " credible band"),
-        colour   = NULL,
-        fill     = NULL
-      ) +
-      ggplot2::ylim(0, 1) +
-      ggplot2::theme_minimal()
-    return(p)
+    return(.plot_survival_curves(df, obs = obs, level = level,
+                                 km_data = km_data))
   }
 
   n_ch   <- if (!is.null(x$mcmc$n_chains)) x$mcmc$n_chains else 1L
@@ -549,4 +640,62 @@ plot.CausalShrinkageForest <- function(x,
   if (forest == "control") return(p_control)
   if (forest == "treat")   return(p_treat)
   list(control = p_control, treat = p_treat)
+}
+
+
+# -- plot.ShrinkageTreesPrediction ---------------------------------------------
+
+#' Plot posterior predictive survival curves
+#'
+#' Plots posterior predictive survival curves for new observations from
+#' a \code{ShrinkageTreesPrediction} object. Only available for survival
+#' outcome types (\code{"right-censored"} or \code{"interval-censored"}).
+#'
+#' @param x A \code{ShrinkageTreesPrediction} object returned by
+#'   \code{\link{predict.ShrinkageTrees}} for a survival model.
+#' @param type Character; currently only \code{"survival"} is supported.
+#' @param obs Integer vector of predicted-observation indices for individual
+#'   survival curves, or \code{NULL} (default) for the population-averaged
+#'   curve across all predicted observations.
+#' @param t_grid Optional numeric vector of time points (on the original
+#'   time scale) at which to evaluate the survival function. If \code{NULL}
+#'   (default), a grid of 200 equally spaced points is generated
+#'   automatically.
+#' @param level Width of the pointwise credible band. Default \code{0.95}.
+#' @param ... Additional arguments (currently unused).
+#' @return A \pkg{ggplot2} object.
+#'
+#' @examples
+#' \dontrun{
+#' # Fit a survival model
+#' fit_surv <- SurvivalBART(
+#'   time = time, status = status, X_train = X,
+#'   number_of_trees = 20, N_post = 200, N_burn = 100,
+#'   store_posterior_sample = TRUE, verbose = FALSE
+#' )
+#'
+#' # Predict on new data
+#' pred <- predict(fit_surv, newdata = X_test)
+#'
+#' # Population-averaged posterior predictive survival curve
+#' plot(pred, type = "survival")
+#'
+#' # Individual posterior predictive curves
+#' plot(pred, type = "survival", obs = c(1, 5, 10))
+#' }
+#' @seealso \code{\link{predict.ShrinkageTrees}},
+#'   \code{\link{plot.ShrinkageTrees}}
+#' @export
+plot.ShrinkageTreesPrediction <- function(x,
+                                          type = "survival",
+                                          obs = NULL,
+                                          t_grid = NULL,
+                                          level = 0.95,
+                                          ...) {
+  type <- match.arg(type, choices = "survival")
+  .check_ggplot2()
+
+  df <- .survival_curves_pred(x, obs = obs, t_grid = t_grid, level = level)
+  .plot_survival_curves(df, obs = obs, level = level,
+                        title_prefix = "Posterior predictive")
 }

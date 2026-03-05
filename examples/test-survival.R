@@ -125,16 +125,19 @@ if (requireNamespace("ggplot2", quietly = TRUE)) {
   # Population-averaged survival curve
   p1 <- plot(fit_rc, type = "survival")
   cat("Population-averaged survival curve OK.\n")
+  p1
 
   # Individual curves
   p2 <- plot(fit_rc, type = "survival", obs = c(1, 5, 10))
   cat("Individual survival curves OK.\n")
+  p2
 
   # KM overlay
   if (requireNamespace("survival", quietly = TRUE)) {
     p3 <- plot(fit_rc, type = "survival", km = TRUE)
     cat("KM overlay OK.\n")
   }
+  p3
 }
 
 cat("\nAll survival tests passed.\n")

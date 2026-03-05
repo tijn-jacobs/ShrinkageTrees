@@ -151,6 +151,20 @@ ATE_horseshoe <- mean(post_ATE_horseshoe)
 ```
 ![Posterior ATE plot](man/figures/posterior_ate_plot.png)
 
+## 📊 Included Datasets
+
+The package ships with two TCGA datasets for high-dimensional survival analysis and causal inference:
+
+| Dataset | Cancer | n | Covariates | Treatment |
+|---------|--------|---|------------|-----------|
+| `pdac` | Pancreatic (PAAD) | 178 | ~3,000 genes + clinical | Radiation vs control |
+| `ovarian` | Ovarian (OV) | 357 | 2,000 genes + clinical | Carboplatin vs cisplatin |
+
+```r
+data("pdac")     # data frame with time, status, treatment, gene expression, ...
+data("ovarian")  # list: ovarian$X (gene matrix), ovarian$clinical (data frame)
+```
+
 ## 🩺 Pancreatic Cancer Analysis Demo
 
 The package includes a **demo analysis** based on the TCGA PAAD (pancreatic cancer) dataset to showcase how ShrinkageTrees can be used in practice. This demo replicates the main case study from the preprint *"Horseshoe Forests for High-Dimensional Causal Survival Analysis"* ([arXiv:2507.22004](https://arxiv.org/abs/2507.22004)).
