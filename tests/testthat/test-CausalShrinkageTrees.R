@@ -439,7 +439,7 @@ test_that("CausalShrinkageForest returns CausalShrinkageForest S3 object with wo
   )
 
   expect_s3_class(fit, "CausalShrinkageForest")
-  expect_no_error(print(fit))
+  expect_no_error(capture.output(print(fit)))
   expect_no_error(smry <- summary(fit))
   expect_type(smry, "list")
   expect_true(!is.null(smry$sigma))

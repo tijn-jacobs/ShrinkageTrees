@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.29 (TeX Live 2026) (preloaded format=pdflatex 2026.3.3)  5 MAR 2026 12:28
+This is pdfTeX, Version 3.141592653-2.6-1.40.29 (TeX Live 2026) (preloaded format=pdflatex 2026.3.3)  5 MAR 2026 18:27
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -786,7 +786,7 @@ LaTeX Font Info:    Trying to load font information for U+fplmbb on input line 2
 (/Users/tijnjacobs/Library/TinyTeX/texmf-dist/tex/latex/psnfss/ufplmbb.fd
 File: ufplmbb.fd 2003/10/30 Fontinst v1.914 font definitions for U/fplmbb.
 )
-<figures/ExampleTree_standalone.pdf, id=148, 450.43079pt x 177.2211pt>
+<figures/ExampleTree_standalone.pdf, id=144, 450.43079pt x 177.2211pt>
 File: figures/ExampleTree_standalone.pdf Graphic file (type pdf)
 <use figures/ExampleTree_standalone.pdf>
 Package pdftex.def Info: figures/ExampleTree_standalone.pdf  used on input line 43.
@@ -824,23 +824,61 @@ Overfull \hbox (3.15167pt too wide) in paragraph at lines 193--194
 \T1/ppl/m/n/9 (-20) are dis-patched in par-al-lel via \T1/zi4/m/n/9 parallel::mclapply() \T1/ppl/m/n/9 (-20) us-ing \T1/zi4/m/n/9 min(n_chains, parallel::detectCores())
  []
 
-[6] [7] [8]
-Overfull \hbox (4.34819pt too wide) in paragraph at lines 349--350
-\T1/ppl/m/n/9 (-20) To il-lus-trate the mod-u-lar-ity of the pack-age, we fit a sec-ond causal model us-ing \T1/zi4/m/n/9 SurvivalShrinkageBCF()\T1/ppl/m/n/9 (-20) ,
+[6] [7]
+<figures/trace_horse.pdf, id=296, 361.35pt x 216.81pt>
+File: figures/trace_horse.pdf Graphic file (type pdf)
+<use figures/trace_horse.pdf>
+Package pdftex.def Info: figures/trace_horse.pdf  used on input line 304.
+(pdftex.def)             Requested size: 338.59021pt x 203.15631pt.
+<figures/density_horse.pdf, id=297, 361.35pt x 216.81pt>
+File: figures/density_horse.pdf Graphic file (type pdf)
+<use figures/density_horse.pdf>
+Package pdftex.def Info: figures/density_horse.pdf  used on input line 313.
+(pdftex.def)             Requested size: 338.59021pt x 203.15631pt.
+[8] [9 <./figures/trace_horse.pdf> <./figures/density_horse.pdf>]
+<figures/survival_individual.pdf, id=327, 361.35pt x 252.945pt>
+File: figures/survival_individual.pdf Graphic file (type pdf)
+<use figures/survival_individual.pdf>
+Package pdftex.def Info: figures/survival_individual.pdf  used on input line 348.
+(pdftex.def)             Requested size: 338.59021pt x 237.0157pt.
+<figures/survival_population.pdf, id=329, 361.35pt x 252.945pt>
+File: figures/survival_population.pdf Graphic file (type pdf)
+<use figures/survival_population.pdf>
+Package pdftex.def Info: figures/survival_population.pdf  used on input line 363.
+(pdftex.def)             Requested size: 338.59021pt x 237.0157pt.
+
+Overfull \hbox (22.25009pt too wide) in paragraph at lines 374--375
+\T1/ppl/m/n/9 (-20) We now es-ti-mate het-ero-ge-neous treat-ment ef-fects of car-bo-platin ver-sus cis-platin us-ing \T1/zi4/m/n/9 CausalHorseForest()\T1/ppl/m/n/9 (-20) ,
  []
 
-[9] (./RJwrapper.bbl (./RJwrapper.brf)
+[10 <./figures/survival_individual.pdf>] [11 <./figures/survival_population.pdf>]
+<figures/ate_posterior.pdf, id=357, 289.08pt x 216.81pt>
+File: figures/ate_posterior.pdf Graphic file (type pdf)
+<use figures/ate_posterior.pdf>
+Package pdftex.def Info: figures/ate_posterior.pdf  used on input line 417.
+(pdftex.def)             Requested size: 191.2008pt x 143.3994pt.
+<figures/cate_caterpillar.pdf, id=358, 289.08pt x 252.945pt>
+File: figures/cate_caterpillar.pdf Graphic file (type pdf)
+<use figures/cate_caterpillar.pdf>
+Package pdftex.def Info: figures/cate_caterpillar.pdf  used on input line 417.
+(pdftex.def)             Requested size: 191.2008pt x 167.2993pt.
+
+Overfull \hbox (4.0971pt too wide) in paragraph at lines 428--429
+\T1/ppl/m/n/9 (-20) interval-censored out-comes via \T1/zi4/m/n/9 outcome_type = "interval-censored" \T1/ppl/m/n/9 (-20) with \T1/zi4/m/n/9 left_time \T1/ppl/m/n/9 (-20) and \T1/zi4/m/n/9 right_time
+ []
+
+[12 <./figures/ate_posterior.pdf> <./figures/cate_caterpillar.pdf>] (./RJwrapper.bbl (./RJwrapper.brf)
 \tf@brf=\write6
 \openout6 = `RJwrapper.brf'.
 
 )
 
 LaTeX Font Warning: Font shape `T1/zi4/m/it' undefined
-(Font)              using `T1/zi4/m/n' instead on input line 391.
+(Font)              using `T1/zi4/m/n' instead on input line 452.
 
 LaTeX Font Info:    Font shape `T1/zi4/m/it' will be
-(Font)              scaled to size 9.18004pt on input line 391.
-[10]) [11] (./RJwrapper.aux)
+(Font)              scaled to size 9.18004pt on input line 452.
+[13]) [14] (./RJwrapper.aux)
  ***********
 LaTeX2e <2025-11-01>
 L3 programming layer <2026-01-19>
@@ -849,23 +887,23 @@ L3 programming layer <2026-01-19>
 LaTeX Font Warning: Some font shapes were not available, defaults substituted.
 
 Package rerunfilecheck Info: File `RJwrapper.out' has not changed.
-(rerunfilecheck)             Checksum: 746E0B415845A0ADE59B2D1CC54D7B96;4580.
+(rerunfilecheck)             Checksum: 71CCC824615854A54EB0A8F38C5C1B79;4531.
 Package rerunfilecheck Info: File `RJwrapper.brf' has not changed.
-(rerunfilecheck)             Checksum: E663A62C63BBF5D6AE9A737685E332F9;1974.
+(rerunfilecheck)             Checksum: E523421DE5B3C13E97C013363B6A3E10;2032.
  ) 
 Here is how much of TeX's memory you used:
- 27247 strings out of 469515
- 497460 string characters out of 5468670
- 918125 words of memory out of 5000000
- 55043 multiletter control sequences out of 15000+600000
- 684544 words of font info for 332 fonts, out of 8000000 for 9000
+ 27322 strings out of 469515
+ 499859 string characters out of 5468670
+ 920154 words of memory out of 5000000
+ 55112 multiletter control sequences out of 15000+600000
+ 684385 words of font info for 330 fonts, out of 8000000 for 9000
  14 hyphenation exceptions out of 8191
- 117i,12n,131p,1451b,981s stack positions out of 10000i,1000n,20000p,200000b,200000s
+ 117i,12n,131p,1451b,986s stack positions out of 10000i,1000n,20000p,200000b,200000s
 </Users/tijnjacobs/Library/TinyTeX/texmf-dist/fonts/type1/public/inconsolata/Inconsolata-zi4r.pfb></Users/tijnjacobs/Library/TinyTeX/texmf-dist/fonts/type1/public/amsfonts/cm/cmex10.pfb></Users/tijnjacobs/Library/TinyTeX/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi10.pfb></Users/tijnjacobs/Library/TinyTeX/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi9.pfb></Users/tijnjacobs/Library/TinyTeX/texmf-dist/fonts/type1/public/amsfonts/cm/cmr10.pfb></Users/tijnjacobs/Library/TinyTeX/texmf-dist/fonts/type1/public/amsfonts/cm/cmr6.pfb></Users/tijnjacobs/Library/TinyTeX/texmf-dist/fonts/type1/public/amsfonts/cm/cmr7.pfb></Users/tijnjacobs/Library/TinyTeX/texmf-dist/fonts/type1/public/amsfonts/cm/cmr9.pfb></Users/tijnjacobs/Library/TinyTeX/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy10.pfb></Users/tijnjacobs/Library/TinyTeX/texmf-dist/fonts/type1/public/mathpazo/fplmbb.pfb></Users/tijnjacobs/Library/TinyTeX/texmf-dist/fonts/type1/public/mathpazo/fplmr.pfb></Users/tijnjacobs/Library/TinyTeX/texmf-dist/fonts/type1/public/mathpazo/fplmri.pfb></Users/tijnjacobs/Library/TinyTeX/texmf-dist/fonts/type1/urw/palatino/uplb8a.pfb></Users/tijnjacobs/Library/TinyTeX/texmf-dist/fonts/type1/urw/palatino/uplr8a.pfb></Users/tijnjacobs/Library/TinyTeX/texmf-dist/fonts/type1/urw/palatino/uplri8a.pfb>
-Output written on RJwrapper.pdf (11 pages, 231380 bytes).
+Output written on RJwrapper.pdf (14 pages, 372209 bytes).
 PDF statistics:
- 426 PDF objects out of 1000 (max. 8388607)
- 376 compressed objects within 4 object streams
- 56 named destinations out of 1000 (max. 500000)
- 66258 words of extra memory for PDF output out of 74296 (max. 10000000)
+ 507 PDF objects out of 1000 (max. 8388607)
+ 441 compressed objects within 5 object streams
+ 65 named destinations out of 1000 (max. 500000)
+ 66280 words of extra memory for PDF output out of 74296 (max. 10000000)
 

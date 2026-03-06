@@ -126,7 +126,7 @@ predict.ShrinkageTrees <- function(object, newdata, level = 0.95, ...) {
       b_dirichletSEXP          = args$b_dirichlet,
       rho_dirichletSEXP        = args$rho_dirichlet,
       sigmaSEXP                = pre$sigma_hat,
-      sigma_knownSEXP          = TRUE,
+      sigma_knownSEXP          = object$preprocess$sigma_known,
       omegaSEXP                = args$omega,
       param1SEXP               = args$param1,
       param2SEXP               = args$param2,
@@ -159,7 +159,9 @@ predict.ShrinkageTrees <- function(object, newdata, level = 0.95, ...) {
     # Store posterior samples for survival curve plotting
     if (survival) {
       out$predictions_sample <- sample_pred   # N_post x n_new
-      out$sigma <- fit$sigma * pre$sigma_hat  # posterior sigma on log-time scale
+      # sigma is jointly sampled with the trees (sigma_known = FALSE for
+      # survival); remove burn-in to match predictions_sample rows.
+      out$sigma <- fit$sigma[-(1:object$mcmc$N_burn)] * pre$sigma_hat
     }
 
     class(out) <- "ShrinkageTreesPrediction"
@@ -800,16 +802,16 @@ print.CausalShrinkageForest <- function(x, ...) {
 #' @seealso \code{\link{summary.ShrinkageTrees}} which reports R-hat and ESS
 #'   automatically when coda is available.
 #' @examples
-#' \dontrun{
-#' fit <- ShrinkageTrees(y = rnorm(50), X_train = matrix(rnorm(250), 50, 5),
-#'                       N_post = 200, N_burn = 100, n_chains = 2)
+#' \donttest{
+#' fit <- HorseTrees(y = rnorm(50), X_train = matrix(rnorm(250), 50, 5),
+#'                   N_post = 200, N_burn = 100, n_chains = 2)
 #' if (requireNamespace("coda", quietly = TRUE)) {
 #'   mcmc_obj <- as.mcmc.list(fit)
 #'   coda::gelman.diag(mcmc_obj)
 #'   coda::effectiveSize(mcmc_obj)
 #' }
 #' }
-#' @export
+#' @exportS3Method coda::as.mcmc.list
 as.mcmc.list.ShrinkageTrees <- function(x, ...) {
 
   if (!requireNamespace("coda", quietly = TRUE))

@@ -39,7 +39,10 @@ df <- data.frame(
                    "DART for AFT survival",
                    "BCF for AFT survival",
                    "Shrinkage BCF for AFT survival"),
-  Class = c(rep("`ShrinkageTrees`", 4), rep("`CausalShrinkageForest`", 4)),
+  Class = c("`ShrinkageTrees`", "`ShrinkageTrees`",
+            "`CausalShrinkageForest`", "`CausalShrinkageForest`",
+            "`ShrinkageTrees`", "`ShrinkageTrees`",
+            "`CausalShrinkageForest`", "`CausalShrinkageForest`"),
   check.names = FALSE
 )
 knitr::kable(df, caption = "Fitting functions in \\pkg{ShrinkageTrees}. The first four are primary functions; the last four are convenience wrappers.", booktabs = TRUE)
@@ -47,41 +50,57 @@ knitr::kable(df, caption = "Fitting functions in \\pkg{ShrinkageTrees}. The firs
 
 ## ----data, echo=TRUE, eval=FALSE----------------------------------------------
 # library(ShrinkageTrees)
-# data("pdac")
+# data("ovarian")
 # 
-# time      <- pdac$time
-# status    <- pdac$status
-# treatment <- pdac$treatment
-# X         <- as.matrix(pdac[, !(names(pdac) %in% c("time", "status", "treatment"))])
+# clin      <- ovarian$clinical
+# time      <- clin$OS_time
+# status    <- clin$OS_event
+# treatment <- clin$treatment
 # 
-# cat("n =", nrow(pdac), "| p =", ncol(X),
-#     "| censoring rate =", round(1 - mean(status), 2),
-#     "| treated =", sum(treatment), "/ control =", sum(1 - treatment), "\n")
+# X <- cbind(age        = clin$age,
+#            figo_stage = clin$figo_stage,
+#            tumor_grade = clin$tumor_grade,
+#            ovarian$X)
+# 
+# cat("n =", nrow(clin), "| p =", ncol(X),
+#     "| event rate =", round(mean(status), 2),
+#     "| carboplatin =", sum(treatment), "/ cisplatin =", sum(1 - treatment), "\n")
+
+
+## ----split, echo=TRUE, eval=FALSE---------------------------------------------
+# set.seed(2025)
+# train_idx <- sample(seq_len(nrow(clin)), size = floor(0.8 * nrow(clin)))
+# test_idx  <- setdiff(seq_len(nrow(clin)), train_idx)
+# 
+# X_train <- X[train_idx, ];  X_test <- X[test_idx, ]
+# time_train <- time[train_idx];  time_test <- time[test_idx]
+# status_train <- status[train_idx];  status_test <- status[test_idx]
 
 
 ## ----survival-bart, echo=TRUE, eval=FALSE-------------------------------------
-# set.seed(2025)
 # fit_bart <- SurvivalBART(
-#   time            = time,
-#   status          = status,
-#   X_train         = X,
-#   number_of_trees = 200,
+#   time            = time_train,
+#   status          = status_train,
+#   X_train         = X_train,
+#   X_test          = X_test,
+#   number_of_trees = 50,
 #   N_post          = 5000,
 #   N_burn          = 5000,
 #   n_chains        = 2,
+#   store_posterior_sample = TRUE,
 #   verbose         = FALSE
 # )
 
 
 ## ----survival-horse, echo=TRUE, eval=FALSE------------------------------------
-# set.seed(2025)
 # fit_horse <- HorseTrees(
-#   y               = time,
-#   status          = status,
-#   X_train         = X,
+#   y               = time_train,
+#   status          = status_train,
+#   X_train         = X_train,
+#   X_test          = X_test,
 #   outcome_type    = "right-censored",
 #   timescale       = "time",
-#   number_of_trees = 200,
+#   number_of_trees = 50,
 #   k               = 0.1,
 #   N_post          = 5000,
 #   N_burn          = 5000,
@@ -96,83 +115,91 @@ knitr::kable(df, caption = "Fitting functions in \\pkg{ShrinkageTrees}. The firs
 # summary(fit_horse)
 
 
+## ----cindex, echo=TRUE, eval=FALSE--------------------------------------------
+# library(survival)
+# c_bart  <- concordance(Surv(time_test, status_test) ~ fit_bart$test_predictions)
+# c_horse <- concordance(Surv(time_test, status_test) ~ fit_horse$test_predictions)
+# 
+# cat("Test C-index — SurvivalBART:", round(c_bart$concordance, 3),
+#     " HorseTrees:", round(c_horse$concordance, 3), "\n")
+
+
 ## ----convergence, echo=TRUE, eval=FALSE---------------------------------------
 # plot(fit_horse, type = "trace")
 # plot(fit_horse, type = "density")
 
 
-## ----vi, echo=TRUE, eval=FALSE------------------------------------------------
-# plot(fit_bart,  type = "vi", n_vi = 15)
-# plot(fit_horse, type = "vi", n_vi = 15)
+## ----trace-fig, echo=FALSE, fig.cap="Traceplot of the posterior draws of $\\sigma$ for the Horseshoe Forest model. The two chains are shown in different colours.", out.width="85%", fig.align='center'----
+knitr::include_graphics("figures/trace_horse.pdf")
 
 
-## ----prediction, echo=TRUE, eval=FALSE----------------------------------------
-# pred <- predict(fit_horse, newdata = X)
-# print(pred)
-# summary(pred)
+## ----density-fig, echo=FALSE, fig.cap="Posterior density of $\\sigma$ for the Horseshoe Forest model, estimated separately for each chain.", out.width="85%", fig.align='center'----
+knitr::include_graphics("figures/density_horse.pdf")
+
+
+## ----patient-profiles, echo=TRUE, eval=FALSE----------------------------------
+# pred <- predict(fit_horse, newdata = X_test)
+# 
+# idx_best  <- which.max(pred$mean)
+# idx_worst <- which.min(pred$mean)
+# 
+# cat("Best prognosis  — age:", X_test[idx_best, "age"],
+#     " stage:", X_test[idx_best, "figo_stage"],
+#     " grade:", X_test[idx_best, "tumor_grade"], "\n")
+# cat("Worst prognosis — age:", X_test[idx_worst, "age"],
+#     " stage:", X_test[idx_worst, "figo_stage"],
+#     " grade:", X_test[idx_worst, "tumor_grade"], "\n")
+
+
+## ----individual-survival, echo=TRUE, eval=FALSE-------------------------------
+# plot(pred, type = "survival", obs = c(idx_best, idx_worst))
+
+
+## ----individual-fig, echo=FALSE, fig.cap="Posterior survival curves for two test-set patients at opposite ends of the predicted risk spectrum, with pointwise 95\\% credible bands.", out.width="85%", fig.align='center'----
+knitr::include_graphics("figures/survival_individual.pdf")
+
+
+## ----population-survival, echo=TRUE, eval=FALSE-------------------------------
+# plot(fit_horse, type = "survival", km = TRUE)
+
+
+## ----population-fig, echo=FALSE, fig.cap="Population-averaged posterior survival curve (solid line) with 95\\% credible band (shaded) and Kaplan--Meier estimate (dashed).", out.width="85%", fig.align='center'----
+knitr::include_graphics("figures/survival_population.pdf")
 
 
 ## ----propensity, echo=TRUE, eval=FALSE----------------------------------------
-# set.seed(2025)
-# ps_fit <- HorseTrees(
-#   y            = treatment,
-#   X_train      = X,
-#   outcome_type = "binary",
-#   k            = 0.1,
-#   N_post       = 5000,
-#   N_burn       = 5000,
-#   verbose      = FALSE
-# )
-# propensity <- pnorm(ps_fit$train_predictions)
-# X_control  <- cbind(propensity, X)
+# ps_model   <- glm(treatment ~ age + factor(figo_stage) + factor(tumor_grade),
+#                    family = binomial, data = clin)
+# propensity <- predict(ps_model, type = "response")
+# X_control  <- cbind(propensity = propensity, X)
 
 
 ## ----causal-fit, echo=TRUE, eval=FALSE----------------------------------------
 # set.seed(2025)
 # fit_causal <- CausalHorseForest(
-#   y                         = time,
+#   y                         = log(time),
 #   status                    = status,
 #   X_train_control           = X_control,
 #   X_train_treat             = X,
 #   treatment_indicator_train = treatment,
 #   outcome_type              = "right-censored",
-#   timescale                 = "time",
-#   number_of_trees           = 200,
+#   timescale                 = "log",
+#   number_of_trees           = 50,
 #   k                         = 0.1,
 #   N_post                    = 5000,
 #   N_burn                    = 5000,
 #   n_chains                  = 2,
-#   store_posterior_sample     = TRUE,
+#   store_posterior_sample    = TRUE,
 #   verbose                   = FALSE
 # )
 # summary(fit_causal)
 
 
 ## ----treatment-effects, echo=TRUE, eval=FALSE---------------------------------
-# # Posterior ATE density
 # plot(fit_causal, type = "ate")
-# 
-# # Observation-level CATEs with 95% credible intervals
 # plot(fit_causal, type = "cate")
-# 
-# # Variable importance for both forests
-# plot(fit_causal, type = "vi", forest = "both")
 
 
-## ----comparison, echo=TRUE, eval=FALSE----------------------------------------
-# set.seed(2025)
-# fit_shrinkage_bcf <- SurvivalShrinkageBCF(
-#   time            = time,
-#   status          = status,
-#   X_train         = X,
-#   treatment       = treatment,
-#   number_of_trees_control = 200,
-#   number_of_trees_treat   = 50,
-#   N_post          = 5000,
-#   N_burn          = 5000,
-#   n_chains        = 2,
-#   store_posterior_sample = TRUE,
-#   verbose         = FALSE
-# )
-# summary(fit_shrinkage_bcf)
+## ----treatment-effects-fig, echo=FALSE, fig.cap="Left: posterior density of the average treatment effect (ATE) of carboplatin versus cisplatin on the log-survival scale, with 95\\% credible interval (dashed lines). Right: patient-level conditional average treatment effects (CATEs) sorted by posterior mean with 95\\% credible intervals; the dashed line marks zero (no effect).", out.width="48%", fig.show='hold', fig.align='center'----
+knitr::include_graphics(c("figures/ate_posterior.pdf", "figures/cate_caterpillar.pdf"))
 

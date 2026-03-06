@@ -110,8 +110,10 @@
 #' head(ovarian$clinical[, c("OS_time", "OS_event", "treatment")])
 #'
 #' # KM plot by treatment
-#' library(survival)
-#' fit <- survfit(Surv(OS_time, OS_event) ~ treatment, data = ovarian$clinical)
-#' plot(fit, col = c("blue", "red"), xlab = "Time (days)", ylab = "Survival")
-#' legend("topright", c("Carboplatin", "Cisplatin"), col = c("blue", "red"), lty = 1)
+#' if (requireNamespace("survival", quietly = TRUE)) {
+#'   library(survival)
+#'   fit <- survfit(Surv(OS_time, OS_event) ~ treatment, data = ovarian$clinical)
+#'   plot(fit, col = c("blue", "red"), xlab = "Time (days)", ylab = "Survival")
+#'   legend("topright", c("Carboplatin", "Cisplatin"), col = c("blue", "red"), lty = 1)
+#' }
 "ovarian"

@@ -65,8 +65,8 @@ compute_cindex <- function(time, status, predicted) {
 }
 
 # MCMC settings
-N_post <- 1000
-N_burn <- 500
+N_post <- 5000
+N_burn <- 5000
 n_trees <- 50
 
 # --------------------------------------------------------------------------- #
@@ -90,9 +90,9 @@ fit_bart <- SurvivalBART(
 
 t_bart <- (proc.time() - t0)[3]
 
-print(fit_bart)
+fit_bart
 cat("\n")
-print(summary(fit_bart))
+summary(fit_bart)
 
 cindex_bart_train <- compute_cindex(time_train, status_train, fit_bart$train_predictions)
 cindex_bart_test  <- compute_cindex(time_test, status_test, fit_bart$test_predictions)
@@ -178,6 +178,7 @@ fit_hc <- ShrinkageTrees(
   outcome_type = "right-censored",
   timescale = "time",
   prior_type = "half-cauchy",
+  local_hp = 0.1,
   number_of_trees = n_trees,
   N_post = N_post,
   N_burn = N_burn,

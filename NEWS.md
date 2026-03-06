@@ -12,7 +12,7 @@ a list with two elements:
   age, FIGO stage, tumor grade, and a binary treatment indicator
   (carboplatin vs cisplatin).
 
-See `?ovarian` and `tests/manual/test-ovarian.R` for a full worked example
+See `?ovarian` and `examples/test-ovarian.R` for a full worked example
 covering survival prediction (SurvivalBART, SurvivalDART, HorseTrees) and
 causal inference (SurvivalBCF, SurvivalShrinkageBCF, CausalHorseForest).
 
@@ -21,7 +21,7 @@ causal inference (SurvivalBCF, SurvivalShrinkageBCF, CausalHorseForest).
 All causal model functions — `CausalHorseForest()`, `CausalShrinkageForest()`,
 `SurvivalBCF()`, and `SurvivalShrinkageBCF()` — now accept a `treatment_coding`
 argument controlling how the treatment indicator enters the BCF decomposition
-y = f(x) + b * tau(x) + epsilon. Four options are available:
+y = f(x) + b \* tau(x) + epsilon. Four options are available:
 
 - `"centered"` (default): b_i in {-1/2, 1/2}. This is the original behaviour.
 - `"binary"`: b_i in {0, 1}. Standard binary coding.
@@ -32,7 +32,7 @@ y = f(x) + b * tau(x) + epsilon. Four options are available:
   parameters b_0 and b_1 are assigned N(0, 1/2) priors and estimated within
   the Gibbs sampler via conjugate normal updates, yielding a parameterisation
   that is invariant to the coding of the treatment indicator (Hahn et al.,
-  2020, Section 5.2). The treatment effect is tau(x) = (b_1 - b_0) * tau_tilde(x).
+  2020, Section 5.2). The treatment effect is tau(x) = (b_1 - b_0) \* tau_tilde(x).
   Posterior draws of b_0 and b_1 are returned in the fitted object.
 
 The `predict()` method for `CausalShrinkageForest` objects automatically
@@ -51,7 +51,7 @@ vectors (with `outcome_type = "interval-censored"`) instead of `y` and
 - **Right-censored**: `right_time = Inf`.
 
 This convention follows `survival::Surv(type = "interval2")`. Censored
-event times are imputed via truncated-normal data augmentation within the
+event times are augmented within the
 AFT Gibbs sampler. The following functions are affected:
 
 - `HorseTrees()`, `ShrinkageTrees()` (single-forest models)

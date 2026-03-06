@@ -159,8 +159,8 @@
     df <- data.frame(
       time       = t_grid,
       surv_mean  = colMeans(S_avg),
-      surv_lower = apply(S_avg, 2, quantile, alpha),
-      surv_upper = apply(S_avg, 2, quantile, 1 - alpha),
+      surv_lower = cummin(apply(S_avg, 2, quantile, alpha)),
+      surv_upper = cummin(apply(S_avg, 2, quantile, 1 - alpha)),
       obs_id     = factor("Average")
     )
     return(df)
@@ -184,8 +184,8 @@
     dfs[[k]] <- data.frame(
       time       = t_grid,
       surv_mean  = colMeans(S),
-      surv_lower = apply(S, 2, quantile, alpha),
-      surv_upper = apply(S, 2, quantile, 1 - alpha),
+      surv_lower = cummin(apply(S, 2, quantile, alpha)),
+      surv_upper = cummin(apply(S, 2, quantile, 1 - alpha)),
       obs_id     = factor(paste0("Obs ", i))
     )
   }
@@ -239,8 +239,8 @@
     df <- data.frame(
       time       = t_grid,
       surv_mean  = colMeans(S_avg),
-      surv_lower = apply(S_avg, 2, quantile, alpha),
-      surv_upper = apply(S_avg, 2, quantile, 1 - alpha),
+      surv_lower = cummin(apply(S_avg, 2, quantile, alpha)),
+      surv_upper = cummin(apply(S_avg, 2, quantile, 1 - alpha)),
       obs_id     = factor("Average")
     )
     return(df)
@@ -260,8 +260,8 @@
     dfs[[k]] <- data.frame(
       time       = t_grid,
       surv_mean  = colMeans(S),
-      surv_lower = apply(S, 2, quantile, alpha),
-      surv_upper = apply(S, 2, quantile, 1 - alpha),
+      surv_lower = cummin(apply(S, 2, quantile, alpha)),
+      surv_upper = cummin(apply(S, 2, quantile, 1 - alpha)),
       obs_id     = factor(paste0("Obs ", i))
     )
   }

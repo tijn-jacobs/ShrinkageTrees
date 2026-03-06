@@ -4,7 +4,7 @@
 \alias{as.mcmc.list.ShrinkageTrees}
 \title{Convert MCMC output to a coda mcmc.list}
 \usage{
-as.mcmc.list.ShrinkageTrees(x, ...)
+\method{as.mcmc.list}{ShrinkageTrees}(x, ...)
 }
 \arguments{
 \item{x}{A fitted \code{ShrinkageTrees} object.}
@@ -30,9 +30,9 @@ Requires the suggested package \pkg{coda}.
 For single-chain fits the returned object contains one chain.
 }
 \examples{
-\dontrun{
-fit <- ShrinkageTrees(y = rnorm(50), X_train = matrix(rnorm(250), 50, 5),
-                      N_post = 200, N_burn = 100, n_chains = 2)
+\donttest{
+fit <- HorseTrees(y = rnorm(50), X_train = matrix(rnorm(250), 50, 5),
+                  N_post = 200, N_burn = 100, n_chains = 2)
 if (requireNamespace("coda", quietly = TRUE)) {
   mcmc_obj <- as.mcmc.list(fit)
   coda::gelman.diag(mcmc_obj)

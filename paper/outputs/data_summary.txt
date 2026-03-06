@@ -1,0 +1,1 @@
+n = 357 | p = 2003 | event rate = 0.52 | carboplatin = 278 / cisplatin = 79 

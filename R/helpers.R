@@ -17,6 +17,7 @@
 #'   \item{max}{Estimated maximum of survival times.}
 #'
 #' @importFrom stats dnorm pnorm
+#' @noRd
 censored_info <- function(y, status, left_time = NULL, right_time = NULL,
                           ic_indicator = NULL) {
 

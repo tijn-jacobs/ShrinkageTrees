@@ -62,7 +62,7 @@
 #' X_test <- matrix(rnorm(50 * p), ncol = p)
 #' y <- X[, 1] + X[, 2] - X[, 3] + rnorm(100, sd = 0.5)
 #'
-#' fit4 <- HorseTrees(y = y,
+#' fit5 <- HorseTrees(y = y,
 #'                    X_train = X,
 #'                    X_test = X_test,
 #'                    outcome_type = "continuous",
@@ -105,7 +105,7 @@
 #' @param timescale Indicates the scale of follow-up times. Options are 
 #' `"time"` (nonnegative follow-up times, will be log-transformed internally) 
 #'   or `"log"` (already log-transformed). Only used when 
-#'   `outcome_type = "right-censored"`.
+#'   `outcome_type = "right-censored"` or `"interval-censored"`.
 #' @param number_of_trees Number of trees in the ensemble. Default is 200.
 #' @param k Horseshoe scale hyperparameter (default 0.1). This parameter 
 #' controls the overall level of shrinkage by setting the scale for both 
@@ -137,7 +137,7 @@
 #'   sequential execution.
 #' @param verbose Logical; whether to print verbose output. Default is TRUE.
 #'
-#' @return A named list with the following elements:
+#' @return An S3 object of class \code{"ShrinkageTrees"} with the following elements:
 #' \describe{
 #'   \item{train_predictions}{Vector of posterior mean predictions on the 
 #'   training data.}
@@ -235,7 +235,8 @@ HorseTrees <- function(y = NULL,
       verbose                = FALSE
     )
 
-    n_cores <- min(n_chains, parallel::detectCores(logical = FALSE))
+    n_cores <- if (.Platform$OS.type == "windows") 1L
+                else min(n_chains, parallel::detectCores(logical = FALSE))
     if (verbose)
       message("Running ", n_chains, " chains (", n_cores, " cores) ...")
 

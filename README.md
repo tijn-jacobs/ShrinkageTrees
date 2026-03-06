@@ -1,4 +1,4 @@
-# ShrinkageTrees <img src="https://img.shields.io/badge/R%3E%3D-4.2-blue" alt="R >= 4.2"> ![License: MIT](https://img.shields.io/badge/license-MIT-green) ![Lifecycle: maturing](https://img.shields.io/badge/lifecycle-maturing-blue) [![](https://cranlogs.r-pkg.org/badges/grand-total/ShrinkageTrees)](https://cran.r-project.org/package=ShrinkageTrees)
+# ShrinkageTrees <img src="https://img.shields.io/badge/R%3E%3D-4.1-blue" alt="R >= 4.1"> ![License: MIT](https://img.shields.io/badge/license-MIT-green) ![Lifecycle: maturing](https://img.shields.io/badge/lifecycle-maturing-blue) [![](https://cranlogs.r-pkg.org/badges/grand-total/ShrinkageTrees)](https://cran.r-project.org/package=ShrinkageTrees)
  <img src="sticker/ShrinkageTrees_hex.png" align="right" width="150"/>
 
 ## Overview
@@ -32,7 +32,7 @@ All models are implemented with an efficient C++ backend via Rcpp, allowing scal
 
 ## ⭐ Core Contribution: Horseshoe Trees
 
-Traditional BART and DART primarily regularise model complexity through the **tree structure (e.g., depth constraints or splitting probabilities).
+Traditional BART and DART primarily regularise model complexity through the **tree structure** (e.g., depth constraints or splitting probabilities).
 
 ShrinkageTrees instead introduces global–local shrinkage directly on the leaf (step height) parameters via the Horseshoe prior.
 

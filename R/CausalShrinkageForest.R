@@ -108,7 +108,7 @@
 #' @param verbose Logical; whether to print verbose output. Default is \code{TRUE}.
 #'
 #' @return An S3 object of class \code{"CausalShrinkageForest"} containing:
-#' #' \describe{
+#' \describe{
 #'   \item{train_predictions}{Posterior mean predictions on training data (combined forest).}
 #'   \item{test_predictions}{Posterior mean predictions on test data (combined forest).}
 #'   \item{train_predictions_control}{Estimated control outcomes on training data.}
@@ -178,7 +178,7 @@
 #' Association.
 #' 
 #' @examples
-#' # Example: Continuous outcome, homogenuous treatment effect, two priors
+#' # Example: Continuous outcome, homogeneous treatment effect, two priors
 #' n <- 50
 #' p <- 3
 #' X <- matrix(runif(n * p), ncol = p)
@@ -274,7 +274,7 @@
 #'
 #' @importFrom Rcpp evalCpp
 #' @useDynLib ShrinkageTrees, .registration = TRUE
-#' @importFrom stats sd qchisq qnorm runif coef
+#' @importFrom stats sd qchisq qnorm runif
 #' @importFrom parallel mclapply detectCores
 #' @export
 CausalShrinkageForest <- function(y = NULL,
@@ -373,7 +373,8 @@ CausalShrinkageForest <- function(y = NULL,
       verbose                   = FALSE
     )
 
-    n_cores <- min(n_chains, parallel::detectCores(logical = FALSE))
+    n_cores <- if (.Platform$OS.type == "windows") 1L
+                else min(n_chains, parallel::detectCores(logical = FALSE))
     if (verbose)
       message("Running ", n_chains, " chains (", n_cores, " cores) ...")
 

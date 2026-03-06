@@ -1,0 +1,2 @@
+Best prognosis  — age: 47  stage: 2  grade: 3 
+Worst prognosis — age: 67  stage: 2  grade: 3 

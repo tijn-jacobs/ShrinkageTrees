@@ -107,7 +107,7 @@ test_that("ShrinkageTrees (horseshoe) works for binary outcome", {
   expect_equal(dim(fit$train_probabilities_sample), c(10, 50))
   expect_equal(dim(fit$test_probabilities_sample), c(10, 50))
   
-  # Check estimated probabilitiesHmm ik are within [0,1]
+  # Check estimated probabilities are within [0,1]
   expect_true(all(fit$train_probabilities >= 0 & fit$train_probabilities <= 1))
   expect_true(all(fit$test_probabilities >= 0 & fit$test_probabilities <= 1))
   
@@ -470,7 +470,7 @@ test_that("ShrinkageTrees S3 methods work", {
   )
 
   expect_s3_class(fit, "ShrinkageTrees")
-  expect_no_error(print(fit))
+  expect_no_error(capture.output(print(fit)))
   expect_no_error(smry <- summary(fit))
   expect_type(smry, "list")
   expect_true(!is.null(smry$sigma))
@@ -484,8 +484,8 @@ test_that("ShrinkageTrees S3 methods work", {
   expect_true(all(pred$lower <= pred$mean))
   expect_true(all(pred$mean  <= pred$upper))
 
-  expect_no_error(print(pred))
-  expect_no_error(summary(pred))
+  expect_no_error(capture.output(print(pred)))
+  expect_no_error(capture.output(summary(pred)))
 })
 
 

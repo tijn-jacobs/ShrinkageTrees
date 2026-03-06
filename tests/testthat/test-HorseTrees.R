@@ -92,7 +92,7 @@ test_that("HorseTrees for binary outcome", {
   expect_equal(dim(fit$train_probabilities_sample), c(10, 50))
   expect_equal(dim(fit$test_probabilities_sample), c(10, 50))
   
-  # Check estimated probabilitiesHmm ik are within [0,1]
+  # Check estimated probabilities are within [0,1]
   expect_true(all(fit$train_probabilities >= 0 & fit$train_probabilities <= 1))
   expect_true(all(fit$test_probabilities >= 0 & fit$test_probabilities <= 1))
   

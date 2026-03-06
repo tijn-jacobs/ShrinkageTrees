@@ -47,13 +47,13 @@
 #' @param p_grow Probability of proposing a grow move. Default is 0.4.
 #' @param p_prune Probability of proposing a prune move. Default is 0.4.
 #' @param a_dirichlet First shape parameter of the Beta prior used in the
-#' Dirichlet–Sparse splitting rule. Together with `b_dirichlet_control`, it 
-#' controls the expected sparsity level. Only when "prior_type = "dirichlet"`.
-#' @param b_dirichlet Second shape parameter of the Beta prior for the 
-#' sparsity level. Larger values shrink splitting probabilities more strongly 
-#' toward uniform sparsity.  Only when "prior_type = "dirichlet"`.
-#' @param rho_dirichlet Sparsity hyperparameter. If left NULL, it defaults to 
-#' the number of covariates in the control forest.  Only when "prior_type = "dirichlet"`.
+#' Dirichlet-Sparse splitting rule. Together with `b_dirichlet`, it
+#' controls the expected sparsity level. Only when `prior_type = "dirichlet"`.
+#' @param b_dirichlet Second shape parameter of the Beta prior for the
+#' sparsity level. Larger values shrink splitting probabilities more strongly
+#' toward uniform sparsity. Only when `prior_type = "dirichlet"`.
+#' @param rho_dirichlet Sparsity hyperparameter. If left NULL, it defaults to
+#' the number of covariates. Only when `prior_type = "dirichlet"`.
 #' @param nu Degrees of freedom for the error distribution prior. Default is 3.
 #' @param q Quantile hyperparameter for the error variance prior. Default is 0.90.
 #' @param sigma Optional known value for error standard deviation. If NULL,
@@ -299,7 +299,8 @@ ShrinkageTrees <- function(y = NULL,
       verbose                = FALSE
     )
 
-    n_cores <- min(n_chains, parallel::detectCores(logical = FALSE))
+    n_cores <- if (.Platform$OS.type == "windows") 1L
+                else min(n_chains, parallel::detectCores(logical = FALSE))
     if (verbose)
       message("Running ", n_chains, " chains (", n_cores, " cores) ...")
 

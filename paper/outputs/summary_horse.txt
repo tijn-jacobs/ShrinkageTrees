@@ -1,0 +1,27 @@
+
+ShrinkageTrees model summary
+============================
+Call: HorseTrees(y = time_train, status = status_train, X_train = X_train, 
+    X_test = X_test, outcome_type = "right-censored", timescale = "time", 
+    number_of_trees = 50, k = 0.1, N_post = 5000, N_burn = 5000, 
+    store_posterior_sample = TRUE, n_chains = 2, verbose = TRUE)
+
+Outcome: Right-censored (AFT, timescale = time) | Prior: horseshoe | Trees: 50
+Data:    n = 285, p = 2003 | Draws: 5000 x 2 chains (burn-in 5000)
+
+Posterior sigma:
+  Mean: 0.997  SD: 0.057  95% CI: [0.893, 1.117]
+
+Predictions (posterior mean):
+  Train: mean = 1450.721, sd = 53.06, range = [1276.08, 1574.916]
+  Test:  mean = 1443.046, sd = 39.628, range = [1338.241, 1534.646]
+
+Variable importance (posterior inclusion probability):
+  X839: 0.001   X864: 0.001   X938: 0.001   X606: 0.001   X1192: 0.001   X493: 0.001   X394: 0.001   X354: 0.001   X373: 0.001   X1179: 0.001 
+
+MCMC acceptance ratio (per chain): 0.501, 0.503
+
+Convergence diagnostics (coda):
+  Gelman-Rubin R-hat:  = 1.001
+  Effective sample size: sigma = 3705
+
