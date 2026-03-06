@@ -1,0 +1,14 @@
+These folders contain the simulations from the first version of the manuscript "Horseshoe Forests for High-Dimensional Causal Survival Analysis", as can be found in version control on arXiv.
+
+Note: The code uses old versions of the software packages and needs to be updated in order to be run.
+
+Each folder contains the code to run the simulation and generate the graphics. It also contains the results of the simulation stored in .rds files.
+
+The following simulations were performed:
+- Main simulation. In the folder: 'Main sim'
+- Friedman simulation over more p. In the folder: 'Deeper Friedman'
+- Simulation with highly correlated covariates. In the folder: 'Robust sim'
+- Simulation with a misspecified error distribution. In the folder: 'Robust sim'
+- Simulation with a dense model. In the folder: 'Robust sim'
+
+Additionally, 'continuous.R' contains code for a continuous outcome simulation.
