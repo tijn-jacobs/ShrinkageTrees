@@ -1,0 +1,11 @@
+These folder contain all the files and results to the simulations performed for the article "Horseshoe Forests for High-Dimensional Causal Survival Analysis"
+
+Each folder contains the code to run the simulation in and generate the graphics. It also contains the results of the simulation stored in .rds files.
+
+We performed the following simulations:
+- Main simulation (see Section). In the folder: 'Main sim'
+- Friedman simulation over more p (see Section). In the folder: 'Deeper Friedman'
+- Simulation with highly correlated covariates (see Section). In the folder: 'Robust sim"
+- Simulation with a misspecified error distribution (see Section). In the folder: 'Robust sim"
+- Simulation with a dense model (see Section). In the folder: 'Robust sim"
+- Hyperparameter tuning (see Section). In the folder: 'Hyperparameter tuning 1' and 'Hyperparameter tuning 2'
