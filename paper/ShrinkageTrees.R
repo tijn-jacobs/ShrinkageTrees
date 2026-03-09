@@ -6,7 +6,7 @@ knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
 library(ShrinkageTrees)
 
 
-## ----ExampleTree, echo=FALSE, fig.cap="Schematic of a single regression tree. Interior nodes contain binary splitting rules of the form $x_\\rho \\leq c$; terminal nodes (leaves) contain step heights $h_\\ell$. An observation traverses the tree from root to leaf, and its prediction is the step height of the leaf it reaches.", out.width="85%", fig.align='center'----
+## ----ExampleTree, echo=FALSE, fig.cap="Schematic of a single regression tree. Interior nodes contain binary splitting rules of the form $x_\\rho < c$; terminal nodes (leaves) contain step heights $h_\\ell$. An observation traverses the tree from root to leaf, and its prediction is the step height of the leaf it reaches.", out.width="85%", fig.align='center'----
 knitr::include_graphics("figures/ExampleTree_standalone.pdf")
 
 
@@ -14,38 +14,52 @@ knitr::include_graphics("figures/ExampleTree_standalone.pdf")
 df <- data.frame(
   Package             = c("BART", "dbarts", "bcf", "stochtree", "SoftBart", "ShrinkageTrees"),
   `Survival`          = c("Yes", "No", "No", "No", "No", "Yes"),
-  `Interval censoring` = c("No", "No", "No", "No", "No", "Yes"),
-  `Causal (BCF)`      = c("No", "No", "Yes", "Yes", "No", "Yes"),
-  `Causal + Survival` = c("No", "No", "No", "No", "No", "Yes"),
-  `Horseshoe prior`   = c("No", "No", "No", "No", "No", "Yes"),
-  `Dirichlet (DART)`  = c("Yes", "No", "No", "No", "No", "Yes"),
+  `Interval\nCensoring` = c("No", "No", "No", "No", "No", "Yes"),
+  `Causal\n(BCF)`     = c("No", "No", "Yes", "Yes", "No", "Yes"),
+  `Dirichlet\n(DART)` = c("Yes", "No", "No", "No", "No", "Yes"),
   check.names         = FALSE
 )
-knitr::kable(df, caption = "Comparison of Bayesian tree ensemble packages in R.",
-             booktabs = TRUE)
+knitr::kable(df,
+             caption = "Comparison of Bayesian tree ensemble packages in R.",
+             booktabs = TRUE,
+             format = "latex") |>
+  kableExtra::kable_styling(
+    latex_options = c("hold_position"),
+    font_size = 9
+  ) |>
+  kableExtra::column_spec(1, width = "2.5cm") |>
+  kableExtra::column_spec(2:5, width = "1.6cm")
 
 
 ## ----fitting-functions, echo=FALSE--------------------------------------------
 df <- data.frame(
-  Function = c("`ShrinkageTrees()`", "`HorseTrees()`",
-               "`CausalShrinkageForest()`", "`CausalHorseForest()`",
-               "`SurvivalBART()`", "`SurvivalDART()`",
-               "`SurvivalBCF()`", "`SurvivalShrinkageBCF()`"),
-  Description = c("General shrinkage tree ensemble",
-                   "Horseshoe Forest (convenience wrapper with default horseshoe scale)",
-                   "Causal forest with flexible priors",
-                   "Causal Horseshoe Forest",
-                   "Standard BART for AFT survival",
-                   "DART for AFT survival",
-                   "BCF for AFT survival",
-                   "Shrinkage BCF for AFT survival"),
-  Class = c("`ShrinkageTrees`", "`ShrinkageTrees`",
-            "`CausalShrinkageForest`", "`CausalShrinkageForest`",
-            "`ShrinkageTrees`", "`ShrinkageTrees`",
-            "`CausalShrinkageForest`", "`CausalShrinkageForest`"),
+  Function = c("\\texttt{ShrinkageTrees()}", "\\texttt{HorseTrees()}",
+               "\\texttt{CausalShrinkageForest()}", "\\texttt{CausalHorseForest()}",
+               "",
+               "\\texttt{SurvivalBART()}", "\\texttt{SurvivalDART()}",
+               "\\texttt{SurvivalBCF()}", "\\texttt{SurvivalShrinkageBCF()}"),
+  Description = c(
+    "Prediction model with user-specified leaf prior (horseshoe, half-Cauchy, standard, Dirichlet)",
+    "Prediction model with horseshoe prior; single tuning parameter $k$",
+    "BCF causal model with user-specified leaf priors for $\\mu$ and $\\tau$ forests",
+    "BCF causal model with horseshoe prior on both forests",
+    "",
+    "AFT survival with conjugate normal leaf prior (standard BART)",
+    "AFT survival with Dirichlet splitting prior (DART)",
+    "AFT survival with BCF decomposition and conjugate normal leaf prior",
+    "AFT survival with BCF decomposition and horseshoe leaf prior"),
   check.names = FALSE
 )
-knitr::kable(df, caption = "Fitting functions in \\pkg{ShrinkageTrees}. The first four are primary functions; the last four are convenience wrappers.", booktabs = TRUE)
+knitr::kable(df,
+             caption = "Fitting functions in \\pkg{ShrinkageTrees}. The first four
+                        are primary functions; the last four are convenience wrappers.",
+             booktabs = TRUE,
+             format = "latex",
+             escape = FALSE) |>
+  kableExtra::kable_styling(latex_options = "hold_position") |>
+  kableExtra::column_spec(1, width = "4.5cm") |>
+  kableExtra::column_spec(2, width = "9.5cm") |>
+  kableExtra::row_spec(4, hline_after = TRUE)
 
 
 ## ----data, echo=TRUE, eval=FALSE----------------------------------------------
@@ -202,5 +216,4 @@ knitr::include_graphics("figures/survival_population.pdf")
 
 ## ----treatment-effects-fig, echo=FALSE, fig.cap="Left: posterior density of the average treatment effect (ATE) of carboplatin versus cisplatin on the log-survival scale, with 95\\% credible interval (dashed lines). Right: patient-level conditional average treatment effects (CATEs) sorted by posterior mean with 95\\% credible intervals; the dashed line marks zero (no effect).", out.width="48%", fig.show='hold', fig.align='center'----
 knitr::include_graphics(c("figures/ate_posterior.pdf", "figures/cate_caterpillar.pdf"))
-
 

@@ -47,15 +47,26 @@ library(ShrinkageTrees)
 
 # Introduction
 
-Bayesian Additive Regression Trees [BART; @chipman2010bart] are a widely adopted non-parametric method for flexible regression and prediction. BART models the response as a sum of $m$ shallow decision trees, each regularised through a Bayesian prior, and can capture complex interactions and non-linearities without requiring the user to specify a parametric form. These properties make BART attractive for the analysis of time-to-event data, where the relationship between covariates and survival is often unknown. @sparapani2021nonparametric extend BART to survival outcomes through both a discrete-time hazard formulation and an accelerated failure time (AFT) approach within the \CRANpkg{BART} package. The AFT formulation models $\log T_i$ as a sum of trees plus a noise term, and accommodates right-censored observations through data augmentation in the Gibbs sampler. To date, the \CRANpkg{BART} package is, to our knowledge, the only CRAN package that implements Bayesian tree ensembles for survival data. It lacks support for several recent methodological developments that we discuss below.
+Bayesian Additive Regression Trees [BART; @chipman2010bart] model the response as a sum of $m$ shallow decision trees, each regularised through a Bayesian prior. BART captures complex interactions and non-linearities without specifying a parametric form. This makes BART well suited to settings where the relationship between covariates and the response is unknown, including survival analysis. The \CRANpkg{BART} package [@sparapani2021nonparametric] is, to our knowledge, the only CRAN package that implements Bayesian tree ensembles for survival data. It supports discrete-time hazard and AFT formulations, competing risks, and recurrent events. However, it does not support interval-censored outcomes, causal inference models, or global–local shrinkage priors on the leaf parameters. We address all three limitations in \pkg{ShrinkageTrees}.
 
-Beyond prediction, there is growing interest in using tree ensembles for causal inference. Bayesian Causal Forests [BCF; @hahn2020bayesian] decompose the response surface into a prognostic function $\mu(\mathbf{x})$, shared across treatment groups, and a treatment effect function $\tau(\mathbf{x})$ that captures heterogeneity in the causal effect. This two-forest structure improves estimation of conditional average treatment effects (CATEs) compared to single-forest approaches. The combination of causal inference and survival analysis arises naturally in clinical trials and observational studies, where the outcome is a time-to-event and treatment effects may vary across patient subgroups. Yet, at the time of writing, no existing R package provides Bayesian causal forests for survival endpoints.
+BART has become a popular tool for causal inference [@hill2011bayesian; @dorie2019automated]. @hahn2020bayesian introduce Bayesian Causal Forests (BCF), which decompose the response surface into a prognostic function and a treatment effect function. This separation improves estimation of heterogeneous treatment effects. The \CRANpkg{bcf} and \CRANpkg{stochtree} packages implement BCF for continuous outcomes. Causal inference and survival analysis arise together naturally in clinical trials and observational studies, where the outcome is a time-to-event and treatment effects may vary across patient subgroups. No existing R package implements Bayesian causal forests for survival endpoints.
 
-In high-dimensional settings, where the number of candidate predictors $p$ is large relative to the sample size $n$, regularisation becomes critical. Standard BART controls complexity through a prior on tree depth and a conjugate normal prior on the leaf step heights $h_{j\ell}$. This does not explicitly distinguish between two different aspects of regularisation: *structural sparsity* — which variables enter the model and how deep trees grow — and *parametric shrinkage* — how strongly individual leaf contributions are pulled towards zero. DART [@linero2018dart] addresses structural sparsity by placing a Dirichlet prior on the splitting probabilities, encouraging the model to concentrate splits on relevant variables. @jacobs2025horseshoe take a complementary approach and apply global–local shrinkage priors, such as the horseshoe [@carvalho2010horseshoe], directly to the leaf step heights. The horseshoe prior aggressively shrinks uninformative contributions towards zero while leaving large, well-supported effects essentially unpenalised. We refer to tree ensembles equipped with this prior as *Horseshoe Forests*. In \pkg{ShrinkageTrees}, structural and parametric regularisation can be combined freely within a single model, giving the practitioner fine-grained control over the regularisation strategy.
+High-dimensional settings, where the number of predictors $p$ is large relative to the sample size $n$, demand adequate regularisation. We distinguish two components on which regularisation can act in Bayesian tree ensembles. The first is the tree structure, which determines how the covariate space is partitioned. The second is the leaf parameters, which determine each partition's contribution to the fitted function. Standard BART regularises both components generically: a depth prior discourages complex trees, and a conjugate normal prior shrinks the leaf parameters. DART [@linero2018dart] strengthens structural regularisation by placing a Dirichlet prior on the splitting probabilities, encouraging the model to split on a smaller subset of relevant predictors. @jacobs2025horseshoe target the second component and place global–local shrinkage priors, such as the horseshoe [@carvalho2010horseshoe], directly on the leaf parameters. This shrinks weak or spurious contributions aggressively toward zero while preserving strong signals. We refer to tree ensembles with such priors as *Horseshoe Forests*.
 
-We introduce the \CRANpkg{ShrinkageTrees} package, a unified R implementation that brings together these developments. The package supports survival outcomes via AFT models with both right-censoring and interval-censoring; causal inference through BCF with separate prognostic and treatment effect forests, extended to survival endpoints; flexible regularisation by decoupling structural sparsity from parametric shrinkage; and multi-chain MCMC with parallel execution. We implement the core samplers in C++ via \CRANpkg{Rcpp} [@eddelbuettel2011rcpp] and provide a coherent S3 interface with `print`, `summary`, `predict`, and `plot` methods. The methodological foundations are developed in @jacobs2025horseshoe.
+We introduce \CRANpkg{ShrinkageTrees}, a unified R package that addresses these three gaps. We support survival outcomes via AFT models with both right-censoring and interval-censoring. We extend BCF to survival endpoints, enabling estimation of heterogeneous treatment effects for time-to-event outcomes. We decouple structural sparsity from parametric shrinkage and implement Horseshoe Forests, allowing both forms of regularisation to be combined within a single model. We implement the core samplers in C++ via \CRANpkg{Rcpp} [@eddelbuettel2011rcpp] and provide a coherent S3 interface with `print`, `summary`, `predict`, and `plot` methods. @jacobs2025horseshoe develop the methodological foundations.
 
-The remainder of this paper is organised as follows. Section 2 provides a brief overview of the statistical methodology. Section 3 reviews related R packages and compares their capabilities. Section 4 describes the package architecture and implementation. Section 5 demonstrates the package on a high-dimensional ovarian cancer survival dataset. Section 6 concludes with a discussion.
+We introduce \CRANpkg{ShrinkageTrees}, a unified R package that addresses the three 
+gaps identified above. We extend BART to survival outcomes via AFT models for both 
+right-censored and interval-censored data. We extend the BCF decomposition to survival endpoints, 
+providing, to our knowledge, the first causal forest implementation for time-to-event 
+outcomes in R. We implement both Dirichlet splitting priors and Horseshoe Forests, 
+allowing both forms of regularisation to be combined freely within a single model. 
+The Horseshoe Forest sampler relies on an efficient reversible jump algorithm 
+implemented in C++ via \CRANpkg{Rcpp} [@eddelbuettel2011rcpp], and is designed to 
+be extendable to other global–local shrinkage priors. We provide a coherent S3 
+interface with \code{print}, \code{summary}, \code{predict}, and \code{plot} methods.
+
+The remainder of this paper is organised as follows. Section 2 provides a brief overview of the statistical methodology. Section 3 reviews related R packages. Section 4 describes the package architecture. Section 5 demonstrates the package on a high-dimensional ovarian cancer survival dataset. Section 6 concludes.
 
 # Overview of Statistical Methodology
 
@@ -73,7 +84,7 @@ g(\mathbf{x}_i;\, \mathcal{T}_j, \mathcal{H}_j) = \sum_{\ell=1}^{L_j} h_{j\ell} 
 $$
 where $\mathbb{1}(\mathbf{x}_i;\, \mathcal{T}_j, \ell) = 1$ if $\mathbf{x}_i$ is assigned to leaf $\ell$ in tree $\mathcal{T}_j$, and zero otherwise.
 
-```{r ExampleTree, echo=FALSE, fig.cap="Schematic of a single regression tree. Interior nodes contain binary splitting rules of the form $x_\\rho \\leq c$; terminal nodes (leaves) contain step heights $h_\\ell$. An observation traverses the tree from root to leaf, and its prediction is the step height of the leaf it reaches.", out.width="85%", fig.align='center',}
+```{r ExampleTree, echo=FALSE, fig.cap="Schematic of a single regression tree. Interior nodes contain binary splitting rules of the form $x_\\rho < c$; terminal nodes (leaves) contain step heights $h_\\ell$. An observation traverses the tree from root to leaf, and its prediction is the step height of the leaf it reaches.", out.width="85%", fig.align='center',}
 knitr::include_graphics("figures/ExampleTree_standalone.pdf")
 ```
 
@@ -101,13 +112,11 @@ where $\nu$ denotes the degrees of freedom parameter and $\psi$ the prior scale.
 
 ## Regularisation
 
-We distinguish three regularisation mechanisms, each targeting a different aspect of the model.
+The parameters of a BART ensemble fall into two groups: tree structure parameters (nodes, splitting variables, split points) that determine how the covariate space is partitioned, and step heights that determine each partition's contribution to the fitted function. Regularisation can target either group.
 
-**Tree structure priors.** Standard BART regularisation follows the branching process prior of @chipman2010bart: each internal node at depth $d$ splits with probability $\alpha (1 + d)^{-\beta}$, where $\alpha \in (0,1)$ and $\beta \geq 0$ discourage deep trees. Under the default values $\alpha = 0.95$ and $\beta = 2$, most trees remain shallow.
+**Structural regularisation.** Standard BART regularises the tree structure through the branching process prior of @chipman2010bart: each internal node at depth $d$ splits with probability $\alpha (1 + d)^{-\beta}$, where $\alpha \in (0,1)$ and $\beta \geq 0$ discourage deep trees. Under the default values $\alpha = 0.95$ and $\beta = 2$, most trees remain shallow. DART [@linero2018dart] strengthens structural regularisation by replacing the uniform distribution over splitting variables with a Dirichlet prior on the splitting probabilities $\mathbf{s} = (s_1, \ldots, s_p)$. By concentrating the prior on sparse probability vectors, DART encourages the ensemble to split on a subset of relevant variables, achieving structural variable selection.
 
-**Dirichlet splitting priors.** DART [@linero2018dart] replaces the uniform distribution over splitting variables with a Dirichlet prior on the splitting probabilities $\mathbf{s} = (s_1, \ldots, s_p)$. By concentrating the prior on sparse probability vectors, DART encourages the ensemble to split on a subset of relevant variables, achieving structural variable selection.
-
-**Global–local shrinkage priors on step heights.** Rather than regularising the tree structure alone, one can place shrinkage priors directly on the leaf step heights. \pkg{ShrinkageTrees} adopts a scale mixture of normals representation,
+**Shrinkage on step heights.** Rather than regularising the tree structure alone, we can place shrinkage priors directly on the leaf step heights. \pkg{ShrinkageTrees} adopts a scale mixture of normals representation,
 $$
 h_\ell \mid \lambda_\ell, \tau, \omega \sim \mathcal{N}(0,\, \omega\, \lambda_\ell^2\, \tau^2),
 $$
@@ -162,15 +171,21 @@ At the time of writing, \pkg{ShrinkageTrees} is the only implementation that com
 df <- data.frame(
   Package             = c("BART", "dbarts", "bcf", "stochtree", "SoftBart", "ShrinkageTrees"),
   `Survival`          = c("Yes", "No", "No", "No", "No", "Yes"),
-  `Interval censoring` = c("No", "No", "No", "No", "No", "Yes"),
-  `Causal (BCF)`      = c("No", "No", "Yes", "Yes", "No", "Yes"),
-  `Causal + Survival` = c("No", "No", "No", "No", "No", "Yes"),
-  `Horseshoe prior`   = c("No", "No", "No", "No", "No", "Yes"),
-  `Dirichlet (DART)`  = c("Yes", "No", "No", "No", "No", "Yes"),
+  `Interval\nCensoring` = c("No", "No", "No", "No", "No", "Yes"),
+  `Causal\n(BCF)`     = c("No", "No", "Yes", "Yes", "No", "Yes"),
+  `Dirichlet\n(DART)` = c("Yes", "No", "No", "No", "No", "Yes"),
   check.names         = FALSE
 )
-knitr::kable(df, caption = "Comparison of Bayesian tree ensemble packages in R.",
-             booktabs = TRUE)
+knitr::kable(df,
+             caption = "Comparison of Bayesian tree ensemble packages in R.",
+             booktabs = TRUE,
+             format = "latex") |>
+  kableExtra::kable_styling(
+    latex_options = c("hold_position"),
+    font_size = 9
+  ) |>
+  kableExtra::column_spec(1, width = "2.5cm") |>
+  kableExtra::column_spec(2:5, width = "1.6cm")
 ```
 
 # Package Architecture
@@ -180,30 +195,36 @@ knitr::kable(df, caption = "Comparison of Bayesian tree ensemble packages in R."
 ## Fitting functions and S3 classes
 
 The package provides four primary fitting functions and four convenience wrappers for common model configurations. Table \@ref(tab:fitting-functions) lists all eight functions. The primary functions accept arguments that control the outcome type (`outcome_type`), prior specification (`prior_type`, `local_hp`, `global_hp`), tree structure (`number_of_trees`, `power`, `base`), and MCMC settings (`N_post`, `N_burn`, `n_chains`).
-
 ```{r fitting-functions, echo=FALSE}
 df <- data.frame(
-  Function = c("`ShrinkageTrees()`", "`HorseTrees()`",
-               "`CausalShrinkageForest()`", "`CausalHorseForest()`",
-               "`SurvivalBART()`", "`SurvivalDART()`",
-               "`SurvivalBCF()`", "`SurvivalShrinkageBCF()`"),
-  Description = c("General shrinkage tree ensemble",
-                   "Horseshoe Forest (convenience wrapper with default horseshoe scale)",
-                   "Causal forest with flexible priors",
-                   "Causal Horseshoe Forest",
-                   "Standard BART for AFT survival",
-                   "DART for AFT survival",
-                   "BCF for AFT survival",
-                   "Shrinkage BCF for AFT survival"),
-  Class = c("`ShrinkageTrees`", "`ShrinkageTrees`",
-            "`CausalShrinkageForest`", "`CausalShrinkageForest`",
-            "`ShrinkageTrees`", "`ShrinkageTrees`",
-            "`CausalShrinkageForest`", "`CausalShrinkageForest`"),
+  Function = c("\\texttt{ShrinkageTrees()}", "\\texttt{HorseTrees()}",
+               "\\texttt{CausalShrinkageForest()}", "\\texttt{CausalHorseForest()}",
+               "",
+               "\\texttt{SurvivalBART()}", "\\texttt{SurvivalDART()}",
+               "\\texttt{SurvivalBCF()}", "\\texttt{SurvivalShrinkageBCF()}"),
+  Description = c(
+    "Prediction model with user-specified leaf prior (horseshoe, half-Cauchy, standard, Dirichlet)",
+    "Prediction model with horseshoe prior; single tuning parameter $k$",
+    "BCF causal model with user-specified leaf priors for $\\mu$ and $\\tau$ forests",
+    "BCF causal model with horseshoe prior on both forests",
+    "",
+    "AFT survival with conjugate normal leaf prior (standard BART)",
+    "AFT survival with Dirichlet splitting prior (DART)",
+    "AFT survival with BCF decomposition and conjugate normal leaf prior",
+    "AFT survival with BCF decomposition and horseshoe leaf prior"),
   check.names = FALSE
 )
-knitr::kable(df, caption = "Fitting functions in \\pkg{ShrinkageTrees}. The first four are primary functions; the last four are convenience wrappers.", booktabs = TRUE)
+knitr::kable(df,
+             caption = "Fitting functions in \\pkg{ShrinkageTrees}. The first four
+                        are primary functions; the last four are convenience wrappers.",
+             booktabs = TRUE,
+             format = "latex",
+             escape = FALSE) |>
+  kableExtra::kable_styling(latex_options = "hold_position") |>
+  kableExtra::column_spec(1, width = "4.5cm") |>
+  kableExtra::column_spec(2, width = "9.5cm") |>
+  kableExtra::row_spec(4, hline_after = TRUE)
 ```
-
 `ShrinkageTrees()` is the most general prediction model function. It accepts a `prior_type` argument that selects the leaf prior: `"horseshoe"` (per-tree global scale), `"horseshoe_fw"` (forest-wide global scale), `"half-cauchy"` (local shrinkage only), `"standard"` (conjugate normal, as in classical BART), or `"dirichlet"` (Dirichlet splitting, as in DART). `HorseTrees()` is a convenience wrapper that fixes the prior to the horseshoe and exposes a single tuning parameter $k$ controlling the half-Cauchy scales via $\alpha_\tau = \alpha_\lambda = k / \sqrt{m}$. The causal functions `CausalShrinkageForest()` and `CausalHorseForest()` mirror this design for the causal BCF formulation, with independent prior configurations for the prognostic and treatment effect forests.
 
 All prediction model functions return an object of class `"ShrinkageTrees"`; all causal model functions return `"CausalShrinkageForest"`. Both classes provide `print()`, `summary()`, `predict()`, and `plot()` methods. The `summary()` method reports posterior summaries for $\sigma$, variable inclusion probabilities, and — for causal models — the ATE with a credible interval. The `predict()` method re-runs the MCMC sampler on the new covariate matrix using the training data and hyperparameters stored in the fitted object; it always generates posterior samples internally, regardless of whether `store_posterior_sample` was set during fitting. The returned `ShrinkageTreesPrediction` object contains posterior means and credible intervals. The `plot()` method produces MCMC diagnostics (traceplots and posterior densities for $\sigma$), variable importance plots, and — for causal models — ATE and CATE visualisations. Plotting uses \CRANpkg{ggplot2}, which is a suggested but not required dependency.
@@ -226,7 +247,21 @@ Assessing MCMC convergence is an essential part of any Bayesian workflow, yet mo
 
 # Application: Ovarian Cancer Survival
 
-We demonstrate the package on the `ovarian` dataset shipped with \pkg{ShrinkageTrees}. This dataset is curated from The Cancer Genome Atlas ovarian cancer cohort [TCGA-OV; @tcga2011ovarian] and contains overall survival times, a binary treatment indicator, clinical covariates, and expression levels of 2,000 genes selected by median absolute deviation. Ovarian cancer is one of the most lethal gynaecological malignancies, with a five-year survival rate below 50\%. First-line treatment typically involves platinum-based chemotherapy, and the choice between carboplatin and cisplatin — two agents with different toxicity profiles — remains a central clinical question. The dataset provides a high-dimensional causal survival problem that exercises the main features of the package. We first fit prediction models for survival, then extend the analysis to causal inference using the BCF formulation.
+We demonstrate the package on the \texttt{ovarian} dataset shipped with 
+\pkg{ShrinkageTrees}. This dataset is curated from The Cancer Genome Atlas ovarian 
+cancer cohort [TCGA-OV; @tcga2011ovarian] and contains overall survival times, a 
+binary treatment indicator, clinical covariates, and expression levels of 2,000 genes 
+selected by median absolute deviation. Ovarian cancer is one of the most lethal 
+gynaecological malignancies, accounting for approximately 85\% of ovarian cancer 
+deaths in its high-grade serous form [@tcga2011ovarian]. The five-year survival rate 
+is below 50\%. First-line treatment involves platinum-based chemotherapy, and gene 
+expression patterns are known to be associated with survival duration and chemotherapy 
+response [@tcga2011ovarian]. The choice between carboplatin and cisplatin — two 
+platinum agents with different toxicity profiles — remains a central clinical question. 
+The dataset provides a challenging high-dimensional causal survival problem, with 
+gene expression data yielding $p \gg n$, that exercises the main features of the 
+package. We first fit prediction models for survival, then extend the analysis to 
+causal inference and fit a model to estimate the heterogenuous treaetment effect.
 
 ## Data and setup
 
