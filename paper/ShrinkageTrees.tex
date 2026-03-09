@@ -37,17 +37,11 @@ The remainder of this paper is organised as follows. Section 2 provides a brief 
 
 \subsection{Bayesian Additive Regression Trees}\label{bayesian-additive-regression-trees}
 
-We adapt the Bayesian Additive Regression Trees (BART) model, originally introduced by \citet{chipman2010bart} to estimate the conditional mean function \(\mathbb{E}[Y_i \mid \mathbf{x}_i]\) in regression settings with continuous uncensored outcomes. The model assumes
+We adapt the BART model of \citet{chipman2010bart}. BART models the response as a sum of \(m\) shallow decision trees:
 \[
-Y_i = \sum_{j=1}^{m} g(\mathbf{x}_i;\, \mathcal{T}_j, \mathcal{H}_j) + \varepsilon_i, \quad \varepsilon_i \sim \mathcal{N}(0, \sigma^2),
+Y_i = \sum_{j=1}^{m} g(\mathbf{x}_i;\, \mathcal{T}_j, \mathcal{H}_j) + \varepsilon_i, \quad \varepsilon_i \sim \mathcal{N}(0, \sigma^2).
 \]
-where each \(\mathcal{T}_j\) is a binary decision tree that defines recursive partitioning rules over the covariate space, and \(\mathcal{H}_j = \{h_{j1}, \ldots, h_{jL_j}\}\) denotes the set of step heights associated with the \(L_j\) leaves of tree \(\mathcal{T}_j\).
-
-For a given input \(\mathbf{x}\), the function \(g(\mathbf{x};\, \mathcal{T}_j, \mathcal{H}_j)\) maps \(\mathbf{x}\) to a leaf node \(\ell\) in \(\mathcal{T}_j\) and returns the corresponding value \(h_{j\ell}\). Each tree partitions the covariate space into disjoint regions, assigning a constant prediction to each (see Figure \ref{fig:ExampleTree}). The prediction of the \(j\)-th tree for individual \(i\) is obtained by
-\[
-g(\mathbf{x}_i;\, \mathcal{T}_j, \mathcal{H}_j) = \sum_{\ell=1}^{L_j} h_{j\ell} \cdot \mathbb{1}(\mathbf{x}_i;\, \mathcal{T}_j, \ell),
-\]
-where \(\mathbb{1}(\mathbf{x}_i;\, \mathcal{T}_j, \ell) = 1\) if \(\mathbf{x}_i\) is assigned to leaf \(\ell\) in tree \(\mathcal{T}_j\), and zero otherwise.
+Each tree \(j\) is characterised by two parameter groups. The \emph{tree structure} \(\mathcal{T}_j\) encodes the topology and the splitting rules: which variables to split on and at what thresholds. It determines how the covariate space is partitioned into disjoint regions. The \emph{step heights} \(\mathcal{H}_j = \{h_{j1}, \ldots, h_{jL_j}\}\) are the values assigned to the \(L_j\) leaves and determine each region's contribution to the fitted function. For input \(\mathbf{x}\), the function \(g(\mathbf{x};\, \mathcal{T}_j, \mathcal{H}_j)\) returns the step height of the leaf that \(\mathbf{x}\) reaches (see Figure \ref{fig:ExampleTree}). This distinction between \(\mathcal{T}\) and \(\mathcal{H}\) is central to the regularisation framework we develop below.
 
 \begin{figure}
 
@@ -58,27 +52,19 @@ where \(\mathbb{1}(\mathbf{x}_i;\, \mathcal{T}_j, \ell) = 1\) if \(\mathbf{x}_i\
 \caption{Schematic of a single regression tree. Interior nodes contain binary splitting rules of the form $x_\rho < c$; terminal nodes (leaves) contain step heights $h_\ell$. An observation traverses the tree from root to leaf, and its prediction is the step height of the leaf it reaches.}\label{fig:ExampleTree}
 \end{figure}
 
-A prior is specified over the ensemble \(\{(\mathcal{T}_j, \mathcal{H}_j)\}_{j=1}^m\) by independently assigning a prior on the tree structure and a conditional prior on the step heights given the tree:
+We specify independent priors on \(\mathcal{T}_j\) and \(\mathcal{H}_j\):
 \[
 p(\mathcal{T}_j, \mathcal{H}_j) = p_{\mathcal{T}}(\mathcal{T}_j)\, p_{\mathcal{H}}(\mathcal{H}_j \mid \mathcal{T}_j) \quad \text{for } j = 1,\ldots,m.
 \]
-These define the two key components of the BART prior. The tree structure \(\mathcal{T}\) of each tree is drawn from a prior \(p_{\mathcal{T}}(\mathcal{T})\) originally described by \citet{chipman1998bayesiancart}, based on a heterogeneous Galton--Watson branching process \citep{rockova2020theory}. The process begins at a root node and recursively decides whether to split a node based on its depth \(d\). The probability that a node at depth \(d\) is non-terminal is given by
-\[
-p(d) = \alpha\, (1 + d)^{-\beta},
-\]
-with hyperparameters \(\alpha > 0\) and \(\beta > 0\) governing the expected depth and shape of the tree. Given a tree topology, each interior node is assigned a binary decision rule of the form \([x_\rho \leq c]\), where the splitting variable \(\rho\) is selected uniformly from the available covariates and the split point \(c\) is drawn uniformly from the range of observed values for variable \(\rho\). The splitting rules are constrained to those producing valid partitions, that is, each subset contains a minimal chosen number of observations.
+The tree structure prior \(p_{\mathcal{T}}\) is a branching process \citep{chipman1998bayesiancart, rockova2020theory} in which a node at depth \(d\) splits with probability \(\alpha\, (1 + d)^{-\beta}\). At each internal node, the splitting variable is drawn uniformly from the available covariates and the split point uniformly from the observed range.
 
-The prior \(p_{\mathcal{H}}\) on the step heights \(\mathcal{H}\) is defined conditionally on the tree structure \(\mathcal{T}\). The step heights \(h_{j\ell}\) are assigned independent Gaussian priors of the form
+The step height prior \(p_{\mathcal{H}}\) assigns independent Gaussian priors conditional on the tree structure:
 \[
 h_{j\ell} \sim \mathcal{N}\!\left(0,\, \frac{1}{4\sqrt{m}}\right),
 \]
-where the variance is scaled to ensure that the prior places approximately 95\% of its mass within the observed range of the response. This prior is conjugate, enabling efficient non-reversible updates using a Gibbs sampler.
+where the variance is scaled so that the prior places approximately 95\% of its mass within the observed range of the response. This prior is conjugate, so the Gibbs sampler can update the step heights efficiently.
 
-The noise is modelled as \(\varepsilon_i \sim \mathcal{N}(0, \sigma^2)\), with the error variance \(\sigma^2\) assigned a scaled inverse-chi-squared prior:
-\[
-\sigma^2 \sim \text{Inv-}\chi^2(\nu,\, \psi),
-\]
-where \(\nu\) denotes the degrees of freedom parameter and \(\psi\) the prior scale. We follow \citet{chipman2010bart}, setting \(\nu = 3\) and choosing \(\psi\) so that the prior is centred around a rough estimate of \(\sigma^2\).
+We model the error variance as \(\sigma^2 \sim \text{Inv-}\chi^2(\nu,\, \psi)\), with \(\nu = 3\) and \(\psi\) chosen so that the prior is centred around a rough estimate of \(\sigma^2\) \citep{chipman2010bart}.
 
 \subsection{Regularisation}\label{regularisation}
 
@@ -227,10 +213,8 @@ response \citep{tcga2011ovarian}. The choice between carboplatin and cisplatin -
 platinum agents with different toxicity profiles --- remains a central clinical question.
 The dataset provides a challenging high-dimensional causal survival problem, with
 gene expression data yielding \(p \gg n\), that exercises the main features of the
-package. We first fit prediction models for survival, then extend the analysis to
-causal inference and fit a model to estimate the heterogenuous treaetment effect.
-
-\subsection{Data and setup}\label{data-and-setup}
+package. We first fit a prediction model for survival, then extend the analysis to
+causal inference and estimate the heterogeneous treatment effect.
 
 \begin{verbatim}
 library(ShrinkageTrees)
@@ -263,24 +247,7 @@ time_train <- time[train_idx];  time_test <- time[test_idx]
 status_train <- status[train_idx];  status_test <- status[test_idx]
 \end{verbatim}
 
-\subsection{Survival prediction models}\label{survival-prediction-models}
-
-We fit two prediction models on the training data: a standard BART model via \texttt{SurvivalBART()} and a Horseshoe Forest via \texttt{HorseTrees()}. Both use an AFT formulation with right-censoring and two independent MCMC chains. The BART model serves as a baseline; the Horseshoe Forest applies global--local shrinkage to the leaf step heights, which is expected to improve regularisation in this high-dimensional setting where the number of predictors far exceeds the sample size.
-
-\begin{verbatim}
-fit_bart <- SurvivalBART(
-  time            = time_train,
-  status          = status_train,
-  X_train         = X_train,
-  X_test          = X_test,
-  number_of_trees = 50,
-  N_post          = 5000,
-  N_burn          = 5000,
-  n_chains        = 2,
-  store_posterior_sample = TRUE,
-  verbose         = FALSE
-)
-\end{verbatim}
+We fit a Horseshoe Forest via \texttt{HorseTrees()} using an AFT formulation with right-censoring and two independent MCMC chains. The horseshoe prior applies global--local shrinkage to the leaf step heights, providing regularisation in this high-dimensional setting where the number of predictors far exceeds the sample size.
 
 \begin{verbatim}
 fit_horse <- HorseTrees(
@@ -304,23 +271,59 @@ The \texttt{print()} and \texttt{summary()} methods provide a concise overview o
 
 \begin{verbatim}
 print(fit_horse)
+\end{verbatim}
+
+\begin{verbatim}
+ShrinkageTrees model
+---------------------
+Outcome type:         Right-censored (AFT, timescale = time)
+Prior:                horseshoe
+Number of trees:      50
+Training size (n):    285
+Number of features:   2003
+Chains:               2
+Draws per chain:      5000 (burn-in 5000)
+Acceptance ratio:     0.501, 0.503 (per chain)
+Posterior mean sigma: 0.997
+\end{verbatim}
+
+\begin{verbatim}
 summary(fit_horse)
+\end{verbatim}
+
+\begin{verbatim}
+ShrinkageTrees model summary
+============================
+Outcome: Right-censored (AFT, timescale = time) | Prior: horseshoe | Trees: 50
+Data:    n = 285, p = 2003 | Draws: 5000 x 2 chains (burn-in 5000)
+
+Posterior sigma:
+  Mean: 0.997  SD: 0.057  95% CI: [0.893, 1.117]
+
+Predictions (posterior mean):
+  Train: mean = 1450.721, sd = 53.06, range = [1276.08, 1574.916]
+  Test:  mean = 1443.046, sd = 39.628, range = [1338.241, 1534.646]
+
+Variable importance (posterior inclusion probability):
+  X839: 0.001  X864: 0.001  X938: 0.001  X606: 0.001  X1192: 0.001
+  X493: 0.001  X394: 0.001  X354: 0.001  X373: 0.001  X1179: 0.001
+
+MCMC acceptance ratio (per chain): 0.501, 0.503
+
+Convergence diagnostics (coda):
+  Gelman-Rubin R-hat:  = 1.001
+  Effective sample size: sigma = 3705
 \end{verbatim}
 
 We evaluate predictive accuracy on the held-out test set using the concordance index {[}C-index; \citet{harrell1996concordance}{]}, where a value of 1 indicates perfect discrimination and 0.5 corresponds to random prediction.
 
 \begin{verbatim}
 library(survival)
-c_bart  <- concordance(Surv(time_test, status_test) ~ fit_bart$test_predictions)
 c_horse <- concordance(Surv(time_test, status_test) ~ fit_horse$test_predictions)
-
-cat("Test C-index — SurvivalBART:", round(c_bart$concordance, 3),
-    " HorseTrees:", round(c_horse$concordance, 3), "\n")
+cat("Test C-index — HorseTrees:", round(c_horse$concordance, 3), "\n")
 \end{verbatim}
 
-Both models achieve a test C-index of approximately 0.60, indicating modest but above-chance discrimination --- a reasonable result given the extremely high-dimensional setting (\(p = 2{,}003 \gg n = 357\)). The Horseshoe Forest and standard BART perform comparably here, consistent with the horseshoe prior providing regularisation benefits primarily in estimation and uncertainty quantification rather than in point prediction summaries.
-
-\subsection{Convergence diagnostics}\label{convergence-diagnostics}
+The model achieves a test C-index of 0.594, indicating modest but above-chance discrimination --- a reasonable result given the extremely high-dimensional setting (\(p = 2{,}003 \gg n = 357\)).
 
 We assess convergence using \(\sigma\) traceplots and posterior densities. With \texttt{n\_chains\ =\ 2}, each chain is plotted separately, allowing visual assessment of mixing and chain agreement. The \texttt{summary()} method automatically reports the effective sample size and Gelman--Rubin \(\hat{R}\) statistic when the \CRANpkg{coda} package is installed.
 
@@ -348,8 +351,6 @@ plot(fit_horse, type = "density")
 \end{figure}
 
 Figures \ref{fig:trace-fig} and \ref{fig:density-fig} show good mixing: the two chains overlap throughout the sampling period and yield nearly identical posterior densities for \(\sigma\). The \texttt{summary()} output confirms convergence with \(\hat{R} = 1\) and an effective sample size of 3,754.
-
-\subsection{Posterior survival curves}\label{posterior-survival-curves}
 
 We identify two test-set patients at opposite ends of the predicted risk spectrum: the patient with the highest predicted survival time (best prognosis) and the patient with the lowest (worst prognosis).
 
@@ -399,8 +400,6 @@ plot(fit_horse, type = "survival", km = TRUE)
 
 In Figure \ref{fig:population-fig}, the model-based survival curve closely tracks the Kaplan--Meier estimate during the observed follow-up period, with expected divergence in the right tail where data are sparse.
 
-\subsection{Causal survival analysis}\label{causal-survival-analysis}
-
 We now estimate heterogeneous treatment effects of carboplatin versus cisplatin using \texttt{CausalHorseForest()}, which fits a BCF model with horseshoe shrinkage on both the prognostic and treatment effect forests. We first estimate propensity scores from a logistic regression on the clinical covariates. Using the full gene expression matrix for propensity estimation would risk overfitting given \(p \gg n\); clinical covariates alone capture the main sources of confounding by indication.
 
 \begin{verbatim}
@@ -431,9 +430,30 @@ fit_causal <- CausalHorseForest(
 summary(fit_causal)
 \end{verbatim}
 
-The \texttt{summary()} method reports the posterior average treatment effect (ATE) on the log-survival scale with a 95\% credible interval. Here we pass \texttt{log(time)} directly with \texttt{timescale\ =\ "log"}, so all treatment effect estimates remain on the log-survival scale. A positive ATE indicates that carboplatin is associated with longer survival times.
+\begin{verbatim}
+CausalShrinkageForest model summary
+=====================================
+Outcome: Right-censored (AFT, timescale = log)
+Prior:   control = horseshoe, treatment = horseshoe
+Trees:   control = 50, treatment = 50
+Data:    n = 357, p_control = 2004, p_treat = 2003 | Draws: 5000 x 2 chains (burn-in 5000)
 
-\subsection{Treatment effect posteriors}\label{treatment-effect-posteriors}
+Treatment effect (CATE):
+  ATE:     -0.1042  95% CI: [-0.3423, 0.0706]
+  CATE SD: 0.0079
+
+Prognostic function (mu):
+  Mean: 7.249  SD: 0.004  Range: [7.238, 7.258]
+
+Posterior sigma:
+  Mean: 0.993  SD: 0.05  95% CI: [0.899, 1.098]
+
+MCMC acceptance ratios (per chain):
+  control:   0.508, 0.505
+  treatment: 0.476, 0.476
+\end{verbatim}
+
+The \texttt{summary()} method reports the posterior average treatment effect (ATE) on the log-survival scale with a 95\% credible interval. Here we pass \texttt{log(time)} directly with \texttt{timescale\ =\ "log"}, so all treatment effect estimates remain on the log-survival scale. A positive ATE indicates that carboplatin is associated with longer survival times.
 
 The \texttt{plot()} method provides visualisations of the treatment effect posterior. The ATE density plot shows the full posterior distribution of the average treatment effect, while the CATE caterpillar plot displays patient-level treatment effect estimates sorted by posterior mean with 95\% credible intervals.
 
@@ -452,8 +472,6 @@ plot(fit_causal, type = "cate")
 \end{figure}
 
 Figure \ref{fig:treatment-effects-fig} shows the treatment effect posteriors. The ATE posterior is centred near zero on the log-survival scale, and the individual CATEs cluster tightly around the ATE with narrow credible intervals. This suggests a relatively homogeneous treatment effect across the patient population --- consistent with both platinum agents acting through similar mechanisms.
-
-\subsection{Interval-censored survival}\label{interval-censored-survival}
 
 Although the ovarian dataset contains right-censored observations, \pkg{ShrinkageTrees} also supports interval-censored outcomes via \texttt{outcome\_type\ =\ "interval-censored"} with \texttt{left\_time} and \texttt{right\_time} arguments following the convention of \texttt{survival::Surv(type\ =\ "interval2")}. See \texttt{?ShrinkageTrees} for details and examples.
 

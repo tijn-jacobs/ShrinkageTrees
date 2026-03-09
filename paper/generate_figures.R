@@ -17,7 +17,7 @@ dir.create("outputs", showWarnings = FALSE)
 data("ovarian")
 
 clin      <- ovarian$clinical
-time      <- clin$OS_time
+time      <- clin$OS_time / 30.44   # convert days to months
 status    <- clin$OS_event
 treatment <- clin$treatment
 
@@ -46,20 +46,6 @@ status_train <- status[train_idx];  status_test <- status[test_idx]
 # PART 1: SURVIVAL PREDICTION
 ################################################################################
 
-cat("=== Fitting SurvivalBART ===\n")
-fit_bart <- SurvivalBART(
-  time            = time_train,
-  status          = status_train,
-  X_train         = X_train,
-  X_test          = X_test,
-  number_of_trees = 50,
-  N_post          = 5000,
-  N_burn          = 5000,
-  n_chains        = 2,
-  store_posterior_sample = TRUE,
-  verbose         = TRUE
-)
-
 cat("=== Fitting HorseTrees ===\n")
 fit_horse <- HorseTrees(
   y               = time_train,
@@ -87,12 +73,10 @@ summary(fit_horse)
 sink()
 
 # --- C-index ---
-c_bart  <- concordance(Surv(time_test, status_test) ~ fit_bart$test_predictions)
 c_horse <- concordance(Surv(time_test, status_test) ~ fit_horse$test_predictions)
 
 sink("outputs/cindex.txt")
-cat("Test C-index — SurvivalBART:", round(c_bart$concordance, 3),
-    " HorseTrees:", round(c_horse$concordance, 3), "\n")
+cat("Test C-index — HorseTrees:", round(c_horse$concordance, 3), "\n")
 sink()
 
 # --- Convergence diagnostics ---
@@ -113,23 +97,9 @@ ggsave("figures/density_horse.pdf", p_density, width = 5, height = 3)
 
 pred <- predict(fit_horse, newdata = X_test)
 
-idx_best  <- which.max(pred$mean)
-idx_worst <- which.min(pred$mean)
+idx <- which.min(abs(pred$mean - median(pred$mean)))
 
-sink("outputs/patient_profiles.txt")
-cat("Best prognosis  — age:", X_test[idx_best, "age"],
-    " stage:", X_test[idx_best, "figo_stage"],
-    " grade:", X_test[idx_best, "tumor_grade"], "\n")
-cat("Worst prognosis — age:", X_test[idx_worst, "age"],
-    " stage:", X_test[idx_worst, "figo_stage"],
-    " grade:", X_test[idx_worst, "tumor_grade"], "\n")
-sink()
-
-patient_cols <- c("steelblue", "indianred")
-
-p_individual <- plot(pred, type = "survival", obs = c(idx_best, idx_worst)) +
-  scale_colour_manual(values = patient_cols) +
-  scale_fill_manual(values = patient_cols)
+p_individual <- plot(pred, type = "survival", obs = idx)
 ggsave("figures/survival_individual.pdf", p_individual, width = 5, height = 3.5)
 
 p_population <- plot(fit_horse, type = "survival", km = TRUE)
@@ -156,7 +126,7 @@ fit_causal <- CausalHorseForest(
   outcome_type              = "right-censored",
   timescale                 = "log",
   number_of_trees           = 50,
-  k                         = 0.1,
+  k                         = 0.25,
   N_post                    = 5000,
   N_burn                    = 5000,
   n_chains                  = 2,

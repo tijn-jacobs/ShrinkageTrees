@@ -91,21 +91,6 @@ knitr::kable(df,
 # status_train <- status[train_idx];  status_test <- status[test_idx]
 
 
-## ----survival-bart, echo=TRUE, eval=FALSE-------------------------------------
-# fit_bart <- SurvivalBART(
-#   time            = time_train,
-#   status          = status_train,
-#   X_train         = X_train,
-#   X_test          = X_test,
-#   number_of_trees = 50,
-#   N_post          = 5000,
-#   N_burn          = 5000,
-#   n_chains        = 2,
-#   store_posterior_sample = TRUE,
-#   verbose         = FALSE
-# )
-
-
 ## ----survival-horse, echo=TRUE, eval=FALSE------------------------------------
 # fit_horse <- HorseTrees(
 #   y               = time_train,
@@ -126,16 +111,16 @@ knitr::kable(df,
 
 ## ----survival-summary, echo=TRUE, eval=FALSE----------------------------------
 # print(fit_horse)
+
+
+## ----survival-summary2, echo=TRUE, eval=FALSE---------------------------------
 # summary(fit_horse)
 
 
 ## ----cindex, echo=TRUE, eval=FALSE--------------------------------------------
 # library(survival)
-# c_bart  <- concordance(Surv(time_test, status_test) ~ fit_bart$test_predictions)
 # c_horse <- concordance(Surv(time_test, status_test) ~ fit_horse$test_predictions)
-# 
-# cat("Test C-index — SurvivalBART:", round(c_bart$concordance, 3),
-#     " HorseTrees:", round(c_horse$concordance, 3), "\n")
+# cat("Test C-index — HorseTrees:", round(c_horse$concordance, 3), "\n")
 
 
 ## ----convergence, echo=TRUE, eval=FALSE---------------------------------------
