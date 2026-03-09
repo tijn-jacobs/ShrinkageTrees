@@ -437,3 +437,4 @@ void DrawSparsityParameter(bool fixed_theta, double& dart_theta,
   random.SetInclusionWeights(log_weights);
   dart_theta = theta_grid[random.discrete()];
 }
+

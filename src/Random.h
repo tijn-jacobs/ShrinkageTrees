@@ -114,3 +114,4 @@ private:
 };
 
 #endif  // GUARD_Random_h
+

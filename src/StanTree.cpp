@@ -296,3 +296,4 @@ size_t StanTree::GetConstrainedCut(size_t split_var)
   else
     return ancestor->GetConstrainedCut(split_var);
 }
+

@@ -23,3 +23,4 @@ separately for the prognostic function, CATE, and total outcome.
 \code{\link{predict.CausalShrinkageForest}},
 \code{\link{print.summary.CausalShrinkageForestPrediction}}
 }
+

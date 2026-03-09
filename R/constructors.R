@@ -250,3 +250,4 @@ NewCausalShrinkageForest <- function(
   class(obj) <- "CausalShrinkageForest"
   obj
 }
+

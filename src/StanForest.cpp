@@ -188,3 +188,4 @@ void StanForest::UpdateHalfCauchyScale(double global_parameter,
                    (std::sqrt(aux) * std::sqrt(static_cast<double>(num_trees)));
   storage_eta = prior_info.eta;
 }
+

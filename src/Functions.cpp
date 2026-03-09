@@ -593,3 +593,4 @@ double LogMoveRatio(size_t number_of_nogs, size_t number_of_leaves,
   return std::log(prune_prob) - std::log(number_of_nogs) - 
          (std::log(grow_prob) - std::log(number_of_leaves));
 }
+

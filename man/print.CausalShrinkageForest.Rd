@@ -23,3 +23,4 @@ acceptance ratios.
 \code{\link{summary.CausalShrinkageForest}},
 \code{\link{CausalHorseForest}}, \code{\link{CausalShrinkageForest}}
 }
+

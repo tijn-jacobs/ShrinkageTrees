@@ -370,3 +370,4 @@ S3 methods: \code{\link{print.CausalShrinkageForest}},
 \code{\link{predict.CausalShrinkageForest}},
 \code{\link{plot.CausalShrinkageForest}}.
 }
+

@@ -207,3 +207,5 @@ It includes four core functions:
 - `CausalShrinkageForest()`: fits a flexible causal forest with user-defined shrinkage priors and tuning options.
 
 The `...Trees` functions use a single learner to estimate the outcome model directly. In contrast, the `Causal...Forest` variants fit separate models for the treated and control regression function. This enables estimation of conditional average treatment effects (CATEs).
+
+

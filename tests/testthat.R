@@ -10,3 +10,5 @@ library(testthat)
 library(ShrinkageTrees)
 
 test_check("ShrinkageTrees")
+
+

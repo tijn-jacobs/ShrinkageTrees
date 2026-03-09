@@ -227,3 +227,4 @@ run_one_rep <- function(setting, rep, X, cfg, methods) {
   
   do.call(rbind, out)
 }
+

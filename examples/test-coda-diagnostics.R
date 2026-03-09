@@ -182,3 +182,4 @@ stopifnot(!is.null(smry_surv$diagnostics))
 cat("All assertions passed.\n")
 
 cat("\nAll coda diagnostics tests passed.\n")
+

@@ -118,3 +118,4 @@ print(plot(fit_causal, type = "cate"))
 dev.off()
 cat("\nAll plots saved to:", outfile, "\n")
 cat("Open the PDF to visually inspect.\n")
+

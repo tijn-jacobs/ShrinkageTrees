@@ -699,3 +699,4 @@ plot.ShrinkageTreesPrediction <- function(x,
   .plot_survival_curves(df, obs = obs, level = level,
                         title_prefix = "Posterior predictive")
 }
+

@@ -25,3 +25,4 @@ importance, and MCMC diagnostics.
 \seealso{
 \code{\link{summary.ShrinkageTrees}}
 }
+

@@ -43,3 +43,4 @@ interval bounds.
 \code{\link{summary.ShrinkageTreesPrediction}},
 \code{\link{plot.ShrinkageTreesPrediction}}
 }
+

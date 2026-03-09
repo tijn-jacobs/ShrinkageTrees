@@ -34,3 +34,4 @@ Or source interactively in R:
 ```r
 source("examples/test-causal.R")
 ```
+

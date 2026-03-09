@@ -60,3 +60,4 @@ stopifnot(all(pred$probabilities >= 0 & pred$probabilities <= 1))
 cat(sprintf("Test predictions: %d observations\n", length(pred$mean)))
 
 cat("\nAll binary tests passed.\n")
+

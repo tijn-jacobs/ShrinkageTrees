@@ -23,3 +23,4 @@ mean predictions and credible interval bounds.
 \seealso{
 \code{\link{summary.ShrinkageTreesPrediction}}
 }
+

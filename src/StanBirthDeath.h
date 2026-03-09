@@ -16,3 +16,4 @@ bool BirthDeathStep(StanTree& tree, CutpointMatrix& cutpoints,
                     bool use_augmentation, Random& random);
 
 #endif
+

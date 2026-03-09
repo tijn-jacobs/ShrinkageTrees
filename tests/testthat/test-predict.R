@@ -249,3 +249,4 @@ test_that("predict.CausalShrinkageForest errors on dimension mismatch", {
   expect_error(predict(fit, newdata_control = X_a, newdata_treat = X_b),
                "same number of rows")
 })
+

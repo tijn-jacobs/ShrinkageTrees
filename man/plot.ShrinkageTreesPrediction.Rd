@@ -56,3 +56,4 @@ plot(pred, type = "survival", obs = c(1, 5, 10))
 \code{\link{predict.ShrinkageTrees}},
 \code{\link{plot.ShrinkageTrees}}
 }
+

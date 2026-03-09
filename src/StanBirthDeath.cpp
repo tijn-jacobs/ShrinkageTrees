@@ -112,3 +112,4 @@ bool BirthDeathStep(StanTree& tree, CutpointMatrix& cutpoints,
     }
   }
 }
+

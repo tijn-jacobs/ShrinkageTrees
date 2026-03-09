@@ -60,3 +60,4 @@ tryCatch(
 )
 
 cat("\nAll survival curve tests passed!\n")
+

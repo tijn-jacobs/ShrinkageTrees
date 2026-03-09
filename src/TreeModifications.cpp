@@ -921,3 +921,4 @@ bool ReversibleJump(Tree& tree, Cutpoints& cutpoints, Data& data,
     }
   }
 }
+

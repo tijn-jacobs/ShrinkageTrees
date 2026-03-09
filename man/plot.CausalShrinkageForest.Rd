@@ -79,3 +79,4 @@ plot(fit, type = "ate")
 plot(fit, type = "cate")
 }
 }
+

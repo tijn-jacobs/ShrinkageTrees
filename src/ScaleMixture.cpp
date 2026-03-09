@@ -530,3 +530,4 @@ double log_inverse_gamma_pdf(double x, double a, double b) {
     - (a + 1) * std::log(x) - (b / x);
   return log_density;
 }
+

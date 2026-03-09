@@ -394,3 +394,4 @@ test_that("CausalHorseForest n_chains > 1 pools chains correctly", {
   expect_length(fit$chains$acceptance_ratios_control, 2)
   expect_length(fit$chains$acceptance_ratios_treat,   2)
 })
+

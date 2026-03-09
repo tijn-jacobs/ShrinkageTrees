@@ -97,3 +97,4 @@ if (requireNamespace("ggplot2", quietly = TRUE)) {
 }
 
 cat("\nAll continuous tests passed.\n")
+

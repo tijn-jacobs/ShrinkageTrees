@@ -75,3 +75,4 @@ treatment \eqn{E[\exp(\mu(X) + \tau(X))]}.
 \code{\link{print.CausalShrinkageForestPrediction}},
 \code{\link{summary.CausalShrinkageForestPrediction}}
 }
+

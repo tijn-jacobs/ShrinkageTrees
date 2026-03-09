@@ -216,3 +216,4 @@ censored_info <- function(y, status, left_time = NULL, right_time = NULL,
   out$mcmc$n_chains <- n_chains
   out
 }
+

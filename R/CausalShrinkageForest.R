@@ -1223,3 +1223,4 @@ CausalShrinkageForest <- function(y = NULL,
 
   return(obj)
 }
+

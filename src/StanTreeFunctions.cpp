@@ -37,3 +37,4 @@ void GetSplittableVariables(StanTree* node, CutpointMatrix& cutpoints,
     if (upper_bound >= lower_bound) good_vars.push_back(split_var);
   }
 }
+

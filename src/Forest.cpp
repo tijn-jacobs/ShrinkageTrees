@@ -185,3 +185,4 @@ void Forest::PrintForest(size_t tree_index) {
 
   cout << endl;
 }
+

@@ -233,3 +233,4 @@ test_that("plot.ShrinkageTreesPrediction type='survival' returns a ggplot", {
   out2 <- expect_no_error(plot(pred, type = "survival", obs = c(1, 3)))
   expect_s3_class(out2, "gg")
 })
+

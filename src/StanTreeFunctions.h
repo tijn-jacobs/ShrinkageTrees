@@ -16,3 +16,4 @@ void GetSplittableVariables(StanTree* node, CutpointMatrix& cutpoints,
                             std::vector<size_t>& good_vars);
 
 #endif
+

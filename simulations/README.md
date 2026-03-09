@@ -57,3 +57,4 @@ Simulations used for responding to reviewer comments (not in the main manuscript
 Simulation results are saved as `.rds` files alongside their corresponding R scripts. Plots are saved as `.png` or `.pdf` files in the same directories.
 
 Simulation scripts that run on a cluster save output to `$TMPDIR` (using `Sys.getenv("TMPDIR")`); the resulting `.rds` files were then copied into this folder for local analysis and plotting.
+

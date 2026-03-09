@@ -146,3 +146,4 @@ void Cutpoints::Print() const {
   // Print footer
   cout << "-----------------------\n";
 }
+

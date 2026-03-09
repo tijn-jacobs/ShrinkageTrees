@@ -145,3 +145,4 @@ if (requireNamespace("ggplot2", quietly = TRUE)) {
 }
 
 cat("\nAll causal tests passed.\n")
+

@@ -584,3 +584,4 @@ size_t Tree::NodeSize(Data& data, Cutpoints& cutpoints) {
 
   return count;  // Return the total number of observations in this node
 }
+

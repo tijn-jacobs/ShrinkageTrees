@@ -1030,3 +1030,4 @@ CausalHorseForest <- function(y = NULL,
 
   return(obj)
 }
+

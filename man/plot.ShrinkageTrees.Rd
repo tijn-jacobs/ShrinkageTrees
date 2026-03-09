@@ -124,3 +124,4 @@ plot(fit_surv, type = "survival", obs = c(1, 10),
      t_grid = seq(0.1, 20, length.out = 100))
 }
 }
+

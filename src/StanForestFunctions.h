@@ -95,3 +95,4 @@ void DrawSparsityParameter(bool fixed_theta, double& dart_theta,
                            Random& random);
 
 #endif
+

@@ -43,3 +43,4 @@ and MCMC diagnostics.
 \code{\link{print.summary.CausalShrinkageForest}},
 \code{\link{CausalHorseForest}}, \code{\link{CausalShrinkageForest}}
 }
+

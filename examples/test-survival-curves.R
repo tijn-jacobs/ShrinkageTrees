@@ -29,3 +29,4 @@ print(p3)
 
 p4 <- plot(pred, type = "survival", obs = c(1, 10, 20), xlim=c(0,15))
 print(p4)
+

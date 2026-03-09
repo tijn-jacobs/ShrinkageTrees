@@ -6,7 +6,7 @@ library(magick)     # Advanced image processing
 library(sysfonts)   # font selection
 library(tidyverse)
 
-#setwd("/Users/tijnjacobs/Library/CloudStorage/OneDrive-VrijeUniversiteitAmsterdam/Documents/GitHub/ShrinkageTrees/sticker")
+#setwd("sticker")
 
 pine_img <- magick::image_read('vector_graph_logo_high.png')
 
@@ -52,3 +52,4 @@ sticker(
   dpi = 600,
   p_family = "DIN Alternate"
 )
+

@@ -39,3 +39,4 @@ importFrom(stats,runif)
 importFrom(stats,sd)
 importFrom(utils,head)
 useDynLib(ShrinkageTrees, .registration = TRUE)
+

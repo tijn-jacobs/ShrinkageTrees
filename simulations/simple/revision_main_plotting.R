@@ -288,3 +288,4 @@ sum_linear <- sum_linear %>%
   mutate(Method = ifelse(Method == "CHF0.5", "CHF_CV", Method))
 make_latex_table_cate(sum_linear,    "linear")
 make_latex_table_cate(sum_nonlinear, "nonlinear")
+

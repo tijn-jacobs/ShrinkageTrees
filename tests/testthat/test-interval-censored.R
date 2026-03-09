@@ -216,3 +216,4 @@ test_that("CausalHorseForest works for interval-censored survival", {
   expect_no_error(capture.output(print(fit)))
   expect_no_error(smry <- summary(fit))
 })
+

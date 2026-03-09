@@ -619,3 +619,4 @@ cat(sprintf("\nATE (multi-chain): %.4f [%.4f, %.4f]\n",
             s_bcf_mc$treatment_effect$ate_upper))
 
 cat("\n\n=== ANALYSIS COMPLETE ===\n")
+

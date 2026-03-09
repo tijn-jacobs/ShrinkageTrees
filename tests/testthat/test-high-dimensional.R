@@ -203,3 +203,4 @@ test_that("ShrinkageTrees horseshoe_fw handles p >> n survival without error", {
   expect_true(is.numeric(fit$forestwide_shrinkage))
   expect_true(all(fit$forestwide_shrinkage >= 0))
 })
+

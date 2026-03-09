@@ -167,3 +167,4 @@ plot(fit$sigma,
      main = "Traceplot of Sigma",
      col = rgb(0, 0.5, 0, 0.5)
 )
+

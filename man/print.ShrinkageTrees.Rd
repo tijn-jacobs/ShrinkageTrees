@@ -23,3 +23,4 @@ posterior mean sigma.
 \code{\link{summary.ShrinkageTrees}}, \code{\link{HorseTrees}},
 \code{\link{ShrinkageTrees}}
 }
+
