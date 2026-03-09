@@ -40,7 +40,7 @@
 #' @param number_of_trees_control Number of trees in the control forest. Default is 200.
 #' @param number_of_trees_treat Number of trees in the treatment forest. Default is 200.
 #' @param prior_type_control Type of prior on control forest step heights. One of 
-#' \code{"horseshoe"}, \code{"horseshoe_fw"}, \code{"horseshoe_EB"}, or \code{"half-cauchy"}. 
+#' \code{"horseshoe"}, \code{"horseshoe_fw"}, or \code{"half-cauchy"}.
 #' Default is \code{"horseshoe"}.
 #' @param prior_type_treat Type of prior on treatment forest step heights. Same options as 
 #' \code{prior_type_control}.
@@ -147,13 +147,6 @@
 #' The \code{horseshoe_fw} prior (forest-wide horseshoe) is similar to
 #' \code{horseshoe}, except that the global shrinkage parameter is shared
 #' across all trees in the forest simultaneously. 
-#'
-#' The \code{horseshoe_EB} prior is an empirical Bayes variant of the
-#' \code{horseshoe} prior. Here, the global shrinkage parameter (\eqn{\tau})
-#' is not assigned a prior distribution but instead must be specified directly
-#' using \code{global_hp}, while local shrinkage parameters still follow
-#' half-Cauchy priors. Note: \eqn{\tau} must be provided by the user; it is 
-#' not estimated by the software.
 #'
 #' The \code{half-cauchy} prior considers only local shrinkage and does not
 #' include a global shrinkage component. It places a half-Cauchy prior on each
@@ -390,30 +383,28 @@ CausalShrinkageForest <- function(y = NULL,
   }
 
   # Check prior_type value
-  allowed_prior <- c("horseshoe", "horseshoe_fw", "horseshoe_EB", "half-cauchy",
+  allowed_prior <- c("horseshoe", "horseshoe_fw", "half-cauchy",
                      "standard", "dirichlet", "standard-halfcauchy", "dirichlet-halfcauchy")
   if (!prior_type_control %in% allowed_prior) {
-    stop("Invalid prior_type_control Choose 'horseshoe', 'horseshoe_fw', 
-         'horseshoe_EB', 'half-cauchy', 'standard', 'standard-halfnormal', 'standard-halfcauchy', 'dirichlet', or 'dirichlet-halfcauchy'.")
+    stop("Invalid prior_type_control Choose 'horseshoe', 'horseshoe_fw',
+         'half-cauchy', 'standard', 'standard-halfnormal', 'standard-halfcauchy', 'dirichlet', or 'dirichlet-halfcauchy'.")
   }
   
   if (!prior_type_treat %in% allowed_prior) {
-    stop("Invalid prior_type_control Choose 'horseshoe', 'horseshoe_fw', 
-         'horseshoe_EB', 'half-cauchy', 'standard', 'standard-halfnormal', 'standard-halfcauchy', 'dirichlet',  or 'dirichlet-halfcauchy',.")
+    stop("Invalid prior_type_treat. Choose 'horseshoe', 'horseshoe_fw',
+         'half-cauchy', 'standard', 'standard-halfnormal', 'standard-halfcauchy', 'dirichlet', or 'dirichlet-halfcauchy'.")
   }
   
   # Prior-specific checks
-  if (prior_type_control %in% c("horseshoe", "horseshoe_fw", "horseshoe_EB")) {
+  if (prior_type_control %in% c("horseshoe", "horseshoe_fw")) {
     if (is.null(local_hp_control) || is.null(global_hp_control)) {
-      stop("For prior_type_control = 'horseshoe', 'horseshoe_fw', or 
-           'horseshoe_EB', you must provide both local_hp and global_hp.")
+      stop("For prior_type_control = 'horseshoe' or 'horseshoe_fw', you must provide both local_hp and global_hp.")
     }
   }
   
-  if (prior_type_treat %in% c("horseshoe", "horseshoe_fw", "horseshoe_EB")) {
+  if (prior_type_treat %in% c("horseshoe", "horseshoe_fw")) {
     if (is.null(local_hp_treat) || is.null(global_hp_treat)) {
-      stop("For prior_type_treat = 'horseshoe', 'horseshoe_fw', or 
-           'horseshoe_EB', you must provide both local_hp and global_hp.")
+      stop("For prior_type_treat = 'horseshoe' or 'horseshoe_fw', you must provide both local_hp and global_hp.")
     }
   }
 
@@ -425,8 +416,7 @@ CausalShrinkageForest <- function(y = NULL,
       stop("For prior_type = 'half-cauchy', you must provide local_hp_control.")
     }
     if (!is.null(global_hp_control)) {
-      warning("global_hp_control is ignored for 'half-cauchy'. If you want to 
-              fix the global parameter, consider using 'horseshoe_EB'.")
+      warning("global_hp_control is ignored for 'half-cauchy'.")
     }
     global_hp_control <- 1
     prior_type_control <- "halfcauchy"
@@ -438,15 +428,11 @@ CausalShrinkageForest <- function(y = NULL,
            local_hp_treat.")
     }
     if (!is.null(global_hp_treat)) {
-      warning("global_hp_treat is ignored for 'half-cauchy'. If you want to fix 
-              the global parameter, consider using 'horseshoe_EB'.")
+      warning("global_hp_treat is ignored for 'half-cauchy'.")
     }
     global_hp_treat <- 1
     prior_type_treat <- "halfcauchy"
   }
-  
-  if (prior_type_control == "horseshoe_EB") prior_type_control <- "halfcauchy"
-  if (prior_type_treat == "horseshoe_EB") prior_type_treat <- "halfcauchy"
   
   reversible_flag_control <- TRUE
   reversible_flag_treat <- TRUE

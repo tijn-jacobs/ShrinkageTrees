@@ -182,3 +182,10 @@ cat("         survival_population.pdf, ate_posterior.pdf, cate_caterpillar.pdf\n
 cat("Outputs: outputs/data_summary.txt, print_horse.txt, summary_horse.txt,\n")
 cat("         cindex.txt, patient_profiles.txt, summary_causal.txt\n")
 
+
+
+
+setwd("~/Library/CloudStorage/OneDrive-VrijeUniversiteitAmsterdam/Documents/GitHub/ShrinkageTrees/paper")
+
+rmarkdown::render("motivation-letter/motivation-letter.md")
+

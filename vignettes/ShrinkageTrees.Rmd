@@ -546,7 +546,7 @@ While `HorseTrees()` fixes the prior to the horseshoe, the more general
 `ShrinkageTrees()` function exposes the `prior_type` argument, allowing
 the user to select among all implemented regularisation strategies.
 Available options are `"horseshoe"`, `"horseshoe_fw"` (forest-wide),
-`"horseshoe_EB"` (empirical Bayes), `"half-cauchy"`, `"standard"`
+`"half-cauchy"`, `"standard"`
 (classical BART), and `"dirichlet"` (DART). Below we compare the
 per-tree horseshoe and the forest-wide horseshoe on a continuous outcome.
 

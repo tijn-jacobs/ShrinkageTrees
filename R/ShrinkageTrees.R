@@ -34,7 +34,7 @@
 #' \code{"interval-censored"}.
 #' @param number_of_trees Number of trees in the ensemble. Default is 200.
 #' @param prior_type Type of prior on the step heights. Options include
-#' `"horseshoe"`, `"horseshoe_fw"`, `"horseshoe_EB"`, `"half-cauchy"`, 
+#' `"horseshoe"`, `"horseshoe_fw"`, `"half-cauchy"`,
 #' `"standard"` and `"dirichlet"`.
 #' @param local_hp Local hyperparameter controlling shrinkage on individual
 #' step heights. Should typically be set smaller than 1 / sqrt(number_of_trees).
@@ -115,13 +115,6 @@
 #' The \code{horseshoe_fw} prior (forest-wide horseshoe) is similar to
 #' \code{horseshoe}, except that the global shrinkage parameter is shared
 #' across all trees in the forest simultaneously. 
-#'
-#' The \code{horseshoe_EB} prior is an empirical Bayes variant of the
-#' \code{horseshoe} prior. Here, the global shrinkage parameter (\eqn{\tau})
-#' is not assigned a prior distribution but instead must be specified directly
-#' using \code{global_hp}, while local shrinkage parameters still follow
-#' half-Cauchy priors. Note: \eqn{\tau} must be provided by the user; it is 
-#' not estimated by the software.
 #'
 #' The \code{half-cauchy} prior considers only local shrinkage and does not
 #' include a global shrinkage component. It places a half-Cauchy prior on each
@@ -342,15 +335,15 @@ ShrinkageTrees <- function(y = NULL,
   }
   
   # Check prior_type value
-  allowed_prior <- c("horseshoe", "horseshoe_fw", "horseshoe_EB", "half-cauchy", "standard", "dirichlet")
+  allowed_prior <- c("horseshoe", "horseshoe_fw", "half-cauchy", "standard", "dirichlet")
   if (!prior_type %in% allowed_prior) {
-    stop("Invalid prior_type. Choose 'horseshoe', 'horseshoe_fw', 'horseshoe_EB', 'half-cauchy', 'standard' or 'dirichlet.")
+    stop("Invalid prior_type. Choose 'horseshoe', 'horseshoe_fw', 'half-cauchy', 'standard' or 'dirichlet.")
   }
   
   # Prior-specific checks
-  if (prior_type %in% c("horseshoe", "horseshoe_fw", "horseshoe_EB")) {
+  if (prior_type %in% c("horseshoe", "horseshoe_fw")) {
     if (is.null(local_hp) || is.null(global_hp)) {
-      stop("For prior_type = 'horseshoe', 'horseshoe_fw', or 'horseshoe_EB', you must provide both local_hp and global_hp.")
+      stop("For prior_type = 'horseshoe' or 'horseshoe_fw', you must provide both local_hp and global_hp.")
     }
   }
   
@@ -359,14 +352,12 @@ ShrinkageTrees <- function(y = NULL,
       stop("For prior_type = 'half-cauchy', you must provide local_hp.")
     }
     if (!is.null(global_hp)) {
-      warning("global_hp is ignored for 'half-cauchy'. If you want to fix the global parameter, consider using 'horseshoe_EB'.")
+      warning("global_hp is ignored for 'half-cauchy'.")
     }
     global_hp <- 1
     prior_type <- "halfcauchy"
   }
   
-  if (prior_type == "horseshoe_EB") prior_type <- "halfcauchy"
-
   # Default reversible flag
   reversible_flag <- TRUE
 

@@ -13,4 +13,3 @@ probitHorseTrees_cpp <- function(nSEXP, pSEXP, n_testSEXP, X_trainSEXP, ySEXP, X
     .Call(`_ShrinkageTrees_probitHorseTrees_cpp`, nSEXP, pSEXP, n_testSEXP, X_trainSEXP, ySEXP, X_testSEXP, number_of_treesSEXP, N_postSEXP, N_burnSEXP, delayed_proposalSEXP, powerSEXP, baseSEXP, p_growSEXP, p_pruneSEXP, omegaSEXP, latent_thresholdSEXP, param1SEXP, param2SEXP, prior_typeSEXP, reversibleSEXP, store_posterior_sampleSEXP, verboseSEXP)
 }
 
-

@@ -101,7 +101,7 @@ Used when \code{outcome_type} is \code{"right-censored"} or
 \item{number_of_trees_treat}{Number of trees in the treatment forest. Default is 200.}
 
 \item{prior_type_control}{Type of prior on control forest step heights. One of
-\code{"horseshoe"}, \code{"horseshoe_fw"}, \code{"horseshoe_EB"}, or \code{"half-cauchy"}.
+\code{"horseshoe"}, \code{"horseshoe_fw"}, or \code{"half-cauchy"}.
 Default is \code{"horseshoe"}.}
 
 \item{prior_type_treat}{Type of prior on treatment forest step heights. Same options as
@@ -244,13 +244,6 @@ separately for each tree, allowing adaptive regularization per tree.
 The \code{horseshoe_fw} prior (forest-wide horseshoe) is similar to
 \code{horseshoe}, except that the global shrinkage parameter is shared
 across all trees in the forest simultaneously.
-
-The \code{horseshoe_EB} prior is an empirical Bayes variant of the
-\code{horseshoe} prior. Here, the global shrinkage parameter (\eqn{\tau})
-is not assigned a prior distribution but instead must be specified directly
-using \code{global_hp}, while local shrinkage parameters still follow
-half-Cauchy priors. Note: \eqn{\tau} must be provided by the user; it is
-not estimated by the software.
 
 The \code{half-cauchy} prior considers only local shrinkage and does not
 include a global shrinkage component. It places a half-Cauchy prior on each
