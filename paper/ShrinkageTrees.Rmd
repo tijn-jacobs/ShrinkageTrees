@@ -328,7 +328,7 @@ knitr::kable(df,
   kableExtra::kable_styling(latex_options = "hold_position")
 ```
 
-The Horseshoe Forest is expected to outperform standard BART and DART in this sparse setting because the horseshoe prior aggressively shrinks the step heights of trees that split on irrelevant covariates, effectively silencing 195 of the 200 predictors without relying on structural variable selection alone.
+The Horseshoe Forest is expected to outperform standard BART and DART in this sparse setting because the horseshoe prior aggressively shrinks the step heights of trees that split on irrelevant covariates, effectively silencing 495 of the 500 predictors without relying on structural variable selection alone. The $p \gg n$ regime ($p = 500$, $n = 100$) makes adequate regularisation essential.
 
 \textcolor{red}{\textbf{TODO:} Update this paragraph with actual findings. Add a figure showing estimated vs.\ true survival curves for a representative observation if space permits.}
 
