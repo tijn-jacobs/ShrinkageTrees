@@ -277,11 +277,11 @@ fit_horse <- HorseTrees(
 
 \subsection{Results}\label{results}
 
-We evaluate each model on a held-out test set of \(n_{\text{test}} = 200\) observations using root mean squared error (RMSE) of the posterior mean of \(\log T\) relative to the true \(\log T\), and 95\% credible interval coverage. We repeat the simulation \(\ldots\) times and report averages.
+We evaluate each model on a held-out test set of \(n_{\text{test}} = 100\) observations using root mean squared error (RMSE) of the posterior mean of \(\log T\) relative to the true \(\log T\), and 95\% credible interval coverage. We repeat the simulation \(\ldots\) times and report averages.
 
 \textcolor{red}{\textbf{TODO:} Fill in with actual simulation results.}
 
-The Horseshoe Forest is expected to outperform standard BART and DART in this sparse setting because the horseshoe prior aggressively shrinks the step heights of trees that split on irrelevant covariates, effectively silencing 195 of the 200 predictors without relying on structural variable selection alone.
+The Horseshoe Forest is expected to outperform standard BART and DART in this sparse setting because the horseshoe prior aggressively shrinks the step heights of trees that split on irrelevant covariates, effectively silencing 495 of the 500 predictors without relying on structural variable selection alone. The \(p \gg n\) regime (\(p = 500\), \(n = 100\)) makes adequate regularisation essential.
 
 \textcolor{red}{\textbf{TODO:} Update this paragraph with actual findings. Add a figure showing estimated vs.\ true survival curves for a representative observation if space permits.}
 
