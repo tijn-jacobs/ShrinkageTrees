@@ -6,7 +6,7 @@ knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
 library(ShrinkageTrees)
 
 
-## ----ExampleTree, echo=FALSE, fig.cap="Schematic of a single regression tree. Interior nodes contain binary splitting rules of the form $x_\\rho < c$; terminal nodes (leaves) contain step heights $h_\\ell$. An observation traverses the tree from root to leaf, and its prediction is the step height of the leaf it reaches.", out.width="85%", fig.align='center'----
+## ----ExampleTree, echo=FALSE, fig.cap="Schematic of a single regression tree. Interior nodes contain binary splitting rules of the form $x_\\rho < c$; terminal nodes (leaves) contain step heights $h_\\ell$. An observation traverses the tree from root to leaf, and its prediction is the step height of the leaf it reaches.", fig.scap="Schematic of a regression tree.", out.width="85%", fig.align='center'----
 knitr::include_graphics("figures/ExampleTree_standalone.pdf")
 
 
@@ -58,6 +58,67 @@ knitr::kable(df,
   kableExtra::column_spec(1, width = "4.5cm") |>
   kableExtra::column_spec(2, width = "9.5cm") |>
   kableExtra::row_spec(4, hline_after = TRUE)
+
+
+## ----sim-ic-fit, echo=TRUE, eval=FALSE----------------------------------------
+# library(ShrinkageTrees)
+# set.seed(42)
+# 
+# # --- Data generation ---
+# n <- 100; p <- 500
+# X <- matrix(rnorm(n * p), n, p)
+# colnames(X) <- paste0("x", 1:p)
+# mu_true <- 2 + X[,1] - 0.8*X[,2] + 0.6*X[,3] + 0.5*X[,1]*X[,4] - 0.4*X[,5]
+# log_T <- mu_true + rnorm(n, sd = 0.5)
+# T_true <- exp(log_T)
+# 
+# # Interval censoring via inspection times
+# V <- matrix(runif(n * 3, min = min(T_true) * 0.5, max = max(T_true) * 1.2), n, 3)
+# V <- t(apply(V, 1, sort))
+# left_time <- right_time <- rep(NA, n)
+# for (i in 1:n) {
+#   inspections <- V[i, ]
+#   if (T_true[i] <= inspections[1]) {
+#     left_time[i] <- 0; right_time[i] <- inspections[1]
+#   } else if (T_true[i] > tail(inspections, 1)) {
+#     left_time[i] <- tail(inspections, 1); right_time[i] <- Inf
+#   } else {
+#     idx <- min(which(inspections >= T_true[i]))
+#     left_time[i] <- inspections[idx - 1]; right_time[i] <- inspections[idx]
+#   }
+# }
+# 
+# # --- Fit models ---
+# fit_bart <- SurvivalBART(
+#   y = left_time, X_train = X, outcome_type = "interval-censored",
+#   right_time = right_time, number_of_trees = 200,
+#   N_post = 1000, N_burn = 250
+# )
+# fit_dart <- SurvivalDART(
+#   y = left_time, X_train = X, outcome_type = "interval-censored",
+#   right_time = right_time, number_of_trees = 200,
+#   N_post = 1000, N_burn = 250
+# )
+# fit_horse <- HorseTrees(
+#   y = left_time, X_train = X, outcome_type = "interval-censored",
+#   right_time = right_time, number_of_trees = 200, k = 0.1,
+#   N_post = 1000, N_burn = 250
+# )
+
+
+## ----sim-ic-table, echo=FALSE, eval=FALSE-------------------------------------
+# df <- data.frame(
+#   Model = c("BART", "DART", "Horseshoe Forest"),
+#   RMSE  = c("...", "...", "..."),
+#   Coverage = c("...", "...", "..."),
+#   check.names = FALSE
+# )
+# knitr::kable(df,
+#              caption = "Prediction accuracy on the interval-censored simulation.
+#                         RMSE and 95\\% credible interval coverage for $\\log T$,
+#                         averaged over \\ldots replications.",
+#              booktabs = TRUE, format = "latex") |>
+#   kableExtra::kable_styling(latex_options = "hold_position")
 
 
 ## ----data, echo=TRUE, eval=FALSE----------------------------------------------
@@ -123,7 +184,7 @@ knitr::kable(df,
 # plot(fit_horse, type = "density")
 
 
-## ----convergence-fig, echo=FALSE, fig.cap="Left: traceplot of the posterior draws of $\\sigma$ for the Horseshoe Forest model. Right: posterior density of $\\sigma$, estimated separately for each of the four chains.", out.width="48%", fig.show='hold', fig.align='center'----
+## ----convergence-fig, echo=FALSE, fig.cap="Left: traceplot of the posterior draws of $\\sigma$ for the Horseshoe Forest model. Right: posterior density of $\\sigma$, estimated separately for each of the four chains.", fig.scap="Convergence diagnostics.", out.width="48%", fig.show='hold', fig.align='center'----
 knitr::include_graphics(c("figures/trace_horse.pdf", "figures/density_horse.pdf"))
 
 
@@ -140,7 +201,7 @@ knitr::include_graphics(c("figures/trace_horse.pdf", "figures/density_horse.pdf"
 # plot(fit_horse, type = "survival", km = TRUE)
 
 
-## ----survival-fig, echo=FALSE, fig.cap="Left: posterior survival curve for a randomly selected test-set patient, with pointwise 95\\% credible bands. Right: population-averaged posterior survival curve (solid line) with 95\\% credible band (shaded) and Kaplan--Meier estimate (dashed).", out.width="48%", fig.show='hold', fig.align='center'----
+## ----survival-fig, echo=FALSE, fig.cap="Left: posterior survival curve for a randomly selected test-set patient, with pointwise 95\\% credible bands. Right: population-averaged posterior survival curve (solid line) with 95\\% credible band (shaded) and Kaplan--Meier estimate (dashed).", fig.scap="Posterior survival curves.", out.width="48%", fig.show='hold', fig.align='center'----
 knitr::include_graphics(c("figures/survival_individual.pdf", "figures/survival_population.pdf"))
 
 
@@ -183,6 +244,6 @@ knitr::include_graphics(c("figures/survival_individual.pdf", "figures/survival_p
 # plot(fit_causal, type = "cate")
 
 
-## ----treatment-effects-fig, echo=FALSE, fig.cap="Left: posterior density of the average treatment effect (ATE) of carboplatin versus cisplatin on the log-survival scale, with 95\\% credible interval (dashed lines). Right: patient-level conditional average treatment effects (CATEs) sorted by posterior mean with 95\\% credible intervals; the dashed line marks zero (no effect).", out.width="48%", fig.show='hold', fig.align='center'----
+## ----treatment-effects-fig, echo=FALSE, fig.cap="Left: posterior density of the average treatment effect (ATE) of carboplatin versus cisplatin on the log-survival scale, with 95\\% credible interval (dashed lines). Right: patient-level conditional average treatment effects (CATEs) sorted by posterior mean with 95\\% credible intervals; the dashed line marks zero (no effect).", fig.scap="Treatment effect posteriors.", out.width="48%", fig.show='hold', fig.align='center'----
 knitr::include_graphics(c("figures/ate_posterior.pdf", "figures/cate_caterpillar.pdf"))
 

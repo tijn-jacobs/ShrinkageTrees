@@ -66,11 +66,11 @@ interface with \code{print}, \code{summary}, \code{predict}, and \code{plot} met
 
 The remainder of this paper is organised as follows. Section 2 provides a brief overview of the statistical methodology. Section 3 reviews related R packages. Section 4 describes the package architecture. Section 5 demonstrates the package on a high-dimensional ovarian cancer survival dataset. Section 6 concludes.
 
-# Overview of Statistical Methodology
+# Overview of statistical methodology
 
 We build on three components. First, we review the BART model and highlight the distinction between its two parameter groups: tree structures and step heights. Second, we show how regularisation targets either group — structural sparsity via tree priors and Dirichlet splitting, parametric shrinkage via global–local priors on the step heights — and how both strategies can be combined. Third, we extend the framework to causal inference via the $\tau$-learner and to survival outcomes via accelerated failure time models.
 
-## Bayesian Additive Regression Trees
+## Bayesian additive regression trees
 
 We adapt the BART model of @chipman2010bart. BART models the response as a sum of $m$ shallow decision trees:
 $$
@@ -78,7 +78,7 @@ Y_i = \sum_{j=1}^{m} g(\mathbf{x}_i;\, \mathcal{T}_j, \mathcal{H}_j) + \varepsil
 $$
 Each tree $j$ is characterised by two parameter groups. The *tree structure* $\mathcal{T}_j$ encodes the topology and the splitting rules: which variables to split on and at what thresholds. It determines how the covariate space is partitioned into disjoint regions. The *step heights* $\mathcal{H}_j = \{h_{j1}, \ldots, h_{jL_j}\}$ are the values assigned to the $L_j$ leaves and determine each region's contribution to the fitted function. For input $\mathbf{x}$, the function $g(\mathbf{x};\, \mathcal{T}_j, \mathcal{H}_j)$ returns the step height of the leaf that $\mathbf{x}$ reaches (see Figure \@ref(fig:ExampleTree)). This distinction between $\mathcal{T}$ and $\mathcal{H}$ is central to the regularisation framework we develop below.
 
-```{r ExampleTree, echo=FALSE, fig.cap="Schematic of a single regression tree. Interior nodes contain binary splitting rules of the form $x_\\rho < c$; terminal nodes (leaves) contain step heights $h_\\ell$. An observation traverses the tree from root to leaf, and its prediction is the step height of the leaf it reaches.", out.width="85%", fig.align='center',}
+```{r ExampleTree, echo=FALSE, fig.cap="Schematic of a single regression tree. Interior nodes contain binary splitting rules of the form $x_\\rho < c$; terminal nodes (leaves) contain step heights $h_\\ell$. An observation traverses the tree from root to leaf, and its prediction is the step height of the leaf it reaches.", fig.scap="Schematic of a regression tree.", out.width="85%", fig.align='center',}
 knitr::include_graphics("figures/ExampleTree_standalone.pdf")
 ```
 
@@ -113,7 +113,7 @@ $$
 \lambda_\ell \sim \text{C}^+(0, \alpha_\lambda), \qquad
 \tau \sim \text{C}^+(0, \alpha_\tau),
 $$
-where $\text{C}^+(0, \alpha)$ denotes the half-Cauchy distribution with scale $\alpha$. The half-Cauchy has its median at $\alpha$ and possesses heavy tails — its mean and variance do not exist — which allows the local scales to take very large values when the data support a strong effect [@polson2012halfcauchy]. This combination aggressively shrinks the contributions of uninformative leaves towards zero while preserving large, data-supported signals. Following @jacobs2025horseshoe, we set $\alpha_\tau = \alpha_\lambda = k / \sqrt{m}$. The Dirichlet and horseshoe priors address complementary aspects of regularisation — structural sparsity and parametric shrinkage, respectively — and can be combined within a single model in \CRANpkg{ShrinkageTrees}.
+where $\text{C}^+(0, \alpha)$ denotes the half-Cauchy distribution with scale $\alpha$. The half-Cauchy has its median at $\alpha$ and possesses heavy tails — its mean and variance do not exist — which allows the local scales to take very large values when the data support a strong effect [@polson2012halfcauchy]. This combination aggressively shrinks the contributions of uninformative leaves towards zero while preserving large, data-supported signals. Following @jacobs2025horseshoe, we set $\alpha_\tau = \alpha_\lambda = k / \sqrt{m}$. Smaller values of $k$ yield stronger shrinkage. We recommend $k \in [0.05,\, 0.5]$ as a practical range; the default in \CRANpkg{ShrinkageTrees} is $k = 0.1$. When domain knowledge does not suggest a specific value, $k$ can be selected via cross-validation. @jacobs2025horseshoe provide a sensitivity analysis. The Dirichlet and horseshoe priors address complementary aspects of regularisation — structural sparsity and parametric shrinkage, respectively — and can be combined within a single model in \CRANpkg{ShrinkageTrees}.
 
 ## Prediction and causal models
 
@@ -137,7 +137,7 @@ All models are fitted using Markov chain Monte Carlo (MCMC). The outer loop is a
 
 Under the standard BART and Dirichlet (DART) priors, where the leaf parameters have a conjugate normal prior, the marginal likelihood of a proposed tree can be computed in closed form and the step heights are integrated out analytically. This yields the birth–death sampler described in @chipman2010bart; a detailed algorithmic exposition is given in @kapelner2016bartmachine. When global–local shrinkage priors such as the horseshoe are placed on the step heights, this conjugacy is lost: the local and global scale parameters $\lambda_\ell$ and $\tau$ must be sampled explicitly, and the tree proposals become reversible jump MCMC moves that account for the change in the number of scale parameters when a leaf is added or removed. The details of this reversible jump construction, including the proposal distributions and acceptance ratios, are given in @jacobs2025horseshoe.
 
-# Related Packages
+# Related packages
 
 Several R packages implement Bayesian tree ensembles. We review five CRAN packages and compare their capabilities to \CRANpkg{ShrinkageTrees}. Table \@ref(tab:pkg-comparison) provides a summary.
 
@@ -174,7 +174,7 @@ knitr::kable(df,
   kableExtra::column_spec(2:5, width = "1.6cm")
 ```
 
-# Package Architecture
+# Package architecture
 
 \CRANpkg{ShrinkageTrees} is available on CRAN and on GitHub at \url{https://github.com/tijn-jacobs/ShrinkageTrees}. The package is implemented in R with a C++ backend via \CRANpkg{Rcpp} [@eddelbuettel2011rcpp]. In this section we describe the design and implementation.
 
@@ -243,7 +243,96 @@ We benchmark the computational cost of \CRANpkg{ShrinkageTrees} along three axes
 
 \textcolor{red}{\textbf{TODO:} Add Figure \ref{fig:scaling} with benchmark plots.}
 
-# Application: Ovarian Cancer Survival
+# Simulation: Interval-censored survival with sparse covariates
+
+We validate \CRANpkg{ShrinkageTrees} on a simulated interval-censored survival dataset with known ground truth. The simulation targets the setting where the horseshoe prior is expected to provide the largest benefit: a sparse, high-dimensional covariate space with interval-censored outcomes.
+
+## Design
+
+We generate $n = 100$ observations with $p = 500$ covariates drawn independently from $\mathcal{N}(0, 1)$. Only the first 5 covariates are active. The true log-survival time follows
+$$
+\log T_i = 2 + x_{i1} - 0.8\, x_{i2} + 0.6\, x_{i3} + 0.5\, x_{i1}\, x_{i4} - 0.4\, x_{i5} + \varepsilon_i, \quad \varepsilon_i \sim \mathcal{N}(0,\, 0.5^2).
+$$
+We generate interval-censored observations by drawing inspection times $V_{i1} < V_{i2} < V_{i3}$ uniformly over the support of $T$ and recording the interval $(L_i, R_i]$ in which the event falls. Approximately $\ldots$\% of observations are interval-censored, $\ldots$\% are right-censored (event after the last inspection), and $\ldots$\% are exactly observed.
+
+\textcolor{red}{\textbf{TODO:} Fill in censoring percentages from actual simulation.}
+
+## Code
+
+We fit three models — standard BART, DART, and a Horseshoe Forest — each with $m = 200$ trees and $1{,}000$ posterior draws after $250$ burn-in iterations.
+
+```{r sim-ic-fit, echo=TRUE, eval=FALSE}
+library(ShrinkageTrees)
+set.seed(42)
+
+# --- Data generation ---
+n <- 100; p <- 500
+X <- matrix(rnorm(n * p), n, p)
+colnames(X) <- paste0("x", 1:p)
+mu_true <- 2 + X[,1] - 0.8*X[,2] + 0.6*X[,3] + 0.5*X[,1]*X[,4] - 0.4*X[,5]
+log_T <- mu_true + rnorm(n, sd = 0.5)
+T_true <- exp(log_T)
+
+# Interval censoring via inspection times
+V <- matrix(runif(n * 3, min = min(T_true) * 0.5, max = max(T_true) * 1.2), n, 3)
+V <- t(apply(V, 1, sort))
+left_time <- right_time <- rep(NA, n)
+for (i in 1:n) {
+  inspections <- V[i, ]
+  if (T_true[i] <= inspections[1]) {
+    left_time[i] <- 0; right_time[i] <- inspections[1]
+  } else if (T_true[i] > tail(inspections, 1)) {
+    left_time[i] <- tail(inspections, 1); right_time[i] <- Inf
+  } else {
+    idx <- min(which(inspections >= T_true[i]))
+    left_time[i] <- inspections[idx - 1]; right_time[i] <- inspections[idx]
+  }
+}
+
+# --- Fit models ---
+fit_bart <- SurvivalBART(
+  y = left_time, X_train = X, outcome_type = "interval-censored",
+  right_time = right_time, number_of_trees = 200,
+  N_post = 1000, N_burn = 250
+)
+fit_dart <- SurvivalDART(
+  y = left_time, X_train = X, outcome_type = "interval-censored",
+  right_time = right_time, number_of_trees = 200,
+  N_post = 1000, N_burn = 250
+)
+fit_horse <- HorseTrees(
+  y = left_time, X_train = X, outcome_type = "interval-censored",
+  right_time = right_time, number_of_trees = 200, k = 0.1,
+  N_post = 1000, N_burn = 250
+)
+```
+
+## Results
+
+We evaluate each model on a held-out test set of $n_{\text{test}} = 100$ observations using root mean squared error (RMSE) of the posterior mean of $\log T$ relative to the true $\log T$, and 95\% credible interval coverage. We repeat the simulation $\ldots$ times and report averages.
+
+\textcolor{red}{\textbf{TODO:} Fill in with actual simulation results.}
+
+```{r sim-ic-table, echo=FALSE, eval=FALSE}
+df <- data.frame(
+  Model = c("BART", "DART", "Horseshoe Forest"),
+  RMSE  = c("...", "...", "..."),
+  Coverage = c("...", "...", "..."),
+  check.names = FALSE
+)
+knitr::kable(df,
+             caption = "Prediction accuracy on the interval-censored simulation.
+                        RMSE and 95\\% credible interval coverage for $\\log T$,
+                        averaged over \\ldots replications.",
+             booktabs = TRUE, format = "latex") |>
+  kableExtra::kable_styling(latex_options = "hold_position")
+```
+
+The Horseshoe Forest is expected to outperform standard BART and DART in this sparse setting because the horseshoe prior aggressively shrinks the step heights of trees that split on irrelevant covariates, effectively silencing 195 of the 200 predictors without relying on structural variable selection alone.
+
+\textcolor{red}{\textbf{TODO:} Update this paragraph with actual findings. Add a figure showing estimated vs.\ true survival curves for a representative observation if space permits.}
+
+# Application: Ovarian cancer survival
 
 We demonstrate the package on the \texttt{ovarian} dataset shipped with 
 \CRANpkg{ShrinkageTrees}. This dataset is curated from The Cancer Genome Atlas ovarian 
@@ -370,7 +459,7 @@ plot(fit_horse, type = "trace")
 plot(fit_horse, type = "density")
 ```
 
-```{r convergence-fig, echo=FALSE, fig.cap="Left: traceplot of the posterior draws of $\\sigma$ for the Horseshoe Forest model. Right: posterior density of $\\sigma$, estimated separately for each of the four chains.", out.width="48%", fig.show='hold', fig.align='center'}
+```{r convergence-fig, echo=FALSE, fig.cap="Left: traceplot of the posterior draws of $\\sigma$ for the Horseshoe Forest model. Right: posterior density of $\\sigma$, estimated separately for each of the four chains.", fig.scap="Convergence diagnostics.", out.width="48%", fig.show='hold', fig.align='center'}
 knitr::include_graphics(c("figures/trace_horse.pdf", "figures/density_horse.pdf"))
 ```
 
@@ -395,7 +484,7 @@ We also plot the population-averaged posterior survival curve across all trainin
 plot(fit_horse, type = "survival", km = TRUE)
 ```
 
-```{r survival-fig, echo=FALSE, fig.cap="Left: posterior survival curve for a randomly selected test-set patient, with pointwise 95\\% credible bands. Right: population-averaged posterior survival curve (solid line) with 95\\% credible band (shaded) and Kaplan--Meier estimate (dashed).", out.width="48%", fig.show='hold', fig.align='center'}
+```{r survival-fig, echo=FALSE, fig.cap="Left: posterior survival curve for a randomly selected test-set patient, with pointwise 95\\% credible bands. Right: population-averaged posterior survival curve (solid line) with 95\\% credible band (shaded) and Kaplan--Meier estimate (dashed).", fig.scap="Posterior survival curves.", out.width="48%", fig.show='hold', fig.align='center'}
 knitr::include_graphics(c("figures/survival_individual.pdf", "figures/survival_population.pdf"))
 ```
 
@@ -469,7 +558,7 @@ plot(fit_causal, type = "ate")
 plot(fit_causal, type = "cate")
 ```
 
-```{r treatment-effects-fig, echo=FALSE, fig.cap="Left: posterior density of the average treatment effect (ATE) of carboplatin versus cisplatin on the log-survival scale, with 95\\% credible interval (dashed lines). Right: patient-level conditional average treatment effects (CATEs) sorted by posterior mean with 95\\% credible intervals; the dashed line marks zero (no effect).", out.width="48%", fig.show='hold', fig.align='center'}
+```{r treatment-effects-fig, echo=FALSE, fig.cap="Left: posterior density of the average treatment effect (ATE) of carboplatin versus cisplatin on the log-survival scale, with 95\\% credible interval (dashed lines). Right: patient-level conditional average treatment effects (CATEs) sorted by posterior mean with 95\\% credible intervals; the dashed line marks zero (no effect).", fig.scap="Treatment effect posteriors.", out.width="48%", fig.show='hold', fig.align='center'}
 knitr::include_graphics(c("figures/ate_posterior.pdf", "figures/cate_caterpillar.pdf"))
 ```
 
@@ -477,7 +566,7 @@ Figure \@ref(fig:treatment-effects-fig) shows the treatment effect posteriors. T
 
 Although the ovarian dataset contains right-censored observations, \CRANpkg{ShrinkageTrees} also supports interval-censored outcomes via `outcome_type = "interval-censored"` with `left_time` and `right_time` arguments following the convention of `survival::Surv(type = "interval2")`. See `?ShrinkageTrees` for details and examples.
 
-# Discussion and Conclusion
+# Discussion and conclusion
 
 We have introduced \CRANpkg{ShrinkageTrees}, an R package for Bayesian tree ensembles that combines global–local shrinkage priors with survival analysis and causal inference. The package decouples structural regularisation from parametric shrinkage, allowing practitioners to tailor the regularisation strategy to the problem at hand. To our knowledge, it is the first CRAN package to offer the $\tau$-learner for survival endpoints, horseshoe priors on tree ensemble step heights, and interval-censored survival outcomes within a single framework.
 

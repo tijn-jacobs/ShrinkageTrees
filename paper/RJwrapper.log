@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.29 (TeX Live 2026) (preloaded format=pdflatex 2026.3.9)  10 MAR 2026 01:26
+This is pdfTeX, Version 3.141592653-2.6-1.40.29 (TeX Live 2026) (preloaded format=pdflatex 2026.3.10)  10 MAR 2026 12:39
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -627,8 +627,7 @@ LaTeX Info: Redefining \addtolength on input line 87.
 ) (/Users/tijnjacobs/Library/TinyTeX/texmf-dist/tex/latex/l3backend/l3backend-pdftex.def
 File: l3backend-pdftex.def 2025-10-09 L3 backend support: PDF output (pdfTeX)
 \l__color_backend_stack_int=\count354
-)
-No file RJwrapper.aux.
+) (./RJwrapper.aux)
 \openout1 = `RJwrapper.aux'.
 
 LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 54.
@@ -770,36 +769,6 @@ LaTeX Font Info:    Font shape `U/msb/m/n' will be
 (Font)              scaled to size 7.29405pt on input line 11.
 LaTeX Font Info:    Font shape `U/msb/m/n' will be
 (Font)              scaled to size 5.21004pt on input line 11.
-
-Package natbib Warning: Citation `chipman2010bart' on page 1 undefined on input line 15.
-
-
-Package natbib Warning: Citation `sparapani2021nonparametric' on page 1 undefined on input line 15.
-
-
-Package natbib Warning: Citation `hill2011bayesian' on page 1 undefined on input line 17.
-
-
-Package natbib Warning: Citation `dorie2019automated' on page 1 undefined on input line 17.
-
-
-Package natbib Warning: Citation `hahn2020bayesian' on page 1 undefined on input line 17.
-
-
-Package natbib Warning: Citation `caron2022estimating' on page 1 undefined on input line 17.
-
-
-Package natbib Warning: Citation `linero2018dart' on page 1 undefined on input line 19.
-
-
-Package natbib Warning: Citation `jacobs2025horseshoe' on page 1 undefined on input line 19.
-
-
-Package natbib Warning: Citation `carvalho2010horseshoe' on page 1 undefined on input line 19.
-
-
-Package natbib Warning: Citation `eddelbuettel2011rcpp' on page 1 undefined on input line 28.
-
 LaTeX Font Info:    Trying to load font information for T1+zi4 on input line 30.
 (/Users/tijnjacobs/Library/TinyTeX/texmf-dist/tex/latex/inconsolata/t1zi4.fd
 File: t1zi4.fd 2018/01/14 T1/zi4 (Inconsolata)
@@ -810,109 +779,22 @@ Package microtype Info: Loading generic protrusion settings for font family
 (microtype)             `zi4' (encoding: T1).
 (microtype)             For optimal results, create family-specific settings.
 (microtype)             See the microtype manual for details.
-
-Package natbib Warning: Citation `jacobs2025horseshoe' on page 1 undefined on input line 30.
-
 [1{/Users/tijnjacobs/Library/TinyTeX/texmf-var/fonts/map/pdftex/updmap/pdftex.map}{/Users/tijnjacobs/Library/TinyTeX/texmf-dist/fonts/enc/dvips/base/8r.enc}
 
 {/Users/tijnjacobs/Library/TinyTeX/texmf-dist/fonts/enc/dvips/inconsolata/i4-t1-0.enc}]
-
-Package natbib Warning: Citation `chipman2010bart' on page 2 undefined on input line 40.
-
-
-LaTeX Warning: Reference `fig:ExampleTree' on page 2 undefined on input line 44.
-
-<figures/ExampleTree_standalone.pdf, id=93, 421.05907pt x 179.34001pt>
+<figures/ExampleTree_standalone.pdf, id=144, 421.05907pt x 179.34001pt>
 File: figures/ExampleTree_standalone.pdf Graphic file (type pdf)
 <use figures/ExampleTree_standalone.pdf>
 Package pdftex.def Info: figures/ExampleTree_standalone.pdf  used on input line 48.
 (pdftex.def)             Requested size: 338.59021pt x 144.22198pt.
-
-Package natbib Warning: Citation `chipman1998bayesiancart' on page 2 undefined on input line 59.
-
-
-Package natbib Warning: Citation `rockova2020theory' on page 2 undefined on input line 59.
-
-
-Package natbib Warning: Citation `chipman2010bart' on page 2 undefined on input line 67.
-
 [2 <./figures/ExampleTree_standalone.pdf>]
-
-Package natbib Warning: Citation `chipman2010bart' on page 3 undefined on input line 73.
-
-
-Package natbib Warning: Citation `linero2018dart' on page 3 undefined on input line 73.
-
-
-Package natbib Warning: Citation `carvalho2010horseshoe' on page 3 undefined on input line 81.
-
-
-Package natbib Warning: Citation `polson2012halfcauchy' on page 3 undefined on input line 86.
-
-
-Package natbib Warning: Citation `jacobs2025horseshoe' on page 3 undefined on input line 86.
-
-
-Package natbib Warning: Citation `caron2022estimating' on page 3 undefined on input line 90.
-
-
-Package natbib Warning: Citation `hahn2020bayesian' on page 3 undefined on input line 90.
-
-
-Package natbib Warning: Citation `caron2022estimating' on page 3 undefined on input line 90.
-
 LaTeX Font Info:    Trying to load font information for U+fplmbb on input line 94.
 (/Users/tijnjacobs/Library/TinyTeX/texmf-dist/tex/latex/psnfss/ufplmbb.fd
 File: ufplmbb.fd 2003/10/30 Fontinst v1.914 font definitions for U/fplmbb.
-)
-
-Package natbib Warning: Citation `hahn2020bayesian' on page 3 undefined on input line 96.
-
-
-Package natbib Warning: Citation `hahn2020bayesian' on page 3 undefined on input line 96.
-
-[3]
-
-Package natbib Warning: Citation `chipman2010bart' on page 4 undefined on input line 106.
-
-
-Package natbib Warning: Citation `chipman2010bart' on page 4 undefined on input line 108.
-
-
-Package natbib Warning: Citation `kapelner2016bartmachine' on page 4 undefined on input line 108.
-
-
-Package natbib Warning: Citation `jacobs2025horseshoe' on page 4 undefined on input line 108.
-
-
-LaTeX Warning: Reference `tab:pkg-comparison' on page 4 undefined on input line 112.
-
-
-Package natbib Warning: Citation `sparapani2021nonparametric' on page 4 undefined on input line 114.
-
-
-Package natbib Warning: Citation `dorie2023dbarts' on page 4 undefined on input line 116.
-
-
-Package natbib Warning: Citation `hahn2020bayesian' on page 4 undefined on input line 118.
-
-
-Package natbib Warning: Citation `linero2018softbart' on page 4 undefined on input line 122.
-
-
-LaTeX Warning: `!h' float specifier changed to `!ht'.
-
-
-Package natbib Warning: Citation `eddelbuettel2011rcpp' on page 4 undefined on input line 151.
-
-
+) [3] [4]
 Overfull \hbox (26.90779pt too wide) in paragraph at lines 151--152
 [][]\T1/ppl/b/n/9 (-20) ShrinkageTrees[][] \T1/ppl/m/n/9 (-20) is avail-able on CRAN and on GitHub at [][]$\T1/zi4/m/n/9 https : / / github . com / tijn -[] jacobs / ShrinkageTrees$[][]\T1/ppl/m/n/9 (-20) .
  []
-
-[4]
-
-LaTeX Warning: Reference `tab:fitting-functions' on page 5 undefined on input line 155.
 
 LaTeX Font Info:    Font shape `U/msa/m/n' will be
 (Font)              scaled to size 10.42007pt on input line 162.
@@ -938,128 +820,91 @@ Overfull \hbox (3.15167pt too wide) in paragraph at lines 194--195
 \T1/ppl/m/n/9 (-20) are dis-patched in par-al-lel via \T1/zi4/m/n/9 parallel::mclapply() \T1/ppl/m/n/9 (-20) us-ing \T1/zi4/m/n/9 min(n_chains, parallel::detectCores())
  []
 
-
-Package natbib Warning: Citation `plummer2006coda' on page 6 undefined on input line 198.
-
 [6]
-
-Package natbib Warning: Citation `sparapani2021nonparametric' on page 7 undefined on input line 208.
-
-
-Package natbib Warning: Citation `he2019xbart' on page 7 undefined on input line 208.
-
 
 LaTeX Warning: Reference `fig:scaling' on page 7 undefined on input line 210.
 
 
 LaTeX Warning: Reference `fig:scaling' on page 7 undefined on input line 212.
 
-
-Package natbib Warning: Citation `tcga2011ovarian' on page 7 undefined on input line 218.
-
-
-Package natbib Warning: Citation `tcga2011ovarian' on page 7 undefined on input line 222.
-
-
-Package natbib Warning: Citation `tcga2011ovarian' on page 7 undefined on input line 225.
-
-[7]
-
-Package natbib Warning: Citation `harrell1996concordance' on page 8 undefined on input line 321.
-
-[8]
-<figures/trace_horse.pdf, id=191, 361.35pt x 216.81pt>
+[7] [8] [9]
+<figures/trace_horse.pdf, id=321, 361.35pt x 216.81pt>
 File: figures/trace_horse.pdf Graphic file (type pdf)
 <use figures/trace_horse.pdf>
-Package pdftex.def Info: figures/trace_horse.pdf  used on input line 342.
+Package pdftex.def Info: figures/trace_horse.pdf  used on input line 416.
 (pdftex.def)             Requested size: 191.2008pt x 114.72017pt.
-<figures/density_horse.pdf, id=192, 361.35pt x 216.81pt>
+<figures/density_horse.pdf, id=322, 361.35pt x 216.81pt>
 File: figures/density_horse.pdf Graphic file (type pdf)
 <use figures/density_horse.pdf>
-Package pdftex.def Info: figures/density_horse.pdf  used on input line 342.
+Package pdftex.def Info: figures/density_horse.pdf  used on input line 416.
 (pdftex.def)             Requested size: 191.2008pt x 114.72017pt.
-
-LaTeX Warning: Reference `fig:convergence-fig' on page 9 undefined on input line 349.
-
-<figures/survival_individual.pdf, id=193, 361.35pt x 252.945pt>
+[10 <./figures/trace_horse.pdf> <./figures/density_horse.pdf>]
+<figures/survival_individual.pdf, id=346, 361.35pt x 252.945pt>
 File: figures/survival_individual.pdf Graphic file (type pdf)
 <use figures/survival_individual.pdf>
-Package pdftex.def Info: figures/survival_individual.pdf  used on input line 372.
+Package pdftex.def Info: figures/survival_individual.pdf  used on input line 446.
 (pdftex.def)             Requested size: 191.2008pt x 133.84021pt.
-<figures/survival_population.pdf, id=194, 361.35pt x 252.945pt>
+<figures/survival_population.pdf, id=347, 361.35pt x 252.945pt>
 File: figures/survival_population.pdf Graphic file (type pdf)
 <use figures/survival_population.pdf>
-Package pdftex.def Info: figures/survival_population.pdf  used on input line 372.
+Package pdftex.def Info: figures/survival_population.pdf  used on input line 446.
 (pdftex.def)             Requested size: 191.2008pt x 133.84021pt.
 
-LaTeX Warning: Reference `fig:survival-fig' on page 9 undefined on input line 379.
-
-
-Overfull \hbox (37.70009pt too wide) in paragraph at lines 381--382
+Overfull \hbox (37.70009pt too wide) in paragraph at lines 455--456
 []\T1/ppl/m/n/9 (-20) We now es-ti-mate het-ero-ge-neous treat-ment ef-fects of car-bo-platin ver-sus cis-platin us-ing \T1/zi4/m/n/9 CausalHorseForest()\T1/ppl/m/n/9 (-20) ,
  []
 
-[9 <./figures/trace_horse.pdf> <./figures/density_horse.pdf> <./figures/survival_individual.pdf> <./figures/survival_population.pdf>] [10]
-<figures/ate_posterior.pdf, id=237, 289.08pt x 216.81pt>
+[11 <./figures/survival_individual.pdf> <./figures/survival_population.pdf>]
+<figures/ate_posterior.pdf, id=370, 289.08pt x 216.81pt>
 File: figures/ate_posterior.pdf Graphic file (type pdf)
 <use figures/ate_posterior.pdf>
-Package pdftex.def Info: figures/ate_posterior.pdf  used on input line 451.
+Package pdftex.def Info: figures/ate_posterior.pdf  used on input line 525.
 (pdftex.def)             Requested size: 191.2008pt x 143.3994pt.
-<figures/cate_caterpillar.pdf, id=238, 289.08pt x 252.945pt>
+<figures/cate_caterpillar.pdf, id=371, 289.08pt x 252.945pt>
 File: figures/cate_caterpillar.pdf Graphic file (type pdf)
 <use figures/cate_caterpillar.pdf>
-Package pdftex.def Info: figures/cate_caterpillar.pdf  used on input line 451.
+Package pdftex.def Info: figures/cate_caterpillar.pdf  used on input line 525.
 (pdftex.def)             Requested size: 191.2008pt x 167.2993pt.
+[12 <./figures/ate_posterior.pdf> <./figures/cate_caterpillar.pdf>] (./RJwrapper.bbl (./RJwrapper.brf)
+\tf@brf=\write6
+\openout6 = `RJwrapper.brf'.
 
-LaTeX Warning: Reference `fig:treatment-effects-fig' on page 11 undefined on input line 458.
-
-
-Package natbib Warning: Citation `li2023bayesian' on page 11 undefined on input line 466.
-
-
-LaTeX Warning: Reference `fig:treatment-effects-fig' on page 11 undefined on input line 466.
-
-
-Package natbib Warning: Citation `rubin1981bayesian' on page 11 undefined on input line 466.
-
-
-Package natbib Warning: Citation `kapelner2016bartmachine' on page 11 undefined on input line 468.
-
-[11 <./figures/ate_posterior.pdf> <./figures/cate_caterpillar.pdf>]
-
-Package natbib Warning: Citation `jacobs2025horseshoe' on page 12 undefined on input line 470.
-
-No file RJwrapper.bbl.
+[13])
 
 LaTeX Font Warning: Font shape `T1/zi4/m/it' undefined
-(Font)              using `T1/zi4/m/n' instead on input line 486.
+(Font)              using `T1/zi4/m/n' instead on input line 560.
 
 LaTeX Font Info:    Font shape `T1/zi4/m/it' will be
-(Font)              scaled to size 9.18004pt on input line 486.
-)
+(Font)              scaled to size 9.18004pt on input line 560.
+[14]) [15] (./RJwrapper.aux)
+ ***********
+LaTeX2e <2025-11-01>
+L3 programming layer <2026-01-19>
+ ***********
 
-Package natbib Warning: There were undefined citations.
+LaTeX Font Warning: Some font shapes were not available, defaults substituted.
 
-[12] (./RJwrapper.aux)
-Runaway argument?
-{\contentsline {figure}{\numberline {4}{\ignorespaces Left: posterior\ETC.
-! File ended while scanning use of \@writefile.
-<inserted text> 
-                \par 
-l.69 \end{document}
-                   
-I suspect you have forgotten a `}', causing me
-to read past where you wanted me to stop.
-I'll try to recover; but if the error is serious,
-you'd better type `E' or `X' now and fix your file.
 
- 
+LaTeX Warning: There were undefined references.
+
+Package rerunfilecheck Info: File `RJwrapper.out' has not changed.
+(rerunfilecheck)             Checksum: 0D1519C8E6E7344391849BBA6A51483E;4043.
+Package rerunfilecheck Info: File `RJwrapper.brf' has not changed.
+(rerunfilecheck)             Checksum: 02CB048697E451B1C6790092532CACD5;2641.
+ ) 
 Here is how much of TeX's memory you used:
- 27170 strings out of 469515
- 496261 string characters out of 5468670
- 917611 words of memory out of 5000000
- 54987 multiletter control sequences out of 15000+600000
- 685202 words of font info for 337 fonts, out of 8000000 for 9000
+ 27375 strings out of 469515
+ 500648 string characters out of 5468669
+ 919207 words of memory out of 5000000
+ 55140 multiletter control sequences out of 15000+600000
+ 686367 words of font info for 347 fonts, out of 8000000 for 9000
  14 hyphenation exceptions out of 8191
- 117i,12n,131p,1464b,764s stack positions out of 10000i,1000n,20000p,200000b,200000s
-!  ==> Fatal error occurred, no output PDF file produced!
+ 117i,12n,131p,1464b,985s stack positions out of 10000i,1000n,20000p,200000b,200000s
+</Users/tijnjacobs/Library/TinyTeX/texmf-dist/fonts/type1/public/inconsolata/Inconsolata-zi4r.pfb></Users/tijnjacobs/Library/TinyTeX/texmf-dist/fonts/type1/public/amsfonts/cm/cmex10.pfb></Users/tijnjacobs/Library/TinyTeX/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi10.pfb></Users/tijnjacobs/Library/TinyTeX/texmf-dist/fonts/type1/public/amsfonts/cm/cmr10.pfb></Users/tijnjacobs/Library/TinyTeX/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy10.pfb></Users/tijnjacobs/Library/TinyTeX/texmf-dist/fonts/type1/public/mathpazo/fplmbb.pfb></Users/tijnjacobs/Library/TinyTeX/texmf-dist/fonts/type1/public/mathpazo/fplmr.pfb></Users/tijnjacobs/Library/TinyTeX/texmf-dist/fonts/type1/public/mathpazo/fplmri.pfb></Users/tijnjacobs/Library/TinyTeX/texmf-dist/fonts/type1/urw/palatino/uplb8a.pfb></Users/tijnjacobs/Library/TinyTeX/texmf-dist/fonts/type1/urw/palatino/uplr8a.pfb></Users/tijnjacobs/Library/TinyTeX/texmf-dist/fonts/type1/urw/palatino/uplri8a.pfb>
+Output written on RJwrapper.pdf (15 pages, 403726 bytes).
+PDF statistics:
+ 536 PDF objects out of 1000 (max. 8388607)
+ 474 compressed objects within 5 object streams
+ 67 named destinations out of 1000 (max. 500000)
+ 66776 words of extra memory for PDF output out of 74296 (max. 10000000)
+

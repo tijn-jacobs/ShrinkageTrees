@@ -1,0 +1,110 @@
+Initial check results: 
+
+ERROR: Submission does not have consistently named tex, R files
+WARNING: The archive contains hidden files which will be removed: .DS_Store, figures/.DS_Store
+SUCCESS: File and directory names are compliant.
+ERROR: Multiple R files detected: generate_figures.R, ShrinkageTrees.R.
+Scripts should be organised in the scripts/ folder.
+The master R file generated from rendering should still be in the main directory.
+SUCCESS: No problematic file found
+SUCCESS: Possible motivation letter found: motivation-letter
+SUCCESS: Article title formatted in title case.
+ERROR: Section Overview of Statistical Methodology, Related Packages, Package Architecture, Application: Ovarian Cancer Survival, Discussion and Conclusion is not in sentence case!
+SUCCESS: Abstract formatted in plain text.
+Initial check results: 
+
+SUCCESS: Submission has consistently named tex, bib, and R files
+SUCCESS: File and directory names are compliant.
+NOTE: Remove .log, .aux and .out files before submitting.
+SUCCESS: No problematic file found
+SUCCESS: Possible motivation letter found: motivation-letter
+SUCCESS: Article title formatted in title case.
+ERROR: Section Overview of Statistical Methodology, Related Packages, Package Architecture, Application: Ovarian Cancer Survival, Discussion and Conclusion is not in sentence case!
+SUCCESS: Abstract formatted in plain text.
+Initial check results: 
+
+SUCCESS: Submission has consistently named tex, bib, and R files
+SUCCESS: File and directory names are compliant.
+NOTE: Remove .log, .aux and .out files before submitting.
+SUCCESS: No problematic file found
+SUCCESS: Possible motivation letter found: motivation-letter
+SUCCESS: Article title formatted in title case.
+ERROR: Section Overview of Statistical Methodology, Related Packages, Package Architecture, Application: Ovarian Cancer Survival, Discussion and Conclusion is not in sentence case!
+SUCCESS: Abstract formatted in plain text.
+Initial check results: 
+
+SUCCESS: Submission has consistently named tex, bib, and R files
+SUCCESS: File and directory names are compliant.
+NOTE: Remove .log, .aux and .out files before submitting.
+SUCCESS: No problematic file found
+SUCCESS: Possible motivation letter found: motivation-letter
+SUCCESS: Article title formatted in title case.
+ERROR: Section Overview of Statistical Methodology, Related Packages, Package Architecture, Application: Ovarian Cancer Survival, Discussion and Conclusion is not in sentence case!
+SUCCESS: Abstract formatted in plain text.
+Initial check results: 
+
+SUCCESS: Submission has consistently named tex, bib, and R files
+SUCCESS: File and directory names are compliant.
+NOTE: Remove .log, .aux and .out files before submitting.
+SUCCESS: No problematic file found
+SUCCESS: Possible motivation letter found: motivation-letter
+SUCCESS: Article title formatted in title case.
+ERROR: Section Overview of Statistical Methodology, Related Packages, Package Architecture, Application: Ovarian Cancer Survival, Discussion and Conclusion is not in sentence case!
+SUCCESS: Abstract formatted in plain text.
+Initial check results: 
+
+SUCCESS: Submission has consistently named tex, bib, and R files
+SUCCESS: File and directory names are compliant.
+NOTE: Remove .log, .aux and .out files before submitting.
+SUCCESS: No problematic file found
+SUCCESS: Possible motivation letter found: motivation-letter
+SUCCESS: Article title formatted in title case.
+ERROR: Section Overview of Statistical Methodology, Related Packages, Package Architecture, Application: Ovarian Cancer Survival, Discussion and Conclusion is not in sentence case!
+SUCCESS: Abstract formatted in plain text.
+Initial check results: 
+
+SUCCESS: Submission has consistently named tex, bib, and R files
+SUCCESS: File and directory names are compliant.
+NOTE: Remove .log, .aux and .out files before submitting.
+SUCCESS: No problematic file found
+SUCCESS: Possible motivation letter found: motivation-letter
+SUCCESS: Article title formatted in title case.
+ERROR: Section Overview of Statistical Methodology, Related Packages, Package Architecture, Application: Ovarian Cancer Survival, Discussion and Conclusion is not in sentence case!
+SUCCESS: Abstract formatted in plain text.
+Initial check results: 
+
+SUCCESS: Submission has consistently named tex, bib, and R files
+SUCCESS: File and directory names are compliant.
+NOTE: Remove .log, .aux and .out files before submitting.
+SUCCESS: No problematic file found
+SUCCESS: Possible motivation letter found: motivation-letter
+SUCCESS: Article title formatted in title case.
+ERROR: Section Overview of Statistical Methodology, Related Packages, Package Architecture, Application: Ovarian Cancer Survival, Discussion and Conclusion is not in sentence case!
+SUCCESS: Abstract formatted in plain text.
+Initial check results: 
+
+SUCCESS: Submission has consistently named tex, bib, and R files
+SUCCESS: File and directory names are compliant.
+NOTE: Remove .log, .aux and .out files before submitting.
+SUCCESS: No problematic file found
+SUCCESS: Possible motivation letter found: motivation-letter
+SUCCESS: Article title formatted in title case.
+SUCCESS: Section titles formatted in sentence case.
+SUCCESS: Abstract formatted in plain text.
+Initial check results: 
+
+SUCCESS: Submission has consistently named tex, bib, and R files
+SUCCESS: File and directory names are compliant.
+NOTE: Remove .log, .aux and .out files before submitting.
+SUCCESS: No problematic file found
+SUCCESS: Possible motivation letter found: motivation-letter
+SUCCESS: Article title formatted in title case.
+SUCCESS: Section titles formatted in sentence case.
+SUCCESS: Abstract formatted in plain text.
+NOTE: A potential list of spelling to check: regularisation, regularises, regularised, linearities, organised, characterised, centred, regularising, instantiation, modelled, topologies, conjugacy, parallelise, hyperpriors, dbarts, bcf, stochtree, traceplots, visualisations, fw, mclapply, behaviour, gynaecological, carboplatin, cisplatin, tumour, traceplot, reweights, suboptimal, der
+SUCCESS: CRAN activities have been detected for package ShrinkageTrees
+ERROR: Package(s) available on CRAN: coda.
+please use \CRANpkg rather than \pkg.
+SUCCESS: All packages marked-up with \CRANpkg or \BIOpkg are available on CRAN or Bioconductor.
+SUCCESS: All the references contain DOI or URL
+SUCCESS: No customised csl file used. Good!
