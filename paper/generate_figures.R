@@ -14,6 +14,8 @@ library(ggplot2)
 dir.create("figures", showWarnings = FALSE)
 dir.create("outputs", showWarnings = FALSE)
 
+set.seed(42)
+
 data("ovarian")
 
 clin      <- ovarian$clinical
@@ -34,7 +36,6 @@ cat("n =", nrow(clin), "| p =", ncol(X),
 sink()
 
 # --- Train / test split ---
-set.seed(2025)
 train_idx <- sample(seq_len(nrow(clin)), size = floor(0.8 * nrow(clin)))
 test_idx  <- setdiff(seq_len(nrow(clin)), train_idx)
 
@@ -54,11 +55,11 @@ fit_horse <- HorseTrees(
   X_test          = X_test,
   outcome_type    = "right-censored",
   timescale       = "time",
-  number_of_trees = 50,
+  number_of_trees = 200,
   k               = 0.1,
   N_post          = 5000,
   N_burn          = 5000,
-  n_chains        = 2,
+  n_chains        = 4,
   store_posterior_sample = TRUE,
   verbose         = TRUE
 )
@@ -73,14 +74,16 @@ summary(fit_horse)
 sink()
 
 # --- C-index ---
-c_horse <- concordance(Surv(time_test, status_test) ~ fit_horse$test_predictions)
+c_horse_train <- concordance(Surv(time_train, status_train) ~ fit_horse$train_predictions)
+c_horse_test  <- concordance(Surv(time_test, status_test) ~ fit_horse$test_predictions)
 
 sink("outputs/cindex.txt")
-cat("Test C-index — HorseTrees:", round(c_horse$concordance, 3), "\n")
+cat("Train C-index — HorseTrees:", round(c_horse_train$concordance, 3), "\n")
+cat("Test C-index — HorseTrees:", round(c_horse_test$concordance, 3), "\n")
 sink()
 
 # --- Convergence diagnostics ---
-chain_cols <- c("steelblue", "indianred")
+chain_cols <- c("steelblue", "indianred", "forestgreen", "darkorange")
 
 p_trace   <- plot(fit_horse, type = "trace") +
   scale_colour_manual(values = chain_cols)
@@ -97,7 +100,7 @@ ggsave("figures/density_horse.pdf", p_density, width = 5, height = 3)
 
 pred <- predict(fit_horse, newdata = X_test)
 
-idx <- which.min(abs(pred$mean - median(pred$mean)))
+idx <- sample(length(pred$mean), 1)
 
 p_individual <- plot(pred, type = "survival", obs = idx)
 ggsave("figures/survival_individual.pdf", p_individual, width = 5, height = 3.5)
@@ -111,12 +114,20 @@ ggsave("figures/survival_population.pdf", p_population, width = 5, height = 3.5)
 
 cat("=== Fitting CausalHorseForest ===\n")
 
-ps_model   <- glm(treatment ~ age + factor(figo_stage) + factor(tumor_grade),
-                   family = binomial, data = clin)
-propensity <- predict(ps_model, type = "response")
+X_ps <- cbind(age = clin$age, figo_stage = clin$figo_stage, tumor_grade = clin$tumor_grade)
+ps_fit <- HorseTrees(
+  y               = treatment,
+  X_train         = X_ps,
+  outcome_type    = "binary",
+  number_of_trees = 200,
+  k               = 0.1,
+  N_post          = 2000,
+  N_burn          = 2000,
+  verbose         = TRUE
+)
+propensity <- ps_fit$train_predictions
 X_control  <- cbind(propensity = propensity, X)
 
-set.seed(2025)
 fit_causal <- CausalHorseForest(
   y                         = log(time),
   status                    = status,
@@ -125,11 +136,11 @@ fit_causal <- CausalHorseForest(
   treatment_indicator_train = treatment,
   outcome_type              = "right-censored",
   timescale                 = "log",
-  number_of_trees           = 50,
-  k                         = 0.25,
+  number_of_trees           = 200,
+  k                         = 0.1,
   N_post                    = 5000,
   N_burn                    = 5000,
-  n_chains                  = 2,
+  n_chains                  = 4,
   store_posterior_sample    = TRUE,
   verbose                   = TRUE
 )

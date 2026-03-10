@@ -15,7 +15,7 @@ df <- data.frame(
   Package             = c("BART", "dbarts", "bcf", "stochtree", "SoftBart", "ShrinkageTrees"),
   `Survival`          = c("Yes", "No", "No", "No", "No", "Yes"),
   `Interval\nCensoring` = c("No", "No", "No", "No", "No", "Yes"),
-  `Causal\n(BCF)`     = c("No", "No", "Yes", "Yes", "No", "Yes"),
+  `Causal\n($\\tau$-learner)` = c("No", "No", "Yes", "Yes", "No", "Yes"),
   `Dirichlet\n(DART)` = c("Yes", "No", "No", "No", "No", "Yes"),
   check.names         = FALSE
 )
@@ -35,23 +35,21 @@ knitr::kable(df,
 df <- data.frame(
   Function = c("\\texttt{ShrinkageTrees()}", "\\texttt{HorseTrees()}",
                "\\texttt{CausalShrinkageForest()}", "\\texttt{CausalHorseForest()}",
-               "",
                "\\texttt{SurvivalBART()}", "\\texttt{SurvivalDART()}",
                "\\texttt{SurvivalBCF()}", "\\texttt{SurvivalShrinkageBCF()}"),
   Description = c(
     "Prediction model with user-specified leaf prior (horseshoe, half-Cauchy, standard, Dirichlet)",
     "Prediction model with horseshoe prior; single tuning parameter $k$",
-    "BCF causal model with user-specified leaf priors for $\\mu$ and $\\tau$ forests",
-    "BCF causal model with horseshoe prior on both forests",
-    "",
+    "$\\tau$-learner causal model with user-specified leaf priors for $\\mu$ and $\\tau$ forests",
+    "$\\tau$-learner causal model with horseshoe prior on both forests",
     "AFT survival with conjugate normal leaf prior (standard BART)",
     "AFT survival with Dirichlet splitting prior (DART)",
-    "AFT survival with BCF decomposition and conjugate normal leaf prior",
-    "AFT survival with BCF decomposition and horseshoe leaf prior"),
+    "AFT survival with $\\tau$-learner decomposition and conjugate normal leaf prior",
+    "AFT survival with $\\tau$-learner decomposition and horseshoe leaf prior"),
   check.names = FALSE
 )
 knitr::kable(df,
-             caption = "Fitting functions in \\pkg{ShrinkageTrees}. The first four
+             caption = "Fitting functions in \\CRANpkg{ShrinkageTrees}. The first four
                         are primary functions; the last four are convenience wrappers.",
              booktabs = TRUE,
              format = "latex",
@@ -64,10 +62,11 @@ knitr::kable(df,
 
 ## ----data, echo=TRUE, eval=FALSE----------------------------------------------
 # library(ShrinkageTrees)
+# set.seed(42)
 # data("ovarian")
 # 
 # clin      <- ovarian$clinical
-# time      <- clin$OS_time
+# time      <- clin$OS_time / 30.44   # convert days to months
 # status    <- clin$OS_event
 # treatment <- clin$treatment
 # 
@@ -76,13 +75,9 @@ knitr::kable(df,
 #            tumor_grade = clin$tumor_grade,
 #            ovarian$X)
 # 
-# cat("n =", nrow(clin), "| p =", ncol(X),
-#     "| event rate =", round(mean(status), 2),
-#     "| carboplatin =", sum(treatment), "/ cisplatin =", sum(1 - treatment), "\n")
 
 
 ## ----split, echo=TRUE, eval=FALSE---------------------------------------------
-# set.seed(2025)
 # train_idx <- sample(seq_len(nrow(clin)), size = floor(0.8 * nrow(clin)))
 # test_idx  <- setdiff(seq_len(nrow(clin)), train_idx)
 # 
@@ -99,13 +94,11 @@ knitr::kable(df,
 #   X_test          = X_test,
 #   outcome_type    = "right-censored",
 #   timescale       = "time",
-#   number_of_trees = 50,
+#   number_of_trees = 200,
 #   k               = 0.1,
 #   N_post          = 5000,
 #   N_burn          = 5000,
-#   n_chains        = 2,
-#   store_posterior_sample = TRUE,
-#   verbose         = FALSE
+#   n_chains        = 4
 # )
 
 
@@ -119,8 +112,10 @@ knitr::kable(df,
 
 ## ----cindex, echo=TRUE, eval=FALSE--------------------------------------------
 # library(survival)
-# c_horse <- concordance(Surv(time_test, status_test) ~ fit_horse$test_predictions)
-# cat("Test C-index — HorseTrees:", round(c_horse$concordance, 3), "\n")
+# c_train <- concordance(Surv(time_train, status_train) ~ fit_horse$train_predictions)
+# c_test  <- concordance(Surv(time_test, status_test) ~ fit_horse$test_predictions)
+# cat("Train C-index:", round(c_train$concordance, 3),
+#     " Test C-index:", round(c_test$concordance, 3), "\n")
 
 
 ## ----convergence, echo=TRUE, eval=FALSE---------------------------------------
@@ -128,53 +123,44 @@ knitr::kable(df,
 # plot(fit_horse, type = "density")
 
 
-## ----trace-fig, echo=FALSE, fig.cap="Traceplot of the posterior draws of $\\sigma$ for the Horseshoe Forest model. The two chains are shown in different colours.", out.width="85%", fig.align='center'----
-knitr::include_graphics("figures/trace_horse.pdf")
-
-
-## ----density-fig, echo=FALSE, fig.cap="Posterior density of $\\sigma$ for the Horseshoe Forest model, estimated separately for each chain.", out.width="85%", fig.align='center'----
-knitr::include_graphics("figures/density_horse.pdf")
+## ----convergence-fig, echo=FALSE, fig.cap="Left: traceplot of the posterior draws of $\\sigma$ for the Horseshoe Forest model. Right: posterior density of $\\sigma$, estimated separately for each of the four chains.", out.width="48%", fig.show='hold', fig.align='center'----
+knitr::include_graphics(c("figures/trace_horse.pdf", "figures/density_horse.pdf"))
 
 
 ## ----patient-profiles, echo=TRUE, eval=FALSE----------------------------------
 # pred <- predict(fit_horse, newdata = X_test)
-# 
-# idx_best  <- which.max(pred$mean)
-# idx_worst <- which.min(pred$mean)
-# 
-# cat("Best prognosis  — age:", X_test[idx_best, "age"],
-#     " stage:", X_test[idx_best, "figo_stage"],
-#     " grade:", X_test[idx_best, "tumor_grade"], "\n")
-# cat("Worst prognosis — age:", X_test[idx_worst, "age"],
-#     " stage:", X_test[idx_worst, "figo_stage"],
-#     " grade:", X_test[idx_worst, "tumor_grade"], "\n")
+# idx <- sample(length(pred$mean), 1)
 
 
 ## ----individual-survival, echo=TRUE, eval=FALSE-------------------------------
-# plot(pred, type = "survival", obs = c(idx_best, idx_worst))
-
-
-## ----individual-fig, echo=FALSE, fig.cap="Posterior survival curves for two test-set patients at opposite ends of the predicted risk spectrum, with pointwise 95\\% credible bands.", out.width="85%", fig.align='center'----
-knitr::include_graphics("figures/survival_individual.pdf")
+# plot(pred, type = "survival", obs = idx)
 
 
 ## ----population-survival, echo=TRUE, eval=FALSE-------------------------------
 # plot(fit_horse, type = "survival", km = TRUE)
 
 
-## ----population-fig, echo=FALSE, fig.cap="Population-averaged posterior survival curve (solid line) with 95\\% credible band (shaded) and Kaplan--Meier estimate (dashed).", out.width="85%", fig.align='center'----
-knitr::include_graphics("figures/survival_population.pdf")
+## ----survival-fig, echo=FALSE, fig.cap="Left: posterior survival curve for a randomly selected test-set patient, with pointwise 95\\% credible bands. Right: population-averaged posterior survival curve (solid line) with 95\\% credible band (shaded) and Kaplan--Meier estimate (dashed).", out.width="48%", fig.show='hold', fig.align='center'----
+knitr::include_graphics(c("figures/survival_individual.pdf", "figures/survival_population.pdf"))
 
 
 ## ----propensity, echo=TRUE, eval=FALSE----------------------------------------
-# ps_model   <- glm(treatment ~ age + factor(figo_stage) + factor(tumor_grade),
-#                    family = binomial, data = clin)
-# propensity <- predict(ps_model, type = "response")
+# X_ps <- cbind(age = clin$age, figo_stage = clin$figo_stage,
+#               tumor_grade = clin$tumor_grade)
+# ps_fit <- HorseTrees(
+#   y               = treatment,
+#   X_train         = X_ps,
+#   outcome_type    = "binary",
+#   number_of_trees = 200,
+#   k               = 0.1,
+#   N_post          = 2000,
+#   N_burn          = 2000
+# )
+# propensity <- ps_fit$train_predictions
 # X_control  <- cbind(propensity = propensity, X)
 
 
 ## ----causal-fit, echo=TRUE, eval=FALSE----------------------------------------
-# set.seed(2025)
 # fit_causal <- CausalHorseForest(
 #   y                         = log(time),
 #   status                    = status,
@@ -183,13 +169,11 @@ knitr::include_graphics("figures/survival_population.pdf")
 #   treatment_indicator_train = treatment,
 #   outcome_type              = "right-censored",
 #   timescale                 = "log",
-#   number_of_trees           = 50,
+#   number_of_trees           = 200,
 #   k                         = 0.1,
 #   N_post                    = 5000,
 #   N_burn                    = 5000,
-#   n_chains                  = 2,
-#   store_posterior_sample    = TRUE,
-#   verbose                   = FALSE
+#   n_chains                  = 4
 # )
 # summary(fit_causal)
 

@@ -3,32 +3,32 @@ CausalShrinkageForest model summary
 =====================================
 Call: CausalHorseForest(y = log(time), status = status, X_train_control = X_control, 
     X_train_treat = X, treatment_indicator_train = treatment, 
-    outcome_type = "right-censored", timescale = "log", number_of_trees = 50, 
+    outcome_type = "right-censored", timescale = "log", number_of_trees = 200, 
     k = 0.1, N_post = 5000, N_burn = 5000, store_posterior_sample = TRUE, 
-    n_chains = 2, verbose = TRUE)
+    n_chains = 4, verbose = TRUE)
 
 Outcome: Right-censored (AFT, timescale = log)
 Prior:   control = horseshoe, treatment = horseshoe
-Trees:   control = 50, treatment = 50
-Data:    n = 357, p_control = 2004, p_treat = 2003 | Draws: 5000 x 2 chains (burn-in 5000)
+Trees:   control = 200, treatment = 200
+Data:    n = 357, p_control = 2004, p_treat = 2003 | Draws: 5000 x 4 chains (burn-in 5000)
 
 Treatment effect (CATE):
-  ATE:     -0.1042  95% CI: [-0.3423, 0.0706]
-  CATE SD: 0.0079
+  ATE:     -0.1518  95% CI: [-0.3991, 0.0688]
+  CATE SD: 0.0133
 
 Prognostic function (mu):
-  Mean: 7.249  SD: 0.004  Range: [7.238, 7.258]
+  Mean: 3.852  SD: 0.009  Range: [3.828, 3.875]
 
 Posterior sigma:
-  Mean: 0.993  SD: 0.05  95% CI: [0.899, 1.098]
+  Mean: 0.993  SD: 0.051  95% CI: [0.898, 1.099]
 
 Variable importance - control forest (posterior inclusion probability):
-  X752: 0.001   X1739: 0.001   X1102: 0.001   X1521: 0.001   X575: 0.001   X633: 0.001   X1247: 0.001   X1446: 0.001   X1938: 0.001   X35: 0.001 
+  X1890: 0.001   X1526: 0.001   X83: 0.001   X288: 0.001   X1527: 0.001   X1760: 0.001   X1211: 0.001   X1098: 0.001   X1795: 0.001   X16: 0.001 
 
 Variable importance - treatment forest (posterior inclusion probability):
-  X1624: 0.001   X1714: 0.001   X240: 0.001   X688: 0.001   X1417: 0.001   X1464: 0.001   X1401: 0.001   X1301: 0.001   X384: 0.001   X181: 0.001 
+  X730: 0.001   X1912: 0.001   X799: 0.001   X1103: 0.001   X335: 0.001   X1293: 0.001   X1340: 0.001   X121: 0.001   X1228: 0.001   X1200: 0.001 
 
 MCMC acceptance ratios (per chain):
-  control:   0.508, 0.505
-  treatment: 0.476, 0.476
+  control:   0.507, 0.507, 0.508, 0.508
+  treatment: 0.476, 0.475, 0.476, 0.475
 
