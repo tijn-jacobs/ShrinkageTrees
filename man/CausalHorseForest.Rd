@@ -193,7 +193,7 @@ indicators are derived internally following the
 \code{survival::Surv(type = "interval2")} convention.
 }
 \examples{
-# Example: Continuous outcome and homogenuous treatment effect
+# Example: Continuous outcome and homogeneous treatment effect
 n <- 50
 p <- 3
 X_control <- matrix(runif(n * p), ncol = p)
@@ -224,7 +224,7 @@ p <- 1000
 # Generate covariates
 X <- matrix(runif(n * p), ncol = p)
 X_treat <- X
-treatment <- rbinom(n, 1, pnorm(X_treat[1, ] - 1/2))
+treatment <- rbinom(n, 1, pnorm(X[, 1] - 1/2))
 
 # Generate true survival times depending on X and treatment
 linpred <- X[, 1] - X[, 2] + (treatment - 0.5) * (1 + X[, 2] / 2 + X[, 3] / 3 
@@ -369,4 +369,3 @@ S3 methods: \code{\link{print.CausalShrinkageForest}},
 \code{\link{predict.CausalShrinkageForest}},
 \code{\link{plot.CausalShrinkageForest}}.
 }
-

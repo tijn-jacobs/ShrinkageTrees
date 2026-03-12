@@ -63,7 +63,7 @@ for right-censored observations.}
 \item{timescale}{Indicates the scale of follow-up times. Options are
 \code{"time"} (nonnegative follow-up times, will be log-transformed internally)
 or \code{"log"} (already log-transformed). Only used when
-\code{outcome_type = "right-censored"}.}
+\code{outcome_type = "right-censored"} or \code{"interval-censored"}.}
 
 \item{number_of_trees}{Number of trees in the ensemble. Default is 200.}
 
@@ -111,7 +111,7 @@ sequential execution.}
 \item{verbose}{Logical; whether to print verbose output. Default is TRUE.}
 }
 \value{
-A named list with the following elements:
+An S3 object of class \code{"ShrinkageTrees"} with the following elements:
 \describe{
 \item{train_predictions}{Vector of posterior mean predictions on the
 training data.}
@@ -201,7 +201,7 @@ X <- matrix(rnorm(100 * p), ncol = p)
 X_test <- matrix(rnorm(50 * p), ncol = p)
 y <- X[, 1] + X[, 2] - X[, 3] + rnorm(100, sd = 0.5)
 
-fit4 <- HorseTrees(y = y,
+fit5 <- HorseTrees(y = y,
                    X_train = X,
                    X_test = X_test,
                    outcome_type = "continuous",
@@ -232,4 +232,3 @@ S3 methods: \code{\link{print.ShrinkageTrees}},
 \code{\link{predict.ShrinkageTrees}},
 \code{\link{plot.ShrinkageTrees}}.
 }
-

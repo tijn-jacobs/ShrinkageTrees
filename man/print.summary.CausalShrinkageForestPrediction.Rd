@@ -24,4 +24,3 @@ function, CATE, and total outcome.
 \seealso{
 \code{\link{summary.CausalShrinkageForestPrediction}}
 }
-

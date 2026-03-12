@@ -44,4 +44,3 @@ if (requireNamespace("coda", quietly = TRUE)) {
 \code{\link{summary.ShrinkageTrees}} which reports R-hat and ESS
 automatically when coda is available.
 }
-

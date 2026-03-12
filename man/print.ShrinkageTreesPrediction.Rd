@@ -26,4 +26,3 @@ interval bounds for the first \code{n_head} observations.
 \code{\link{predict.ShrinkageTrees}},
 \code{\link{summary.ShrinkageTreesPrediction}}
 }
-

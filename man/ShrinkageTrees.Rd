@@ -86,15 +86,15 @@ Must be specified for Horseshoe-type priors; ignored for
 \code{prior_type = "half-cauchy"} or \code{"standard"}.}
 
 \item{a_dirichlet}{First shape parameter of the Beta prior used in the
-Dirichlet–Sparse splitting rule. Together with \code{b_dirichlet_control}, it
-controls the expected sparsity level. Only when "prior_type = "dirichlet"`.}
+Dirichlet-Sparse splitting rule. Together with \code{b_dirichlet}, it
+controls the expected sparsity level. Only when \code{prior_type = "dirichlet"}.}
 
 \item{b_dirichlet}{Second shape parameter of the Beta prior for the
 sparsity level. Larger values shrink splitting probabilities more strongly
-toward uniform sparsity.  Only when "prior_type = "dirichlet"`.}
+toward uniform sparsity. Only when \code{prior_type = "dirichlet"}.}
 
 \item{rho_dirichlet}{Sparsity hyperparameter. If left NULL, it defaults to
-the number of covariates in the control forest.  Only when "prior_type = "dirichlet"`.}
+the number of covariates. Only when \code{prior_type = "dirichlet"}.}
 
 \item{power}{Power parameter for the tree structure prior. Default is 2.0.}
 
@@ -288,4 +288,3 @@ S3 methods: \code{\link{print.ShrinkageTrees}},
 \code{\link{predict.ShrinkageTrees}},
 \code{\link{plot.ShrinkageTrees}}.
 }
-

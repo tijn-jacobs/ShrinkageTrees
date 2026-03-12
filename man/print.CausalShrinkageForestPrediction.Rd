@@ -28,4 +28,3 @@ and the total outcome \eqn{\mu(X) + \tau(X)}.
 \code{\link{predict.CausalShrinkageForest}},
 \code{\link{summary.CausalShrinkageForestPrediction}}
 }
-

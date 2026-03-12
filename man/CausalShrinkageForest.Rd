@@ -199,7 +199,7 @@ sequential execution.}
 }
 \value{
 An S3 object of class \code{"CausalShrinkageForest"} containing:
-#' \describe{
+\describe{
 \item{train_predictions}{Posterior mean predictions on training data (combined forest).}
 \item{test_predictions}{Posterior mean predictions on test data (combined forest).}
 \item{train_predictions_control}{Estimated control outcomes on training data.}
@@ -256,7 +256,7 @@ whose concentration is controlled by a Beta sparsity parameter
 \code{rho_dirichlet}.
 }
 \examples{
-# Example: Continuous outcome, homogenuous treatment effect, two priors
+# Example: Continuous outcome, homogeneous treatment effect, two priors
 n <- 50
 p <- 3
 X <- matrix(runif(n * p), ncol = p)
@@ -363,4 +363,3 @@ S3 methods: \code{\link{print.CausalShrinkageForest}},
 \code{\link{predict.CausalShrinkageForest}},
 \code{\link{plot.CausalShrinkageForest}}.
 }
-

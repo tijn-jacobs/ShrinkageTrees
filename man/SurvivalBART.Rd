@@ -158,4 +158,3 @@ S3 methods: \code{\link{print.ShrinkageTrees}},
 \code{\link{predict.ShrinkageTrees}},
 \code{\link{plot.ShrinkageTrees}}.
 }
-

@@ -26,4 +26,3 @@ diagnostics.
 \seealso{
 \code{\link{summary.CausalShrinkageForest}}
 }
-

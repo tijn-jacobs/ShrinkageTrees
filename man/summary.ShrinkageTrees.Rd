@@ -44,4 +44,3 @@ MCMC diagnostics.
 \code{\link{as.mcmc.list.ShrinkageTrees}},
 \code{\link{HorseTrees}}, \code{\link{ShrinkageTrees}}
 }
-

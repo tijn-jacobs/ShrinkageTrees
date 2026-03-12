@@ -67,10 +67,12 @@ dim(ovarian$X)
 head(ovarian$clinical[, c("OS_time", "OS_event", "treatment")])
 
 # KM plot by treatment
-library(survival)
-fit <- survfit(Surv(OS_time, OS_event) ~ treatment, data = ovarian$clinical)
-plot(fit, col = c("blue", "red"), xlab = "Time (days)", ylab = "Survival")
-legend("topright", c("Carboplatin", "Cisplatin"), col = c("blue", "red"), lty = 1)
+if (requireNamespace("survival", quietly = TRUE)) {
+  library(survival)
+  fit <- survfit(Surv(OS_time, OS_event) ~ treatment, data = ovarian$clinical)
+  plot(fit, col = c("blue", "red"), xlab = "Time (days)", ylab = "Survival")
+  legend("topright", c("Carboplatin", "Cisplatin"), col = c("blue", "red"), lty = 1)
+}
 }
 \references{
 Cancer Genome Atlas Research Network (2011). Integrated genomic analyses
@@ -82,4 +84,3 @@ integrative analysis with GDC data. \emph{Nucleic Acids Research}, 44(8).
 \doi{10.1093/nar/gkv1507}
 }
 \keyword{datasets}
-
