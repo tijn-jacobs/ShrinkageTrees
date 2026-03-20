@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.29 (TeX Live 2026) (preloaded format=pdflatex 2026.3.10)  10 MAR 2026 12:39
+This is pdfTeX, Version 3.141592653-2.6-1.40.29 (TeX Live 2026) (preloaded format=pdflatex 2026.3.20)  20 MAR 2026 16:32
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -769,114 +769,117 @@ LaTeX Font Info:    Font shape `U/msb/m/n' will be
 (Font)              scaled to size 7.29405pt on input line 11.
 LaTeX Font Info:    Font shape `U/msb/m/n' will be
 (Font)              scaled to size 5.21004pt on input line 11.
-LaTeX Font Info:    Trying to load font information for T1+zi4 on input line 30.
+LaTeX Font Info:    Trying to load font information for T1+zi4 on input line 23.
 (/Users/tijnjacobs/Library/TinyTeX/texmf-dist/tex/latex/inconsolata/t1zi4.fd
 File: t1zi4.fd 2018/01/14 T1/zi4 (Inconsolata)
 )
 LaTeX Font Info:    Font shape `T1/zi4/m/n' will be
-(Font)              scaled to size 9.18004pt on input line 30.
+(Font)              scaled to size 9.18004pt on input line 23.
 Package microtype Info: Loading generic protrusion settings for font family
 (microtype)             `zi4' (encoding: T1).
 (microtype)             For optimal results, create family-specific settings.
 (microtype)             See the microtype manual for details.
 [1{/Users/tijnjacobs/Library/TinyTeX/texmf-var/fonts/map/pdftex/updmap/pdftex.map}{/Users/tijnjacobs/Library/TinyTeX/texmf-dist/fonts/enc/dvips/base/8r.enc}
 
-{/Users/tijnjacobs/Library/TinyTeX/texmf-dist/fonts/enc/dvips/inconsolata/i4-t1-0.enc}]
-<figures/ExampleTree_standalone.pdf, id=144, 421.05907pt x 179.34001pt>
+{/Users/tijnjacobs/Library/TinyTeX/texmf-dist/fonts/enc/dvips/inconsolata/i4-t1-0.enc}] [2]
+<figures/ExampleTree_standalone.pdf, id=147, 421.05907pt x 179.34001pt>
 File: figures/ExampleTree_standalone.pdf Graphic file (type pdf)
 <use figures/ExampleTree_standalone.pdf>
-Package pdftex.def Info: figures/ExampleTree_standalone.pdf  used on input line 48.
+Package pdftex.def Info: figures/ExampleTree_standalone.pdf  used on input line 146.
 (pdftex.def)             Requested size: 338.59021pt x 144.22198pt.
-[2 <./figures/ExampleTree_standalone.pdf>]
-LaTeX Font Info:    Trying to load font information for U+fplmbb on input line 94.
+[3] [4 <./figures/ExampleTree_standalone.pdf>]
+LaTeX Font Info:    Font shape `U/msa/m/n' will be
+(Font)              scaled to size 10.42007pt on input line 194.
+LaTeX Font Info:    Font shape `U/msa/m/n' will be
+(Font)              scaled to size 7.91925pt on input line 194.
+LaTeX Font Info:    Font shape `U/msa/m/n' will be
+(Font)              scaled to size 6.25204pt on input line 194.
+LaTeX Font Info:    Font shape `U/msb/m/n' will be
+(Font)              scaled to size 10.42007pt on input line 194.
+LaTeX Font Info:    Font shape `U/msb/m/n' will be
+(Font)              scaled to size 7.91925pt on input line 194.
+LaTeX Font Info:    Font shape `U/msb/m/n' will be
+(Font)              scaled to size 6.25204pt on input line 194.
+LaTeX Font Info:    Trying to load font information for U+fplmbb on input line 200.
 (/Users/tijnjacobs/Library/TinyTeX/texmf-dist/tex/latex/psnfss/ufplmbb.fd
 File: ufplmbb.fd 2003/10/30 Fontinst v1.914 font definitions for U/fplmbb.
-) [3] [4]
-Overfull \hbox (26.90779pt too wide) in paragraph at lines 151--152
+) [5] [6]
+<figures/trace_horse.pdf, id=251, 361.35pt x 216.81pt>
+File: figures/trace_horse.pdf Graphic file (type pdf)
+<use figures/trace_horse.pdf>
+Package pdftex.def Info: figures/trace_horse.pdf  used on input line 304.
+(pdftex.def)             Requested size: 191.2008pt x 114.72017pt.
+<figures/density_horse.pdf, id=252, 361.35pt x 216.81pt>
+File: figures/density_horse.pdf Graphic file (type pdf)
+<use figures/density_horse.pdf>
+Package pdftex.def Info: figures/density_horse.pdf  used on input line 304.
+(pdftex.def)             Requested size: 191.2008pt x 114.72017pt.
+[7 <./figures/trace_horse.pdf> <./figures/density_horse.pdf>]
+<figures/survival_individual.pdf, id=276, 361.35pt x 252.945pt>
+File: figures/survival_individual.pdf Graphic file (type pdf)
+<use figures/survival_individual.pdf>
+Package pdftex.def Info: figures/survival_individual.pdf  used on input line 334.
+(pdftex.def)             Requested size: 191.2008pt x 133.84021pt.
+<figures/survival_population.pdf, id=277, 361.35pt x 252.945pt>
+File: figures/survival_population.pdf Graphic file (type pdf)
+<use figures/survival_population.pdf>
+Package pdftex.def Info: figures/survival_population.pdf  used on input line 334.
+(pdftex.def)             Requested size: 191.2008pt x 133.84021pt.
+
+Overfull \hbox (22.25009pt too wide) in paragraph at lines 345--346
+\T1/ppl/m/n/9 (-20) We now es-ti-mate het-ero-ge-neous treat-ment ef-fects of car-bo-platin ver-sus cis-platin us-ing \T1/zi4/m/n/9 CausalHorseForest()\T1/ppl/m/n/9 (-20) ,
+ []
+
+[8 <./figures/survival_individual.pdf> <./figures/survival_population.pdf>]
+<figures/ate_posterior.pdf, id=301, 289.08pt x 216.81pt>
+File: figures/ate_posterior.pdf Graphic file (type pdf)
+<use figures/ate_posterior.pdf>
+Package pdftex.def Info: figures/ate_posterior.pdf  used on input line 415.
+(pdftex.def)             Requested size: 191.2008pt x 143.3994pt.
+<figures/cate_caterpillar.pdf, id=302, 289.08pt x 252.945pt>
+File: figures/cate_caterpillar.pdf Graphic file (type pdf)
+<use figures/cate_caterpillar.pdf>
+Package pdftex.def Info: figures/cate_caterpillar.pdf  used on input line 415.
+(pdftex.def)             Requested size: 191.2008pt x 167.2993pt.
+[9 <./figures/ate_posterior.pdf> <./figures/cate_caterpillar.pdf>] [10]
+Overfull \hbox (26.90779pt too wide) in paragraph at lines 502--503
 [][]\T1/ppl/b/n/9 (-20) ShrinkageTrees[][] \T1/ppl/m/n/9 (-20) is avail-able on CRAN and on GitHub at [][]$\T1/zi4/m/n/9 https : / / github . com / tijn -[] jacobs / ShrinkageTrees$[][]\T1/ppl/m/n/9 (-20) .
  []
 
-LaTeX Font Info:    Font shape `U/msa/m/n' will be
-(Font)              scaled to size 10.42007pt on input line 162.
-LaTeX Font Info:    Font shape `U/msa/m/n' will be
-(Font)              scaled to size 7.91925pt on input line 162.
-LaTeX Font Info:    Font shape `U/msa/m/n' will be
-(Font)              scaled to size 6.25204pt on input line 162.
-LaTeX Font Info:    Font shape `U/msb/m/n' will be
-(Font)              scaled to size 10.42007pt on input line 162.
-LaTeX Font Info:    Font shape `U/msb/m/n' will be
-(Font)              scaled to size 7.91925pt on input line 162.
-LaTeX Font Info:    Font shape `U/msb/m/n' will be
-(Font)              scaled to size 6.25204pt on input line 162.
 LaTeX Font Info:    Font shape `T1/zi4/m/n' will be
-(Font)              scaled to size 10.20004pt on input line 166.
+(Font)              scaled to size 10.20004pt on input line 517.
 
-Overfull \hbox (24.0pt too wide) in paragraph at lines 162--178
+Overfull \hbox (24.0pt too wide) in paragraph at lines 513--529
  [][] 
  []
 
-[5]
-Overfull \hbox (3.15167pt too wide) in paragraph at lines 194--195
+
+LaTeX Warning: `!h' float specifier changed to `!ht'.
+
+[11]
+Overfull \hbox (3.15167pt too wide) in paragraph at lines 547--548
 \T1/ppl/m/n/9 (-20) are dis-patched in par-al-lel via \T1/zi4/m/n/9 parallel::mclapply() \T1/ppl/m/n/9 (-20) us-ing \T1/zi4/m/n/9 min(n_chains, parallel::detectCores())
  []
 
-[6]
+[12]
 
-LaTeX Warning: Reference `fig:scaling' on page 7 undefined on input line 210.
+LaTeX Warning: Reference `fig:scaling' on page 13 undefined on input line 563.
 
 
-LaTeX Warning: Reference `fig:scaling' on page 7 undefined on input line 212.
+LaTeX Warning: Reference `fig:scaling' on page 13 undefined on input line 565.
 
-[7] [8] [9]
-<figures/trace_horse.pdf, id=321, 361.35pt x 216.81pt>
-File: figures/trace_horse.pdf Graphic file (type pdf)
-<use figures/trace_horse.pdf>
-Package pdftex.def Info: figures/trace_horse.pdf  used on input line 416.
-(pdftex.def)             Requested size: 191.2008pt x 114.72017pt.
-<figures/density_horse.pdf, id=322, 361.35pt x 216.81pt>
-File: figures/density_horse.pdf Graphic file (type pdf)
-<use figures/density_horse.pdf>
-Package pdftex.def Info: figures/density_horse.pdf  used on input line 416.
-(pdftex.def)             Requested size: 191.2008pt x 114.72017pt.
-[10 <./figures/trace_horse.pdf> <./figures/density_horse.pdf>]
-<figures/survival_individual.pdf, id=346, 361.35pt x 252.945pt>
-File: figures/survival_individual.pdf Graphic file (type pdf)
-<use figures/survival_individual.pdf>
-Package pdftex.def Info: figures/survival_individual.pdf  used on input line 446.
-(pdftex.def)             Requested size: 191.2008pt x 133.84021pt.
-<figures/survival_population.pdf, id=347, 361.35pt x 252.945pt>
-File: figures/survival_population.pdf Graphic file (type pdf)
-<use figures/survival_population.pdf>
-Package pdftex.def Info: figures/survival_population.pdf  used on input line 446.
-(pdftex.def)             Requested size: 191.2008pt x 133.84021pt.
-
-Overfull \hbox (37.70009pt too wide) in paragraph at lines 455--456
-[]\T1/ppl/m/n/9 (-20) We now es-ti-mate het-ero-ge-neous treat-ment ef-fects of car-bo-platin ver-sus cis-platin us-ing \T1/zi4/m/n/9 CausalHorseForest()\T1/ppl/m/n/9 (-20) ,
- []
-
-[11 <./figures/survival_individual.pdf> <./figures/survival_population.pdf>]
-<figures/ate_posterior.pdf, id=370, 289.08pt x 216.81pt>
-File: figures/ate_posterior.pdf Graphic file (type pdf)
-<use figures/ate_posterior.pdf>
-Package pdftex.def Info: figures/ate_posterior.pdf  used on input line 525.
-(pdftex.def)             Requested size: 191.2008pt x 143.3994pt.
-<figures/cate_caterpillar.pdf, id=371, 289.08pt x 252.945pt>
-File: figures/cate_caterpillar.pdf Graphic file (type pdf)
-<use figures/cate_caterpillar.pdf>
-Package pdftex.def Info: figures/cate_caterpillar.pdf  used on input line 525.
-(pdftex.def)             Requested size: 191.2008pt x 167.2993pt.
-[12 <./figures/ate_posterior.pdf> <./figures/cate_caterpillar.pdf>] (./RJwrapper.bbl (./RJwrapper.brf)
+[13] [14] (./RJwrapper.bbl (./RJwrapper.brf)
 \tf@brf=\write6
 \openout6 = `RJwrapper.brf'.
 
-[13])
+[15])
 
 LaTeX Font Warning: Font shape `T1/zi4/m/it' undefined
-(Font)              using `T1/zi4/m/n' instead on input line 560.
+(Font)              using `T1/zi4/m/n' instead on input line 631.
 
 LaTeX Font Info:    Font shape `T1/zi4/m/it' will be
-(Font)              scaled to size 9.18004pt on input line 560.
-[14]) [15] (./RJwrapper.aux)
+(Font)              scaled to size 9.18004pt on input line 631.
+) [16] (./RJwrapper.aux)
  ***********
 LaTeX2e <2025-11-01>
 L3 programming layer <2026-01-19>
@@ -888,23 +891,23 @@ LaTeX Font Warning: Some font shapes were not available, defaults substituted.
 LaTeX Warning: There were undefined references.
 
 Package rerunfilecheck Info: File `RJwrapper.out' has not changed.
-(rerunfilecheck)             Checksum: 0D1519C8E6E7344391849BBA6A51483E;4043.
+(rerunfilecheck)             Checksum: 5D1525E69DA8039B2726B36137DC4260;4437.
 Package rerunfilecheck Info: File `RJwrapper.brf' has not changed.
-(rerunfilecheck)             Checksum: 02CB048697E451B1C6790092532CACD5;2641.
+(rerunfilecheck)             Checksum: 878E7F8739EFD0B9E904D14214D5C707;2421.
  ) 
 Here is how much of TeX's memory you used:
- 27375 strings out of 469515
- 500648 string characters out of 5468669
- 919207 words of memory out of 5000000
- 55140 multiletter control sequences out of 15000+600000
- 686367 words of font info for 347 fonts, out of 8000000 for 9000
+ 27399 strings out of 469515
+ 500945 string characters out of 5468669
+ 920448 words of memory out of 5000000
+ 55145 multiletter control sequences out of 15000+600000
+ 687165 words of font info for 359 fonts, out of 8000000 for 9000
  14 hyphenation exceptions out of 8191
- 117i,12n,131p,1464b,985s stack positions out of 10000i,1000n,20000p,200000b,200000s
+ 117i,12n,131p,1464b,986s stack positions out of 10000i,1000n,20000p,200000b,200000s
 </Users/tijnjacobs/Library/TinyTeX/texmf-dist/fonts/type1/public/inconsolata/Inconsolata-zi4r.pfb></Users/tijnjacobs/Library/TinyTeX/texmf-dist/fonts/type1/public/amsfonts/cm/cmex10.pfb></Users/tijnjacobs/Library/TinyTeX/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi10.pfb></Users/tijnjacobs/Library/TinyTeX/texmf-dist/fonts/type1/public/amsfonts/cm/cmr10.pfb></Users/tijnjacobs/Library/TinyTeX/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy10.pfb></Users/tijnjacobs/Library/TinyTeX/texmf-dist/fonts/type1/public/mathpazo/fplmbb.pfb></Users/tijnjacobs/Library/TinyTeX/texmf-dist/fonts/type1/public/mathpazo/fplmr.pfb></Users/tijnjacobs/Library/TinyTeX/texmf-dist/fonts/type1/public/mathpazo/fplmri.pfb></Users/tijnjacobs/Library/TinyTeX/texmf-dist/fonts/type1/urw/palatino/uplb8a.pfb></Users/tijnjacobs/Library/TinyTeX/texmf-dist/fonts/type1/urw/palatino/uplr8a.pfb></Users/tijnjacobs/Library/TinyTeX/texmf-dist/fonts/type1/urw/palatino/uplri8a.pfb>
-Output written on RJwrapper.pdf (15 pages, 403841 bytes).
+Output written on RJwrapper.pdf (16 pages, 408109 bytes).
 PDF statistics:
- 536 PDF objects out of 1000 (max. 8388607)
- 474 compressed objects within 5 object streams
- 67 named destinations out of 1000 (max. 500000)
+ 532 PDF objects out of 1000 (max. 8388607)
+ 469 compressed objects within 5 object streams
+ 68 named destinations out of 1000 (max. 500000)
  66776 words of extra memory for PDF output out of 74296 (max. 10000000)
 

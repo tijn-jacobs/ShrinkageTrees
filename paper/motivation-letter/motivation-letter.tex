@@ -1,0 +1,129 @@
+% Options for packages loaded elsewhere
+\PassOptionsToPackage{unicode}{hyperref}
+\PassOptionsToPackage{hyphens}{url}
+\documentclass[
+  12pt,
+]{article}
+\usepackage{xcolor}
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb}
+\setcounter{secnumdepth}{-\maxdimen} % remove section numbering
+\usepackage{iftex}
+\ifPDFTeX
+  \usepackage[T1]{fontenc}
+  \usepackage[utf8]{inputenc}
+  \usepackage{textcomp} % provide euro and other symbols
+\else % if luatex or xetex
+  \usepackage{unicode-math} % this also loads fontspec
+  \defaultfontfeatures{Scale=MatchLowercase}
+  \defaultfontfeatures[\rmfamily]{Ligatures=TeX,Scale=1}
+\fi
+\usepackage{lmodern}
+\ifPDFTeX\else
+  % xetex/luatex font selection
+\fi
+% Use upquote if available, for straight quotes in verbatim environments
+\IfFileExists{upquote.sty}{\usepackage{upquote}}{}
+\IfFileExists{microtype.sty}{% use microtype if available
+  \usepackage[]{microtype}
+  \UseMicrotypeSet[protrusion]{basicmath} % disable protrusion for tt fonts
+}{}
+\makeatletter
+\@ifundefined{KOMAClassName}{% if non-KOMA class
+  \IfFileExists{parskip.sty}{%
+    \usepackage{parskip}
+  }{% else
+    \setlength{\parindent}{0pt}
+    \setlength{\parskip}{6pt plus 2pt minus 1pt}}
+}{% if KOMA class
+  \KOMAoptions{parskip=half}}
+\makeatother
+\usepackage{graphicx}
+\makeatletter
+\newsavebox\pandoc@box
+\newcommand*\pandocbounded[1]{% scales image to fit in text height/width
+  \sbox\pandoc@box{#1}%
+  \Gscale@div\@tempa{\textheight}{\dimexpr\ht\pandoc@box+\dp\pandoc@box\relax}%
+  \Gscale@div\@tempb{\linewidth}{\wd\pandoc@box}%
+  \ifdim\@tempb\p@<\@tempa\p@\let\@tempa\@tempb\fi% select the smaller of both
+  \ifdim\@tempa\p@<\p@\scalebox{\@tempa}{\usebox\pandoc@box}%
+  \else\usebox{\pandoc@box}%
+  \fi%
+}
+% Set default figure placement to htbp
+\def\fps@figure{htbp}
+\makeatother
+\setlength{\emergencystretch}{3em} % prevent overfull lines
+\providecommand{\tightlist}{%
+  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+\usepackage{bookmark}
+\IfFileExists{xurl.sty}{\usepackage{xurl}}{} % add URL line breaks if available
+\urlstyle{same}
+\hypersetup{
+  hidelinks,
+  pdfcreator={LaTeX via pandoc}}
+
+\author{}
+\date{\vspace{-2.5em}}
+
+\begin{document}
+
+\thispagestyle{empty}
+
+\today
+
+Editor\\
+The R Journal\\
+\bigskip
+
+Dear Professor Tanaka, \bigskip
+
+Please consider our article titled ``ShrinkageTrees: An R Package for
+Bayesian Tree Ensembles for Survival Analysis and Causal Inference'' for
+publication in the R Journal.
+
+Bayesian tree ensembles for survival data are in high demand across
+biostatistics, clinical research, and epidemiology, yet existing R
+packages cover only part of the landscape. The \texttt{BART} package is
+currently the only CRAN package that implements Bayesian tree ensembles
+for survival outcomes, and it does not support interval-censored data,
+causal forest models, or global--local shrinkage priors on the leaf
+parameters. Our package \texttt{ShrinkageTrees} addresses all three
+gaps. It extends BART to right-censored and interval-censored survival
+outcomes via accelerated failure time models, provides the first
+implementation of Bayesian causal forests for time-to-event endpoints in
+R, and implements Horseshoe Forests --- tree ensembles with horseshoe
+priors on the leaf step heights for adaptive shrinkage in
+high-dimensional settings. The package also supports Dirichlet splitting
+priors (DART) and allows both forms of regularisation to be combined
+within a single model.
+
+Beyond the methodology, we have invested in making
+\texttt{ShrinkageTrees} a well-designed R package. It provides S3
+classes with \texttt{print}, \texttt{summary}, \texttt{predict}, and
+\texttt{plot} methods, integrates with \texttt{ggplot2} for
+visualisation and \texttt{coda} for MCMC diagnostics, and supports
+multi-chain parallel sampling out of the box. The accompanying paper is
+dedicated to highlighting these software design choices and
+demonstrating the package through a worked example on high-dimensional
+ovarian cancer survival data.
+
+We believe this article is a good fit for the R Journal because it
+introduces a package that fills a clear gap in the R ecosystem for
+Bayesian non-parametric survival analysis and causal inference, two
+areas of active methodological and applied interest.
+
+\bigskip
+\bigskip
+
+Regards,
+
+Tijn Jacobs\\
+Department of Mathematics\\
+Vrije Universiteit Amsterdam\\
+Amsterdam, The Netherlands\\
+\href{mailto:t.jacobs@vu.nl}{\nolinkurl{t.jacobs@vu.nl}}
+
+\bigskip
+
+\end{document}

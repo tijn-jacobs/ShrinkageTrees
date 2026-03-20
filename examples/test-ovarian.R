@@ -15,11 +15,10 @@ data(ovarian)
 
 set.seed(2024)
 
-X_gene <- ovarian$X
-clin   <- ovarian$clinical
-time   <- clin$OS_time
-status <- clin$OS_event
-n      <- nrow(clin)
+time   <- ovarian$OS_time
+status <- ovarian$OS_event
+X_gene <- as.matrix(ovarian[, -(1:6)])
+n      <- nrow(ovarian)
 
 cat("=== TCGA Ovarian Cancer Data ===\n")
 cat(sprintf("  n = %d, p_gene = %d\n", n, ncol(X_gene)))
@@ -28,7 +27,7 @@ cat(sprintf("  Events: %d (%.0f%%), Censored: %d (%.0f%%)\n",
             sum(1 - status), 100 * mean(1 - status)))
 cat(sprintf("  Median OS (uncensored): %.0f days\n", median(time[status == 1])))
 cat(sprintf("  Treatment: carboplatin = %d, cisplatin = %d\n",
-            sum(clin$treatment == 1), sum(clin$treatment == 0)))
+            sum(ovarian$treatment == 1), sum(ovarian$treatment == 0)))
 
 ################################################################################
 # PART 1: HIGH-DIMENSIONAL SURVIVAL PREDICTION
@@ -266,7 +265,7 @@ cat("================================================================\n")
 cat("  PART 2: CAUSAL INFERENCE — CARBOPLATIN vs CISPLATIN\n")
 cat("================================================================\n")
 
-treatment <- clin$treatment   # 1 = carboplatin, 0 = cisplatin
+treatment <- ovarian$treatment   # 1 = carboplatin, 0 = cisplatin
 
 cat(sprintf("\n  Carboplatin (W=1): n=%d, events=%d (%.0f%%)\n",
             sum(treatment == 1), sum(status[treatment == 1]),
@@ -276,11 +275,7 @@ cat(sprintf("  Cisplatin  (W=0): n=%d, events=%d (%.0f%%)\n",
             100 * mean(status[treatment == 0])))
 
 # Use all genes + clinical covariates as confounders
-X_clinical <- cbind(
-  age        = clin$age,
-  figo_stage = clin$figo_stage,
-  tumor_grade = clin$tumor_grade
-)
+X_clinical <- as.matrix(ovarian[, c("age", "figo_stage", "tumor_grade")])
 X_confounders <- cbind(X_clinical, X_gene)
 
 cat(sprintf("  Confounders: %d (3 clinical + %d genes)\n",
@@ -289,7 +284,7 @@ cat(sprintf("  Confounders: %d (3 clinical + %d genes)\n",
 # Propensity scores via logistic regression on clinical covariates
 # (use clinical only to avoid overfitting with p >> n)
 ps_model <- glm(treatment ~ age + factor(figo_stage) + factor(tumor_grade),
-                family = binomial, data = clin)
+                family = binomial, data = ovarian)
 propensity <- predict(ps_model, type = "response")
 
 cat(sprintf("  Propensity scores: mean=%.3f, range=[%.3f, %.3f]\n",
@@ -474,16 +469,16 @@ cate <- fit_bcf$train_predictions_treat
 
 # By FIGO stage
 cat("\nCATE by FIGO stage (log-scale):\n")
-for (stage in sort(unique(clin$figo_stage))) {
-  idx <- which(clin$figo_stage == stage)
+for (stage in sort(unique(ovarian$figo_stage))) {
+  idx <- which(ovarian$figo_stage == stage)
   cat(sprintf("  Stage %d: mean CATE = %7.4f, sd = %.4f (n=%d)\n",
               stage, mean(cate[idx]), sd(cate[idx]), length(idx)))
 }
 
 # By tumor grade
 cat("\nCATE by tumor grade (log-scale):\n")
-for (grade in sort(unique(clin$tumor_grade))) {
-  idx <- which(clin$tumor_grade == grade)
+for (grade in sort(unique(ovarian$tumor_grade))) {
+  idx <- which(ovarian$tumor_grade == grade)
   cat(sprintf("  Grade %d: mean CATE = %7.4f, sd = %.4f (n=%d)\n",
               grade, mean(cate[idx]), sd(cate[idx]), length(idx)))
 }
@@ -491,7 +486,7 @@ for (grade in sort(unique(clin$tumor_grade))) {
 # By age group
 age_breaks <- c(0, 55, 65, 75, Inf)
 age_labels <- c("<55", "55-64", "65-74", "75+")
-age_group  <- cut(clin$age, breaks = age_breaks, labels = age_labels, right = FALSE)
+age_group  <- cut(ovarian$age, breaks = age_breaks, labels = age_labels, right = FALSE)
 
 cat("\nCATE by age group (log-scale):\n")
 for (lab in age_labels) {

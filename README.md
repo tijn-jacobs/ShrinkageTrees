@@ -1,4 +1,4 @@
-# ShrinkageTrees <img src="https://img.shields.io/badge/R%3E%3D-4.1-blue" alt="R >= 4.1"> ![License: MIT](https://img.shields.io/badge/license-MIT-green) ![Lifecycle: maturing](https://img.shields.io/badge/lifecycle-maturing-blue) [![](https://cranlogs.r-pkg.org/badges/grand-total/ShrinkageTrees)](https://cran.r-project.org/package=ShrinkageTrees)
+# ShrinkageTrees <img src="https://img.shields.io/badge/R%3E%3D-4.1-blue" alt="R >= 4.1"> ![License: MIT](https://img.shields.io/badge/license-MIT-green) ![Lifecycle: stable](https://img.shields.io/badge/lifecycle-stable-brightgreen) [![](https://cranlogs.r-pkg.org/badges/grand-total/ShrinkageTrees)](https://cran.r-project.org/package=ShrinkageTrees)
 
  <img src="sticker/ShrinkageTrees_hex.png" align="right" width="150"/>
 

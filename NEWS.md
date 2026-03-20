@@ -1,16 +1,22 @@
+# ShrinkageTrees 2.0.1
+
+## `ovarian` dataset restructured
+
+The `ovarian` dataset is now a single data frame (previously a list with
+`$clinical` and `$X` elements). Clinical columns (`OS_time`, `OS_event`,
+`treatment`, `age`, `figo_stage`, `tumor_grade`) and the 2000 gene
+expression columns are combined into one data frame with 2006 columns.
+This simplifies data access and aligns the format with the `pdac` dataset.
+
+Code that previously used `ovarian$clinical` or `ovarian$X` must be
+updated — see `?ovarian` for the new structure.
+
 # ShrinkageTrees 2.0.0
 
 ## TCGA ovarian cancer dataset (`ovarian`)
 
 Added the `ovarian` dataset: a processed TCGA-OV cohort (n = 357) for
-high-dimensional survival prediction and causal inference. The dataset is
-a list with two elements:
-
-- `X`: a 357 x 2000 gene expression matrix (log2-normalised TPM, top 2000
-  most variable genes by median absolute deviation).
-- `clinical`: a data frame with overall survival time and event indicator,
-  age, FIGO stage, tumor grade, and a binary treatment indicator
-  (carboplatin vs cisplatin).
+high-dimensional survival prediction and causal inference.
 
 See `?ovarian` and `examples/test-ovarian.R` for a full worked example
 covering survival prediction (SurvivalBART, SurvivalDART, HorseTrees) and
