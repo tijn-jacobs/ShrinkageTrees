@@ -11,6 +11,12 @@ This simplifies data access and aligns the format with the `pdac` dataset.
 Code that previously used `ovarian$clinical` or `ovarian$X` must be
 updated — see `?ovarian` for the new structure.
 
+## Bug fixes
+
+- Fixed `plot(fit, type = "ate")` and `plot(fit, type = "cate")` for
+  `CausalShrinkageForest` models incorrectly subtracting the control forest
+  predictions from the treatment forest predictions.
+
 # ShrinkageTrees 2.0.0
 
 ## TCGA ovarian cancer dataset (`ovarian`)
@@ -213,5 +219,3 @@ It includes four core functions:
 - `CausalShrinkageForest()`: fits a flexible causal forest with user-defined shrinkage priors and tuning options.
 
 The `...Trees` functions use a single learner to estimate the outcome model directly. In contrast, the `Causal...Forest` variants fit separate models for the treated and control regression function. This enables estimation of conditional average treatment effects (CATEs).
-
-

@@ -25,9 +25,11 @@ The package is implemented with an efficient C++ backend via \CRANpkg{Rcpp} \cit
 \begin{verbatim}
 library(ShrinkageTrees)
 data("ovarian")
-fit <- HorseTrees(y = time, status = status, X_train = X,
-                  outcome_type = "right-censored", number_of_trees = 200)
-# see Section 2 for full data preparation
+time   <- ovarian$OS_time / 30.44  # days to months
+status <- ovarian$OS_event
+X      <- as.matrix(ovarian[, -(1:6)])
+fit    <- HorseTrees(y = time, status = status, X_train = X,
+                     outcome_type = "right-censored", number_of_trees = 200)
 \end{verbatim}
 
 The remainder of this paper is organised as follows. Section 2 provides a first worked example --- a survival prediction model on the ovarian cancer dataset --- so that subsequent methodology is grounded in concrete code. Section 3 reviews the statistical methodology behind the models. Section 4 returns to the example and progressively adds horseshoe shrinkage, causal inference, and interval-censored outcomes. Section 5 describes the package architecture. Section 6 compares \CRANpkg{ShrinkageTrees} with related R packages. Section 7 concludes.
@@ -41,22 +43,18 @@ library(ShrinkageTrees)
 set.seed(42)
 data("ovarian")
 
-clin      <- ovarian$clinical
-time      <- clin$OS_time / 30.44   # convert days to months
-status    <- clin$OS_event
-treatment <- clin$treatment
+time      <- ovarian$OS_time / 30.44   # convert days to months
+status    <- ovarian$OS_event
+treatment <- ovarian$treatment
 
-X <- cbind(age        = clin$age,
-           figo_stage = clin$figo_stage,
-           tumor_grade = clin$tumor_grade,
-           ovarian$X)
+X <- as.matrix(ovarian[, -(1:3)])   # drop OS_time, OS_event, treatment
 \end{verbatim}
 
 The dataset comprises 357 patients with 2,000 gene expression features and three clinical covariates (age, FIGO stage, tumour grade). We hold out 20\% of the patients for evaluating predictive accuracy.
 
 \begin{verbatim}
-train_idx <- sample(seq_len(nrow(clin)), size = floor(0.8 * nrow(clin)))
-test_idx  <- setdiff(seq_len(nrow(clin)), train_idx)
+train_idx <- sample(seq_len(nrow(ovarian)), size = floor(0.8 * nrow(ovarian)))
+test_idx  <- setdiff(seq_len(nrow(ovarian)), train_idx)
 
 X_train <- X[train_idx, ];  X_test <- X[test_idx, ]
 time_train <- time[train_idx];  time_test <- time[test_idx]
@@ -345,8 +343,7 @@ Figure \ref{fig:survival-fig} shows the individual and population-level posterio
 We now estimate heterogeneous treatment effects of carboplatin versus cisplatin using \texttt{CausalHorseForest()}, which fits a \(\tau\)-learner with horseshoe shrinkage on both the prognostic and treatment effect forests. We first estimate propensity scores using a probit Horseshoe Forest on the clinical covariates. We choose a Horseshoe Forest over logistic regression because it handles potential non-linearities and interactions between clinical covariates without manual specification, while the horseshoe prior guards against overfitting in this low-sample-size setting. Using the full gene expression matrix for propensity estimation would risk overfitting given \(p \gg n\); clinical covariates alone capture the main sources of confounding by indication.
 
 \begin{verbatim}
-X_ps <- cbind(age = clin$age, figo_stage = clin$figo_stage,
-              tumor_grade = clin$tumor_grade)
+X_ps <- as.matrix(ovarian[, c("age", "figo_stage", "tumor_grade")])
 ps_fit <- HorseTrees(
   y               = treatment,
   X_train         = X_ps,

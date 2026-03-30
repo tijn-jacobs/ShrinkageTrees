@@ -7,17 +7,17 @@ Call: HorseTrees(y = time_train, status = status_train, X_train = X_train,
     store_posterior_sample = TRUE, n_chains = 4, verbose = TRUE)
 
 Outcome: Right-censored (AFT, timescale = time) | Prior: horseshoe | Trees: 200
-Data:    n = 285, p = 2003 | Draws: 5000 x 4 chains (burn-in 5000)
+Data:    n = 285, p = 2005 | Draws: 5000 x 4 chains (burn-in 5000)
 
 Posterior sigma:
-  Mean: 0.996  SD: 0.059  95% CI: [0.889, 1.12]
+  Mean: 1.004  SD: 0.06  95% CI: [0.893, 1.13]
 
 Predictions (posterior mean):
-  Train: mean = 48.235, sd = 4.101, range = [35.929, 58.447]
-  Test:  mean = 48.093, sd = 2.868, range = [41.461, 54.333]
+  Train: mean = 37.463, sd = 4.377, range = [26.536, 54.677]
+  Test:  mean = 8.9956340811813e+30, sd = 5.37641285340306e+31, range = [30.814, 3.49428738592439e+32]
 
 Variable importance (posterior inclusion probability):
-  X482: 0.001   X419: 0.001   X124: 0.001   X1648: 0.001   X1229: 0.001   X351: 0.001   X1110: 0.001   X1002: 0.001   X537: 0.001   X400: 0.001 
+  X440: 0.001   X1904: 0.001   X204: 0.001   X742: 0.001   X25: 0.001   X1775: 0.001   X468: 0.001   X95: 0.001   X1573: 0.001   X1621: 0.001 
 
-MCMC acceptance ratio (per chain): 0.503, 0.504, 0.504, 0.504
+MCMC acceptance ratio (per chain): 0.502, 0.502, 0.501, 0.502
 

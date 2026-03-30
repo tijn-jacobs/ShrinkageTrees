@@ -1,10 +1,5 @@
 ---
-title: "ShrinkageTrees: An R Package for Bayesian Tree Ensembles for Survival Analysis and Causal Inference"
-date: "2026-04-01"
-abstract: >
-  ShrinkageTrees is an R package for fitting Bayesian tree ensemble models with flexible regularisation mechanisms for survival analysis and causal inference. The package provides unified implementations of BART, DART, and the $\tau$-learner (Bayesian Causal Forests) for right-censored and interval-censored survival outcomes via accelerated failure time (AFT) formulations. Multiple regularisation strategies can be combined within a single model: structural sparsity through tree depth priors and Dirichlet splitting priors (DART), and parametric shrinkage on the leaf step heights through global–local scale mixture priors. A key contribution is the implementation of Horseshoe Forests, which place a horseshoe prior directly on the step heights, enabling adaptive shrinkage that aggressively regularises uninformative leaves while preserving strong signals — a strategy particularly suited to high-dimensional settings. An efficient Rcpp backend and coherent S3 interface support reproducible workflows for both prediction and causal effect estimation.
-draft: true
-author:
+Siuper
   - name: Tijn Jacobs
     affiliation: Vrije Universiteit Amsterdam
     address:
@@ -160,7 +155,8 @@ pred <- predict(fit_bart, newdata = X_test)
 plot(pred, type = "survival", obs = 1)
 ```
 
-This standard BART model serves as a baseline. In Section 4 we return to this dataset and show how horseshoe shrinkage and causal inference models can improve upon and extend this analysis. First, we review the statistical methodology that underpins these extensions.
+This standard BART model serves as a baseline. In Section 4 we return to this dataset and show how horseshoe shrinkage and causal inference models can improve upon and extend this analysis. 
+First, we review the statistical methodology that underpins these extensions.
 
 # Statistical methodology
 

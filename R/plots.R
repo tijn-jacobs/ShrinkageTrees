@@ -572,23 +572,21 @@ plot.CausalShrinkageForest <- function(x,
 
   # -- ATE posterior ----------------------------------------------------------
   if (type == "ate") {
-    sc <- x$train_predictions_sample_control
     st <- x$train_predictions_sample_treat
-    if (is.null(sc) || is.null(st))
+    if (is.null(st))
       stop("ATE plot requires store_posterior_sample = TRUE.", call. = FALSE)
 
-    ate_draws <- rowMeans(st) - rowMeans(sc)
+    ate_draws <- rowMeans(st)
     return(.area_plot(ate_draws, "ATE", prob = 0.95, ...))
   }
 
   # -- CATE distribution ------------------------------------------------------
   if (type == "cate") {
-    sc <- x$train_predictions_sample_control
     st <- x$train_predictions_sample_treat
-    if (is.null(sc) || is.null(st))
+    if (is.null(st))
       stop("CATE plot requires store_posterior_sample = TRUE.", call. = FALSE)
 
-    cate_draws <- st - sc
+    cate_draws <- st
     cate_mean  <- colMeans(cate_draws)
     cate_lo    <- apply(cate_draws, 2, quantile, 0.025)
     cate_hi    <- apply(cate_draws, 2, quantile, 0.975)

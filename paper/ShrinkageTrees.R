@@ -9,9 +9,11 @@ library(ShrinkageTrees)
 ## ----quickstart, echo=TRUE, eval=FALSE----------------------------------------
 # library(ShrinkageTrees)
 # data("ovarian")
-# fit <- HorseTrees(y = time, status = status, X_train = X,
-#                   outcome_type = "right-censored", number_of_trees = 200)
-# # see Section 2 for full data preparation
+# time   <- ovarian$OS_time / 30.44  # days to months
+# status <- ovarian$OS_event
+# X      <- as.matrix(ovarian[, -(1:6)])
+# fit    <- HorseTrees(y = time, status = status, X_train = X,
+#                      outcome_type = "right-censored", number_of_trees = 200)
 
 
 ## ----data, echo=TRUE, eval=FALSE----------------------------------------------
@@ -19,21 +21,16 @@ library(ShrinkageTrees)
 # set.seed(42)
 # data("ovarian")
 # 
-# clin      <- ovarian$clinical
-# time      <- clin$OS_time / 30.44   # convert days to months
-# status    <- clin$OS_event
-# treatment <- clin$treatment
+# time      <- ovarian$OS_time / 30.44   # convert days to months
+# status    <- ovarian$OS_event
+# treatment <- ovarian$treatment
 # 
-# X <- cbind(age        = clin$age,
-#            figo_stage = clin$figo_stage,
-#            tumor_grade = clin$tumor_grade,
-#            ovarian$X)
-# 
+# X <- as.matrix(ovarian[, -(1:3)])   # drop OS_time, OS_event, treatment
 
 
 ## ----split, echo=TRUE, eval=FALSE---------------------------------------------
-# train_idx <- sample(seq_len(nrow(clin)), size = floor(0.8 * nrow(clin)))
-# test_idx  <- setdiff(seq_len(nrow(clin)), train_idx)
+# train_idx <- sample(seq_len(nrow(ovarian)), size = floor(0.8 * nrow(ovarian)))
+# test_idx  <- setdiff(seq_len(nrow(ovarian)), train_idx)
 # 
 # X_train <- X[train_idx, ];  X_test <- X[test_idx, ]
 # time_train <- time[train_idx];  time_test <- time[test_idx]
@@ -138,8 +135,7 @@ knitr::include_graphics(c("figures/survival_individual.pdf", "figures/survival_p
 
 
 ## ----propensity, echo=TRUE, eval=FALSE----------------------------------------
-# X_ps <- cbind(age = clin$age, figo_stage = clin$figo_stage,
-#               tumor_grade = clin$tumor_grade)
+# X_ps <- as.matrix(ovarian[, c("age", "figo_stage", "tumor_grade")])
 # ps_fit <- HorseTrees(
 #   y               = treatment,
 #   X_train         = X_ps,
