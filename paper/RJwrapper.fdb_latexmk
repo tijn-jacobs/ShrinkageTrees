@@ -1,13 +1,13 @@
 # Fdb version 4
-["bibtex RJwrapper"] 1774879816 "RJwrapper.aux" "RJwrapper.bbl" "RJwrapper" 1774881523 0
+["bibtex RJwrapper"] 1774879816 "RJwrapper.aux" "RJwrapper.bbl" "RJwrapper" 1776459448 0
   "./RJreferences.bib" 1773135479 7930 57be56b21f833368a4b97791ffc6d503 ""
   "/usr/share/texlive/texmf-dist/bibtex/bst/natbib/abbrvnat.bst" 1233624470 26532 66bed5cc59495faaa3f9ae9af9fa5e42 ""
-  "RJwrapper.aux" 1774881523 13825 bfb34a86096233ee8505b05d0ae28a50 "pdflatex"
+  "RJwrapper.aux" 1776460523 13825 bfb34a86096233ee8505b05d0ae28a50 "pdflatex"
   (generated)
   "RJwrapper.bbl"
   "RJwrapper.blg"
   (rewritten before read)
-["pdflatex"] 1774881514 "/workspace/paper/RJwrapper.tex" "RJwrapper.pdf" "RJwrapper" 1774881523 0
+["pdflatex"] 1776459444 "/workspace/paper/RJwrapper.tex" "RJwrapper.pdf" "RJwrapper" 1776459448 0
   "/etc/texmf/web2c/texmf.cnf" 1774880313 475 c0e671620eb5563b2130f56340a5fde8 ""
   "/usr/share/texlive/texmf-dist/fonts/enc/dvips/base/8r.enc" 1165713224 4850 80dc9bab7f31fb78a000ccfed0e27cab ""
   "/usr/share/texlive/texmf-dist/fonts/enc/dvips/inconsolata/i4-t1-0.enc" 1558214095 7631 5169ff1acd97ff1c4ab83563c99f96f4 ""
@@ -224,19 +224,19 @@
   "/var/lib/texmf/web2c/pdftex/pdflatex.fmt" 1774880331 6505194 0da0f74b86f09ada846161530710d291 ""
   "/workspace/paper/RJwrapper.tex" 1774346536 1818 45fc0e48f6db484885392a2dd214b6df ""
   "RJournal.sty" 1773057871 11746 114ce02b8960c98664234460bf844add ""
-  "RJwrapper.aux" 1774881523 13825 bfb34a86096233ee8505b05d0ae28a50 "pdflatex"
+  "RJwrapper.aux" 1776460523 13825 bfb34a86096233ee8505b05d0ae28a50 "pdflatex"
   "RJwrapper.bbl" 1774879816 7228 9da6378dd81820ed3e63d811703dc772 "bibtex RJwrapper"
-  "RJwrapper.brf" 1774881523 2421 878e7f8739efd0b9e904d14214d5c707 "pdflatex"
-  "RJwrapper.out" 1774881523 4437 5d1525e69da8039b2726b36137dc4260 "pdflatex"
+  "RJwrapper.brf" 1776460523 2421 878e7f8739efd0b9e904d14214d5c707 "pdflatex"
+  "RJwrapper.out" 1776460523 4437 5d1525e69da8039b2726b36137dc4260 "pdflatex"
   "RJwrapper.tex" 1774346536 1818 45fc0e48f6db484885392a2dd214b6df ""
   "ShrinkageTrees.tex" 1774346507 56835 ff888ef3b4a507dd484062a372c6d404 ""
   "figures/ExampleTree_standalone.pdf" 1773094599 39818 0833f95e1dd49f1fbc2ccaa5d71a97f8 ""
   "figures/ate_posterior.pdf" 1774346349 9452 59af3befb717b3f275499c1301295f04 ""
   "figures/cate_caterpillar.pdf" 1774346349 44013 9a656e1c9041f62b9e6ddcb467e5807a ""
-  "figures/density_horse.pdf" 1774346188 17520 516f41a6d1265693bcffad536a820837 ""
-  "figures/survival_individual.pdf" 1774346218 8413 2fe6b2dc170cf17f81849d11644f0cba ""
-  "figures/survival_population.pdf" 1774346241 9856 53d072c357f1d64f8ce90902c9cdcca7 ""
-  "figures/trace_horse.pdf" 1774346188 108381 b75030e52fe26ddbe06592b8b3ac0f30 ""
+  "figures/density_horse.pdf" 1776459143 17674 802fa02d3392c715e74ccc3949069723 ""
+  "figures/survival_individual.pdf" 1776459372 8371 30605e3796afe4e3d3aafd712b18333b ""
+  "figures/survival_population.pdf" 1776459417 9893 5a7fe513431c9a14b79284515de4e0f8 ""
+  "figures/trace_horse.pdf" 1776459143 108371 a25e2a2bfae89b0fc2ba9b0b68b46ce5 ""
   (generated)
   "RJwrapper.aux"
   "RJwrapper.brf"

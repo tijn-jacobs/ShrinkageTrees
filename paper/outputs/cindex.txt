@@ -1,2 +1,2 @@
-Train C-index — HorseTrees: 0.82 
-Test C-index — HorseTrees: 0.428 
+Train C-index — HorseTrees: 0.733 
+Test C-index — HorseTrees: 0.465 

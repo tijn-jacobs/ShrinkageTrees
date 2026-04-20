@@ -11,6 +11,8 @@ library(ShrinkageTrees)
 library(survival)
 library(ggplot2)
 
+setwd("/Users/tijnjacobs/Library/CloudStorage/OneDrive-VrijeUniversiteitAmsterdam/Documents/GitHub/ShrinkageTrees/paper")
+
 dir.create("figures", showWarnings = FALSE)
 dir.create("outputs", showWarnings = FALSE)
 
