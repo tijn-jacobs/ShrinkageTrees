@@ -9,6 +9,7 @@
   type = c("trace", "density", "ate", "cate", "vi"),
   forest = c("both", "control", "treat"),
   n_vi = 10,
+  bayesian_bootstrap = TRUE,
   ...
 )
 }
@@ -35,6 +36,12 @@ When \code{"both"}, a named list of two \pkg{ggplot2} objects is returned.}
 
 \item{n_vi}{Integer; number of top variables for \code{type = "vi"}.
 Default \code{10}.}
+
+\item{bayesian_bootstrap}{Logical; only used when \code{type = "ate"}. If
+\code{TRUE} (default), the ATE posterior is computed by reweighting each
+iteration's CATE vector with Dirichlet(1, ..., 1) weights, giving the
+population ATE (PATE). If \code{FALSE}, equal \eqn{1/n} weights are used,
+giving the mixed ATE (MATE).}
 
 \item{...}{Additional arguments (currently unused).}
 }

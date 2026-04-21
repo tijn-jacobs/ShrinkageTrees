@@ -1,16 +1,5 @@
 \relax 
 \providecommand\hyper@newdestlabel[2]{}
-\providecommand\HyperFirstAtBeginDocument{\AtBeginDocument}
-\HyperFirstAtBeginDocument{\ifx\hyper@anchor\@undefined
-\global\let\oldnewlabel\newlabel
-\gdef\newlabel#1#2{\newlabelxx{#1}#2}
-\gdef\newlabelxx#1#2#3#4#5#6{\oldnewlabel{#1}{{#2}{#3}}}
-\AtEndDocument{\ifx\hyper@anchor\@undefined
-\let\newlabel\oldnewlabel
-\fi}
-\fi}
-\global\let\hyper@last\relax 
-\gdef\HyperFirstAtBeginDocument#1{#1}
 \providecommand\HyField@AuxAddToFields[1]{}
 \providecommand\HyField@AuxAddToCoFields[2]{}
 \bibstyle{abbrvnat}
@@ -49,12 +38,14 @@
 \citation{chipman1998bayesiancart,rockova2020theory}
 \citation{chipman2010bart}
 \citation{chipman2010bart}
+\citation{chipman2010bart}
 \citation{linero2018dart}
 \@writefile{lof}{\contentsline {figure}{\numberline {1}{\ignorespaces Schematic of a regression tree.}}{4}{figure.caption.2}\protected@file@percent }
 \providecommand*\caption@xref[2]{\@setref\relax\@undefined{#1}}
 \newlabel{fig:ExampleTree}{{1}{4}{Schematic of a regression tree}{figure.caption.2}{}}
 \@writefile{brf}{\backcite{chipman1998bayesiancart}{{4}{2.3.1}{figure.caption.2}}}
 \@writefile{brf}{\backcite{rockova2020theory}{{4}{2.3.1}{figure.caption.2}}}
+\@writefile{brf}{\backcite{chipman2010bart}{{4}{2.3.1}{figure.caption.2}}}
 \@writefile{brf}{\backcite{chipman2010bart}{{4}{2.3.1}{figure.caption.2}}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {2.3.2}Regularisation}{4}{subsection.2.3.2}\protected@file@percent }
 \newlabel{regularisation}{{2.3.2}{4}{Regularisation}{subsection.2.3.2}{}}
@@ -68,9 +59,8 @@
 \citation{caron2022estimating}
 \citation{hahn2020bayesian}
 \citation{caron2022estimating}
-\citation{hahn2020bayesian}
-\citation{hahn2020bayesian}
-\citation{chipman2010bart}
+\@writefile{lof}{\contentsline {figure}{\numberline {2}{\ignorespaces Regularisation landscape.}}{5}{figure.caption.3}\protected@file@percent }
+\newlabel{fig:regularisation-landscape}{{2}{5}{Regularisation landscape}{figure.caption.3}{}}
 \@writefile{brf}{\backcite{carvalho2010horseshoe}{{5}{2.3.2}{subsection.2.3.2}}}
 \@writefile{brf}{\backcite{polson2012halfcauchy}{{5}{2.3.2}{subsection.2.3.2}}}
 \@writefile{brf}{\backcite{jacobs2025horseshoe}{{5}{2.3.2}{subsection.2.3.2}}}
@@ -79,82 +69,93 @@
 \newlabel{the-tau-learner-for-causal-inference}{{2.3.3}{5}{\texorpdfstring {The \(\tau \)-learner for causal inference}{The \textbackslash tau-learner for causal inference}}{subsection.2.3.3}{}}
 \@writefile{brf}{\backcite{hill2011bayesian}{{5}{2.3.3}{subsection.2.3.3}}}
 \@writefile{brf}{\backcite{dorie2019automated}{{5}{2.3.3}{subsection.2.3.3}}}
-\@writefile{brf}{\backcite{caron2022estimating}{{5}{2.3.3}{subsection.2.3.3}}}
-\@writefile{brf}{\backcite{hahn2020bayesian}{{5}{2.3.3}{subsection.2.3.3}}}
-\@writefile{brf}{\backcite{caron2022estimating}{{5}{2.3.3}{subsection.2.3.3}}}
-\@writefile{brf}{\backcite{hahn2020bayesian}{{5}{2.3.3}{subsection.2.3.3}}}
-\@writefile{brf}{\backcite{hahn2020bayesian}{{5}{2.3.3}{subsection.2.3.3}}}
-\citation{jacobs2025horseshoe}
+\citation{hahn2020bayesian}
+\citation{hahn2020bayesian}
+\citation{chipman2010bart}
+\@writefile{lof}{\contentsline {figure}{\numberline {3}{\ignorespaces $\tau $-learner decomposition.}}{6}{figure.caption.4}\protected@file@percent }
+\newlabel{fig:tau-learner}{{3}{6}{$\tau $-learner decomposition}{figure.caption.4}{}}
+\@writefile{brf}{\backcite{caron2022estimating}{{6}{2.3.3}{subsection.2.3.3}}}
+\@writefile{brf}{\backcite{hahn2020bayesian}{{6}{2.3.3}{subsection.2.3.3}}}
+\@writefile{brf}{\backcite{caron2022estimating}{{6}{2.3.3}{subsection.2.3.3}}}
+\@writefile{brf}{\backcite{hahn2020bayesian}{{6}{2.3.3}{subsection.2.3.3}}}
+\@writefile{brf}{\backcite{hahn2020bayesian}{{6}{2.3.3}{subsection.2.3.3}}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {2.3.4}Posterior computation}{6}{subsection.2.3.4}\protected@file@percent }
 \newlabel{posterior-computation}{{2.3.4}{6}{Posterior computation}{subsection.2.3.4}{}}
 \@writefile{brf}{\backcite{chipman2010bart}{{6}{2.3.4}{subsection.2.3.4}}}
-\@writefile{brf}{\backcite{jacobs2025horseshoe}{{6}{2.3.4}{subsection.2.3.4}}}
-\@writefile{toc}{\contentsline {section}{\numberline {2.4}Building up the example}{6}{section.2.4}\protected@file@percent }
-\newlabel{building-up-the-example}{{2.4}{6}{Building up the example}{section.2.4}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {2.4.1}Adding horseshoe shrinkage}{6}{subsection.2.4.1}\protected@file@percent }
-\newlabel{adding-horseshoe-shrinkage}{{2.4.1}{6}{Adding horseshoe shrinkage}{subsection.2.4.1}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {2}{\ignorespaces Convergence diagnostics.}}{7}{figure.caption.3}\protected@file@percent }
-\newlabel{fig:convergence-fig}{{2}{7}{Convergence diagnostics}{figure.caption.3}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {3}{\ignorespaces Posterior survival curves.}}{8}{figure.caption.4}\protected@file@percent }
-\newlabel{fig:survival-fig}{{3}{8}{Posterior survival curves}{figure.caption.4}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {2.4.2}Causal inference: treatment effects for survival}{8}{subsection.2.4.2}\protected@file@percent }
-\newlabel{causal-inference-treatment-effects-for-survival}{{2.4.2}{8}{Causal inference: treatment effects for survival}{subsection.2.4.2}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {4}{\ignorespaces Treatment effect posteriors.}}{9}{figure.caption.5}\protected@file@percent }
-\newlabel{fig:treatment-effects-fig}{{4}{9}{Treatment effect posteriors}{figure.caption.5}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {2.4.3}Interval-censored outcomes: a simulation study}{10}{subsection.2.4.3}\protected@file@percent }
-\newlabel{interval-censored-outcomes-a-simulation-study}{{2.4.3}{10}{Interval-censored outcomes: a simulation study}{subsection.2.4.3}{}}
-\@writefile{toc}{\contentsline {subsubsection}{Design}{10}{subsection.2.4.3}\protected@file@percent }
-\newlabel{design}{{2.4.3}{10}{Design}{subsection.2.4.3}{}}
-\@writefile{toc}{\contentsline {subsubsection}{Code}{10}{subsection.2.4.3}\protected@file@percent }
-\newlabel{code}{{2.4.3}{10}{Code}{subsection.2.4.3}{}}
+\citation{jacobs2025horseshoe}
+\@writefile{brf}{\backcite{jacobs2025horseshoe}{{7}{2.3.4}{subsection.2.3.4}}}
+\@writefile{toc}{\contentsline {section}{\numberline {2.4}Building up the example}{7}{section.2.4}\protected@file@percent }
+\newlabel{building-up-the-example}{{2.4}{7}{Building up the example}{section.2.4}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.4.1}Adding horseshoe shrinkage}{7}{subsection.2.4.1}\protected@file@percent }
+\newlabel{adding-horseshoe-shrinkage}{{2.4.1}{7}{Adding horseshoe shrinkage}{subsection.2.4.1}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {4}{\ignorespaces Convergence diagnostics.}}{8}{figure.caption.5}\protected@file@percent }
+\newlabel{fig:convergence-fig}{{4}{8}{Convergence diagnostics}{figure.caption.5}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {5}{\ignorespaces Posterior survival curves.}}{9}{figure.caption.6}\protected@file@percent }
+\newlabel{fig:survival-fig}{{5}{9}{Posterior survival curves}{figure.caption.6}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.4.2}Causal inference: treatment effects for survival}{9}{subsection.2.4.2}\protected@file@percent }
+\newlabel{causal-inference-treatment-effects-for-survival}{{2.4.2}{9}{Causal inference: treatment effects for survival}{subsection.2.4.2}{}}
+\citation{rubin1981bayesian}
+\@writefile{brf}{\backcite{rubin1981bayesian}{{10}{2.4.2}{subsection.2.4.2}}}
+\@writefile{lof}{\contentsline {figure}{\numberline {6}{\ignorespaces Treatment effect posteriors.}}{11}{figure.caption.7}\protected@file@percent }
+\newlabel{fig:treatment-effects-fig}{{6}{11}{Treatment effect posteriors}{figure.caption.7}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.4.3}Interval-censored outcomes: a simulation study}{11}{subsection.2.4.3}\protected@file@percent }
+\newlabel{interval-censored-outcomes-a-simulation-study}{{2.4.3}{11}{Interval-censored outcomes: a simulation study}{subsection.2.4.3}{}}
+\@writefile{toc}{\contentsline {subsubsection}{Design}{11}{subsection.2.4.3}\protected@file@percent }
+\newlabel{design}{{2.4.3}{11}{Design}{subsection.2.4.3}{}}
+\@writefile{toc}{\contentsline {subsubsection}{Code}{11}{subsection.2.4.3}\protected@file@percent }
+\newlabel{code}{{2.4.3}{11}{Code}{subsection.2.4.3}{}}
 \citation{eddelbuettel2011rcpp}
-\@writefile{toc}{\contentsline {subsubsection}{Results}{11}{subsection.2.4.3}\protected@file@percent }
-\newlabel{results}{{2.4.3}{11}{Results}{subsection.2.4.3}{}}
-\@writefile{toc}{\contentsline {section}{\numberline {2.5}Package architecture}{11}{section.2.5}\protected@file@percent }
-\newlabel{package-architecture}{{2.5}{11}{Package architecture}{section.2.5}{}}
-\@writefile{brf}{\backcite{eddelbuettel2011rcpp}{{11}{2.5}{section.2.5}}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {2.5.1}Fitting functions and S3 classes}{11}{subsection.2.5.1}\protected@file@percent }
-\newlabel{fitting-functions-and-s3-classes}{{2.5.1}{11}{Fitting functions and S3 classes}{subsection.2.5.1}{}}
+\@writefile{toc}{\contentsline {subsubsection}{Results}{12}{subsection.2.4.3}\protected@file@percent }
+\newlabel{results}{{2.4.3}{12}{Results}{subsection.2.4.3}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {2.5}Package architecture}{12}{section.2.5}\protected@file@percent }
+\newlabel{package-architecture}{{2.5}{12}{Package architecture}{section.2.5}{}}
+\@writefile{brf}{\backcite{eddelbuettel2011rcpp}{{12}{2.5}{section.2.5}}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.5.1}Fitting functions and S3 classes}{12}{subsection.2.5.1}\protected@file@percent }
+\newlabel{fitting-functions-and-s3-classes}{{2.5.1}{12}{Fitting functions and S3 classes}{subsection.2.5.1}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {1}{\ignorespaces Fitting functions in \href  {https://CRAN.R-project.org/package=ShrinkageTrees}{{\normalfont  \fontseries  {b}\selectfont  ShrinkageTrees}}. The first four are primary functions; the last four are convenience wrappers.}}{13}{table.caption.8}\protected@file@percent }
+\newlabel{tab:fitting-functions}{{1}{13}{Fitting functions in \CRANpkg {ShrinkageTrees}. The first four are primary functions; the last four are convenience wrappers}{table.caption.8}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.5.2}Rcpp backend}{13}{subsection.2.5.2}\protected@file@percent }
+\newlabel{rcpp-backend}{{2.5.2}{13}{Rcpp backend}{subsection.2.5.2}{}}
 \citation{plummer2006coda}
-\@writefile{lot}{\contentsline {table}{\numberline {1}{\ignorespaces Fitting functions in \href  {https://CRAN.R-project.org/package=ShrinkageTrees}{{\normalfont  \fontseries  {b}\selectfont  ShrinkageTrees}}. The first four are primary functions; the last four are convenience wrappers.\relax }}{12}{table.caption.6}\protected@file@percent }
-\newlabel{tab:fitting-functions}{{1}{12}{Fitting functions in \CRANpkg {ShrinkageTrees}. The first four are primary functions; the last four are convenience wrappers.\relax }{table.caption.6}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {2.5.2}Rcpp backend}{12}{subsection.2.5.2}\protected@file@percent }
-\newlabel{rcpp-backend}{{2.5.2}{12}{Rcpp backend}{subsection.2.5.2}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {2.5.3}Multi-chain MCMC}{12}{subsection.2.5.3}\protected@file@percent }
-\newlabel{multi-chain-mcmc}{{2.5.3}{12}{Multi-chain MCMC}{subsection.2.5.3}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {7}{\ignorespaces Package architecture.}}{14}{figure.caption.9}\protected@file@percent }
+\newlabel{fig:architecture}{{7}{14}{Package architecture}{figure.caption.9}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.5.3}Multi-chain MCMC}{14}{subsection.2.5.3}\protected@file@percent }
+\newlabel{multi-chain-mcmc}{{2.5.3}{14}{Multi-chain MCMC}{subsection.2.5.3}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.5.4}Convergence diagnostics via coda}{14}{subsection.2.5.4}\protected@file@percent }
+\newlabel{convergence-diagnostics-via-coda}{{2.5.4}{14}{Convergence diagnostics via coda}{subsection.2.5.4}{}}
+\@writefile{brf}{\backcite{plummer2006coda}{{14}{2.5.4}{subsection.2.5.4}}}
 \citation{sparapani2021nonparametric}
 \citation{he2019xbart}
 \citation{sparapani2021nonparametric}
 \citation{dorie2023dbarts}
 \citation{hahn2020bayesian}
-\@writefile{toc}{\contentsline {subsection}{\numberline {2.5.4}Convergence diagnostics via coda}{13}{subsection.2.5.4}\protected@file@percent }
-\newlabel{convergence-diagnostics-via-coda}{{2.5.4}{13}{Convergence diagnostics via coda}{subsection.2.5.4}{}}
-\@writefile{brf}{\backcite{plummer2006coda}{{13}{2.5.4}{subsection.2.5.4}}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {2.5.5}Computational speed}{13}{subsection.2.5.5}\protected@file@percent }
-\newlabel{computational-speed}{{2.5.5}{13}{Computational speed}{subsection.2.5.5}{}}
-\@writefile{brf}{\backcite{sparapani2021nonparametric}{{13}{2.5.5}{subsection.2.5.5}}}
-\@writefile{brf}{\backcite{he2019xbart}{{13}{2.5.5}{subsection.2.5.5}}}
-\@writefile{toc}{\contentsline {section}{\numberline {2.6}Related packages}{13}{section.2.6}\protected@file@percent }
-\newlabel{related-packages}{{2.6}{13}{Related packages}{section.2.6}{}}
-\@writefile{brf}{\backcite{sparapani2021nonparametric}{{13}{2.6}{section.2.6}}}
-\@writefile{brf}{\backcite{dorie2023dbarts}{{13}{2.6}{section.2.6}}}
-\@writefile{brf}{\backcite{hahn2020bayesian}{{13}{2.6}{section.2.6}}}
 \citation{linero2018softbart}
-\citation{li2023bayesian}
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.5.5}Computational speed}{15}{subsection.2.5.5}\protected@file@percent }
+\newlabel{computational-speed}{{2.5.5}{15}{Computational speed}{subsection.2.5.5}{}}
+\@writefile{brf}{\backcite{sparapani2021nonparametric}{{15}{2.5.5}{subsection.2.5.5}}}
+\@writefile{brf}{\backcite{he2019xbart}{{15}{2.5.5}{subsection.2.5.5}}}
+\@writefile{toc}{\contentsline {section}{\numberline {2.6}Related packages}{15}{section.2.6}\protected@file@percent }
+\newlabel{related-packages}{{2.6}{15}{Related packages}{section.2.6}{}}
+\@writefile{brf}{\backcite{sparapani2021nonparametric}{{15}{2.6}{section.2.6}}}
+\@writefile{brf}{\backcite{dorie2023dbarts}{{15}{2.6}{section.2.6}}}
+\@writefile{brf}{\backcite{hahn2020bayesian}{{15}{2.6}{section.2.6}}}
+\@writefile{brf}{\backcite{linero2018softbart}{{15}{2.6}{section.2.6}}}
 \citation{rubin1981bayesian}
+\citation{li2023bayesian}
 \citation{kapelner2016bartmachine}
 \citation{jacobs2025horseshoe}
-\@writefile{brf}{\backcite{linero2018softbart}{{14}{2.6}{section.2.6}}}
-\@writefile{lot}{\contentsline {table}{\numberline {2}{\ignorespaces Comparison of Bayesian tree ensemble packages in R.\relax }}{14}{table.caption.7}\protected@file@percent }
-\newlabel{tab:pkg-comparison}{{2}{14}{Comparison of Bayesian tree ensemble packages in R.\relax }{table.caption.7}{}}
-\@writefile{toc}{\contentsline {section}{\numberline {2.7}Discussion and conclusion}{14}{section.2.7}\protected@file@percent }
-\newlabel{discussion-and-conclusion}{{2.7}{14}{Discussion and conclusion}{section.2.7}{}}
-\@writefile{brf}{\backcite{li2023bayesian}{{14}{2.7}{section.2.7}}}
-\@writefile{brf}{\backcite{rubin1981bayesian}{{14}{2.7}{section.2.7}}}
-\@writefile{brf}{\backcite{kapelner2016bartmachine}{{14}{2.7}{section.2.7}}}
-\@writefile{brf}{\backcite{jacobs2025horseshoe}{{14}{2.7}{section.2.7}}}
 \bibdata{RJreferences.bib}
 \bibcite{tcga2011ovarian}{{1}{2011}{{Cancer Genome Atlas Research Network}}{{}}}
+\@writefile{lot}{\contentsline {table}{\numberline {2}{\ignorespaces Comparison of Bayesian tree ensemble packages in R.}}{16}{table.caption.10}\protected@file@percent }
+\newlabel{tab:pkg-comparison}{{2}{16}{Comparison of Bayesian tree ensemble packages in R}{table.caption.10}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {2.7}Discussion and conclusion}{16}{section.2.7}\protected@file@percent }
+\newlabel{discussion-and-conclusion}{{2.7}{16}{Discussion and conclusion}{section.2.7}{}}
+\@writefile{brf}{\backcite{rubin1981bayesian}{{16}{2.7}{section.2.7}}}
+\@writefile{brf}{\backcite{li2023bayesian}{{16}{2.7}{section.2.7}}}
+\@writefile{brf}{\backcite{kapelner2016bartmachine}{{16}{2.7}{section.2.7}}}
+\@writefile{brf}{\backcite{jacobs2025horseshoe}{{16}{2.7}{section.2.7}}}
+\@writefile{toc}{\contentsline {section}{\numberline {2.8}Funding}{16}{section.2.8}\protected@file@percent }
+\newlabel{funding}{{2.8}{16}{Funding}{section.2.8}{}}
 \bibcite{caron2022estimating}{{2}{2022}{{Caron et~al.}}{{Caron, Baio, and Manolopoulou}}}
 \bibcite{carvalho2010horseshoe}{{3}{2010}{{Carvalho et~al.}}{{Carvalho, Polson, and Scott}}}
 \bibcite{chipman1998bayesiancart}{{4}{1998}{{Chipman et~al.}}{{Chipman, George, and McCulloch}}}
@@ -173,10 +174,8 @@
 \bibcite{linero2018softbart}{{17}{2018}{{Linero and Yang}}{{}}}
 \bibcite{plummer2006coda}{{18}{2006}{{Plummer et~al.}}{{Plummer, Best, Cowles, and Vines}}}
 \bibcite{polson2012halfcauchy}{{19}{2012}{{Polson and Scott}}{{}}}
-\@writefile{toc}{\contentsline {section}{\numberline {2.8}Funding}{15}{section.2.8}\protected@file@percent }
-\newlabel{funding}{{2.8}{15}{Funding}{section.2.8}{}}
 \bibcite{rockova2020theory}{{20}{2020}{{Ro\v {c}kov\'{a} and Saha}}{{}}}
 \bibcite{rubin1981bayesian}{{21}{1981}{{Rubin}}{{}}}
 \bibcite{sparapani2021nonparametric}{{22}{2021}{{Sparapani et~al.}}{{Sparapani, Spanbauer, and McCulloch}}}
 \ttl@finishall
-\gdef \@abspage@last{16}
+\gdef \@abspage@last{18}

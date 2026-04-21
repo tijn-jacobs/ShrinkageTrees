@@ -204,7 +204,7 @@ abline(v = 0, col = "red", lwd = 2)
 # Weibull: log(T) = mu + A * tau + sigma * W, where W ~ Gumbel(0,1)
 # W = log(Exp(1)) gives the standard Gumbel distribution
 sigma <- 0.65  # Weibull scale from real AFT (was 0.647)
-W     <- log(rexp(n, rate = 1))  # standard Gumbel noise
+W     <- rnorm(n)  
 log_T <- mu + A * tau + sigma * W
 T_true <- exp(log_T)
 

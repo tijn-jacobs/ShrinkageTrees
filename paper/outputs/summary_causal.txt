@@ -10,25 +10,19 @@ Call: CausalHorseForest(y = log(time), status = status, X_train_control = X_cont
 Outcome: Right-censored (AFT, timescale = log)
 Prior:   control = horseshoe, treatment = horseshoe
 Trees:   control = 200, treatment = 200
-Data:    n = 357, p_control = 2006, p_treat = 2005 | Draws: 5000 x 4 chains (burn-in 5000)
+Data:    n = 357, p_control = 1005, p_treat = 1004 | Draws: 5000 x 4 chains (burn-in 5000)
 
 Treatment effect (CATE):
-  ATE:     -0.3416  95% CI: [-0.7333, 0.0098]
-  CATE SD: 0.0196
+  PATE:    0.022  95% CI (Bayesian bootstrap): [-0.0964, 0.1455]
+  CATE SD: 0.0077
 
 Prognostic function (mu):
-  Mean: 3.562  SD: 0.012  Range: [3.531, 3.594]
+  Mean: 3.63  SD: 0.011  Range: [3.604, 3.649]
 
 Posterior sigma:
-  Mean: 0.99  SD: 0.052  95% CI: [0.894, 1.099]
-
-Variable importance - control forest (posterior inclusion probability):
-  X1614: 0.001   X663: 0.001   X84: 0.001   X1228: 0.001   X278: 0.001   X1318: 0.001   X1059: 0.001   X1055: 0.001   X1592: 0.001   X883: 0.001 
-
-Variable importance - treatment forest (posterior inclusion probability):
-  X1102: 0.001   X1710: 0.001   X1449: 0.001   X470: 0.001   X661: 0.001   X604: 0.001   X401: 0.001   X700: 0.001   X1983: 0.001   X1602: 0.001 
+  Mean: 1  SD: 0.047  95% CI: [0.914, 1.099]
 
 MCMC acceptance ratios (per chain):
-  control:   0.505, 0.506, 0.506, 0.505
-  treatment: 0.472, 0.473, 0.472, 0.472
+  control:   0.508, 0.508, 0.508, 0.507
+  treatment: 0.474, 0.476, 0.475, 0.475
 

@@ -2,12 +2,12 @@
 ShrinkageTrees model
 ---------------------
 Outcome type:         Right-censored (AFT, timescale = time)
-Prior:                horseshoe
+Prior:                standard
 Number of trees:      200
 Training size (n):    285
 Number of features:   1004
 Chains:               4
 Draws per chain:      5000 (burn-in 5000)
-Acceptance ratio:     0.503, 0.504, 0.502, 0.503 (per chain)
-Posterior mean sigma: 0.995
+Acceptance ratio:     0.267, 0.266, 0.265, 0.265 (per chain)
+Posterior mean sigma: 0.258
 

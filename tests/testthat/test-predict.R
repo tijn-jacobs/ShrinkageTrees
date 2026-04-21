@@ -169,6 +169,25 @@ test_that("predict.CausalShrinkageForest works for continuous outcome", {
   expect_false(any(is.na(pred$cate$mean)))
   expect_false(any(is.na(pred$total$mean)))
 
+  # ATE summary and stored CATE samples
+  expect_true(isTRUE(pred$bayesian_bootstrap))
+  expect_equal(dim(pred$cate_samples), c(10, 15))
+  expect_true(is.numeric(pred$ate$mean))
+  expect_true(pred$ate$lower <= pred$ate$mean)
+  expect_true(pred$ate$mean <= pred$ate$upper)
+
+  # MATE path should match rowMeans of stored CATE samples.
+  pred_mate <- predict(fit, newdata_control = X_new, newdata_treat = X_new,
+                       bayesian_bootstrap = FALSE)
+  expect_false(isTRUE(pred_mate$bayesian_bootstrap))
+  ate_rowmean <- mean(rowMeans(pred_mate$cate_samples))
+  expect_equal(pred_mate$ate$mean, ate_rowmean)
+
+  # Standalone helper on a prediction object.
+  bb <- bayesian_bootstrap_ate(pred)
+  expect_equal(bb$n, 15)
+  expect_equal(bb$mate_samples, rowMeans(pred$cate_samples))
+
   # print and summary
   expect_no_error(capture.output(print(pred)))
   expect_no_error(capture.output(summary(pred)))

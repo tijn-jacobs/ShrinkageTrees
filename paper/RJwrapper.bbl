@@ -13,89 +13,71 @@
 
 \bibitem[Caron et~al.(2022)Caron, Baio, and Manolopoulou]{caron2022estimating}
 A.~Caron, G.~Baio, and I.~Manolopoulou.
-\newblock Estimating individual treatment effects using non-parametric
-  regression models: A review.
-\newblock \emph{Journal of the Royal Statistical Society Series A: Statistics
-  in Society}, 185\penalty0 (3):\penalty0 1115--1149, 2022.
+\newblock Estimating individual treatment effects using non-parametric regression models: A review.
+\newblock \emph{Journal of the Royal Statistical Society Series A: Statistics in Society}, 185\penalty0 (3):\penalty0 1115--1149, 2022.
 \newblock \doi{10.1111/rssa.12889}.
 
-\bibitem[Carvalho et~al.(2010)Carvalho, Polson, and
-  Scott]{carvalho2010horseshoe}
+\bibitem[Carvalho et~al.(2010)Carvalho, Polson, and Scott]{carvalho2010horseshoe}
 C.~M. Carvalho, N.~G. Polson, and J.~G. Scott.
 \newblock The horseshoe estimator for sparse signals.
 \newblock \emph{Biometrika}, 97\penalty0 (2):\penalty0 465--480, 2010.
 \newblock \doi{10.1093/biomet/asq017}.
 
-\bibitem[Chipman et~al.(1998)Chipman, George, and
-  McCulloch]{chipman1998bayesiancart}
+\bibitem[Chipman et~al.(1998)Chipman, George, and McCulloch]{chipman1998bayesiancart}
 H.~A. Chipman, E.~I. George, and R.~E. McCulloch.
 \newblock Bayesian {CART} model search.
-\newblock \emph{Journal of the American Statistical Association}, 93\penalty0
-  (443):\penalty0 935--948, 1998.
+\newblock \emph{Journal of the American Statistical Association}, 93\penalty0 (443):\penalty0 935--948, 1998.
 \newblock \doi{10.1080/01621459.1998.10473750}.
 
 \bibitem[Chipman et~al.(2010)Chipman, George, and McCulloch]{chipman2010bart}
 H.~A. Chipman, E.~I. George, and R.~E. McCulloch.
 \newblock {BART}: {B}ayesian additive regression trees.
-\newblock \emph{The Annals of Applied Statistics}, 4\penalty0 (1):\penalty0
-  266--298, 2010.
+\newblock \emph{The Annals of Applied Statistics}, 4\penalty0 (1):\penalty0 266--298, 2010.
 \newblock \doi{10.1214/09-AOAS285}.
 
 \bibitem[Dorie(2023)]{dorie2023dbarts}
 V.~Dorie.
-\newblock \emph{{dbarts}: Discrete {B}ayesian Additive Regression Trees
-  Sampler}, 2023.
+\newblock \emph{{dbarts}: Discrete {B}ayesian Additive Regression Trees Sampler}, 2023.
 \newblock URL \url{https://CRAN.R-project.org/package=dbarts}.
 \newblock R package version 0.9-23.
 
-\bibitem[Dorie et~al.(2019)Dorie, Hill, Shalit, Scott, and
-  Cervone]{dorie2019automated}
+\bibitem[Dorie et~al.(2019)Dorie, Hill, Shalit, Scott, and Cervone]{dorie2019automated}
 V.~Dorie, J.~Hill, U.~Shalit, M.~Scott, and D.~Cervone.
-\newblock Automated versus do-it-yourself methods for causal inference: Lessons
-  learned from a data analysis competition.
+\newblock Automated versus do-it-yourself methods for causal inference: Lessons learned from a data analysis competition.
 \newblock \emph{Statistical Science}, 34\penalty0 (1):\penalty0 43--68, 2019.
 \newblock \doi{10.1214/18-STS667}.
 
 \bibitem[Eddelbuettel and Fran\c{c}ois(2011)]{eddelbuettel2011rcpp}
 D.~Eddelbuettel and R.~Fran\c{c}ois.
 \newblock {Rcpp}: Seamless {R} and {C++} integration.
-\newblock \emph{Journal of Statistical Software}, 40\penalty0 (8):\penalty0
-  1--18, 2011.
+\newblock \emph{Journal of Statistical Software}, 40\penalty0 (8):\penalty0 1--18, 2011.
 \newblock \doi{10.18637/jss.v040.i08}.
 
 \bibitem[Hahn et~al.(2020)Hahn, Murray, and Carvalho]{hahn2020bayesian}
 P.~R. Hahn, J.~S. Murray, and C.~M. Carvalho.
-\newblock Bayesian regression tree models for causal inference: Regularization,
-  confounding, and heterogeneous effects.
+\newblock Bayesian regression tree models for causal inference: Regularization, confounding, and heterogeneous effects.
 \newblock \emph{Bayesian Analysis}, 15\penalty0 (3):\penalty0 965--1056, 2020.
 \newblock \doi{10.1214/19-BA1195}.
 
 \bibitem[Harrell et~al.(1996)Harrell, Lee, and Mark]{harrell1996concordance}
 F.~E. Harrell, K.~L. Lee, and D.~B. Mark.
-\newblock Multivariable prognostic models: Issues in developing models,
-  evaluating assumptions and adequacy, and measuring and reducing errors.
-\newblock \emph{Statistics in Medicine}, 15\penalty0 (4):\penalty0 361--387,
-  1996.
-\newblock
-  \doi{10.1002/(SICI)1097-0258(19960229)15:4<361::AID-SIM168>3.0.CO;2-4}.
+\newblock Multivariable prognostic models: Issues in developing models, evaluating assumptions and adequacy, and measuring and reducing errors.
+\newblock \emph{Statistics in Medicine}, 15\penalty0 (4):\penalty0 361--387, 1996.
+\newblock \doi{10.1002/(SICI)1097-0258(19960229)15:4<361::AID-SIM168>3.0.CO;2-4}.
 
 \bibitem[He et~al.(2019)He, Yalov, and Hahn]{he2019xbart}
 J.~He, S.~Yalov, and P.~R. Hahn.
 \newblock {XBART}: Accelerated {Bayesian} additive regression trees.
-\newblock In \emph{Proceedings of the 22nd International Conference on
-  Artificial Intelligence and Statistics (AISTATS)}, volume~89, pages
-  1130--1138, 2019.
+\newblock In \emph{Proceedings of the 22nd International Conference on Artificial Intelligence and Statistics (AISTATS)}, volume~89, pages 1130--1138, 2019.
 \newblock URL \url{https://proceedings.mlr.press/v89/he19a.html}.
 
 \bibitem[Hill(2011)]{hill2011bayesian}
 J.~L. Hill.
 \newblock Bayesian nonparametric modeling for causal inference.
-\newblock \emph{Journal of Computational and Graphical Statistics}, 20\penalty0
-  (1):\penalty0 217--240, 2011.
+\newblock \emph{Journal of Computational and Graphical Statistics}, 20\penalty0 (1):\penalty0 217--240, 2011.
 \newblock \doi{10.1198/jcgs.2010.08162}.
 
-\bibitem[Jacobs et~al.(2025)Jacobs, van Wieringen, and van~der
-  Pas]{jacobs2025horseshoe}
+\bibitem[Jacobs et~al.(2025)Jacobs, van Wieringen, and van~der Pas]{jacobs2025horseshoe}
 T.~Jacobs, W.~N. van Wieringen, and S.~L. van~der Pas.
 \newblock Horseshoe forests for high-dimensional causal survival analysis.
 \newblock \emph{arXiv preprint arXiv:2507.22004}, 2025.
@@ -103,33 +85,26 @@ T.~Jacobs, W.~N. van Wieringen, and S.~L. van~der Pas.
 
 \bibitem[Kapelner and Bleich(2016)]{kapelner2016bartmachine}
 A.~Kapelner and J.~Bleich.
-\newblock {bartMachine}: Machine learning with {B}ayesian additive regression
-  trees.
-\newblock \emph{Journal of Statistical Software}, 70\penalty0 (4):\penalty0
-  1--40, 2016.
+\newblock {bartMachine}: Machine learning with {B}ayesian additive regression trees.
+\newblock \emph{Journal of Statistical Software}, 70\penalty0 (4):\penalty0 1--40, 2016.
 \newblock \doi{10.18637/jss.v070.i04}.
 
 \bibitem[Li et~al.(2023)Li, Ding, and Mealli]{li2023bayesian}
 F.~Li, P.~Ding, and F.~Mealli.
 \newblock Bayesian causal inference: A critical review.
-\newblock \emph{Philosophical Transactions of the Royal Society A},
-  381\penalty0 (2247):\penalty0 20220153, 2023.
+\newblock \emph{Philosophical Transactions of the Royal Society A}, 381\penalty0 (2247):\penalty0 20220153, 2023.
 \newblock \doi{10.1098/rsta.2022.0153}.
 
 \bibitem[Linero(2018)]{linero2018dart}
 A.~R. Linero.
-\newblock Bayesian regression trees for high-dimensional prediction and
-  variable selection.
-\newblock \emph{Journal of the American Statistical Association}, 113\penalty0
-  (522):\penalty0 626--636, 2018.
+\newblock Bayesian regression trees for high-dimensional prediction and variable selection.
+\newblock \emph{Journal of the American Statistical Association}, 113\penalty0 (522):\penalty0 626--636, 2018.
 \newblock \doi{10.1080/01621459.2016.1264957}.
 
 \bibitem[Linero and Yang(2018)]{linero2018softbart}
 A.~R. Linero and Y.~Yang.
-\newblock Bayesian regression tree ensembles that adapt to smoothness and
-  sparsity.
-\newblock \emph{Journal of the Royal Statistical Society: Series B (Statistical
-  Methodology)}, 80\penalty0 (5):\penalty0 1087--1110, 2018.
+\newblock Bayesian regression tree ensembles that adapt to smoothness and sparsity.
+\newblock \emph{Journal of the Royal Statistical Society: Series B (Statistical Methodology)}, 80\penalty0 (5):\penalty0 1087--1110, 2018.
 \newblock \doi{10.1111/rssb.12293}.
 
 \bibitem[Plummer et~al.(2006)Plummer, Best, Cowles, and Vines]{plummer2006coda}
@@ -152,17 +127,13 @@ V.~Ro\v{c}kov\'{a} and E.~Saha.
 \bibitem[Rubin(1981)]{rubin1981bayesian}
 D.~B. Rubin.
 \newblock The {Bayesian} bootstrap.
-\newblock \emph{The Annals of Statistics}, 9\penalty0 (1):\penalty0 130--134,
-  1981.
+\newblock \emph{The Annals of Statistics}, 9\penalty0 (1):\penalty0 130--134, 1981.
 \newblock \doi{10.1214/aos/1176345338}.
 
-\bibitem[Sparapani et~al.(2021)Sparapani, Spanbauer, and
-  McCulloch]{sparapani2021nonparametric}
+\bibitem[Sparapani et~al.(2021)Sparapani, Spanbauer, and McCulloch]{sparapani2021nonparametric}
 R.~Sparapani, C.~Spanbauer, and R.~McCulloch.
-\newblock Nonparametric machine learning and efficient computation with
-  {B}ayesian additive regression trees: The {BART} {R} package.
-\newblock \emph{Journal of Statistical Software}, 97\penalty0 (1):\penalty0
-  1--66, 2021.
+\newblock Nonparametric machine learning and efficient computation with {B}ayesian additive regression trees: The {BART} {R} package.
+\newblock \emph{Journal of Statistical Software}, 97\penalty0 (1):\penalty0 1--66, 2021.
 \newblock \doi{10.18637/jss.v097.i01}.
 
 \end{thebibliography}

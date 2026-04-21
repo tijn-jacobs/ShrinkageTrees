@@ -1,17 +1,25 @@
 ################################################################################
 # Generate all figures and outputs for the ShrinkageTrees R Journal paper
 #
-# Run this script once from the paper/ directory:
-#   Rscript generate_figures.R
+# Run this from the paper/ directory:
+#   Rscript scripts/generate_figures.R
 #
-# It saves figures to figures/ and text outputs to outputs/
+# Figures land in paper/figures/, text outputs in paper/outputs/.
 ################################################################################
 
 library(ShrinkageTrees)
 library(survival)
 library(ggplot2)
 
-setwd("/Users/tijnjacobs/Library/CloudStorage/OneDrive-VrijeUniversiteitAmsterdam/Documents/GitHub/ShrinkageTrees/paper")
+# Anchor to the paper directory regardless of cwd.
+if (requireNamespace("here", quietly = TRUE)) {
+  paper_root <- here::here("paper")
+} else {
+  paper_root <- normalizePath(file.path(dirname(sys.frame(1)$ofile), ".."),
+                              mustWork = FALSE)
+  if (!dir.exists(paper_root)) paper_root <- getwd()
+}
+setwd(paper_root)
 
 dir.create("figures", showWarnings = FALSE)
 dir.create("outputs", showWarnings = FALSE)
@@ -33,7 +41,7 @@ cat("n =", nrow(ovarian), "| p =", ncol(X),
     "| carboplatin =", sum(treatment), "/ cisplatin =", sum(1 - treatment), "\n")
 sink()
 
-# --- Train / test split ---
+# --- Train / test split (shared between BART and HorseTrees fits) ---
 train_idx <- sample(seq_len(nrow(ovarian)), size = floor(0.8 * nrow(ovarian)))
 test_idx  <- setdiff(seq_len(nrow(ovarian)), train_idx)
 
@@ -42,7 +50,36 @@ time_train <- time[train_idx];  time_test <- time[test_idx]
 status_train <- status[train_idx];  status_test <- status[test_idx]
 
 ################################################################################
-# PART 1: SURVIVAL PREDICTION
+# PART 1a: SURVIVAL BART BASELINE (§2)
+################################################################################
+
+cat("=== Fitting SurvivalBART ===\n")
+fit_bart <- SurvivalBART(
+  time            = time_train,
+  status          = status_train,
+  X_train         = X_train,
+  X_test          = X_test,
+  timescale       = "time",
+  number_of_trees = 200,
+  N_post          = 5000,
+  N_burn          = 5000,
+  n_chains        = 4,
+  verbose         = TRUE
+)
+
+sink("outputs/print_bart.txt")
+print(fit_bart)
+sink()
+
+sink("outputs/summary_bart.txt")
+summary(fit_bart)
+sink()
+
+c_bart_train <- concordance(Surv(time_train, status_train) ~ fit_bart$train_predictions)
+c_bart_test  <- concordance(Surv(time_test, status_test) ~ fit_bart$test_predictions)
+
+################################################################################
+# PART 1b: HORSESHOE FOREST (§4.1)
 ################################################################################
 
 cat("=== Fitting HorseTrees ===\n")
@@ -62,7 +99,6 @@ fit_horse <- HorseTrees(
   verbose         = TRUE
 )
 
-# --- Print / summary ---
 sink("outputs/print_horse.txt")
 print(fit_horse)
 sink()
@@ -71,16 +107,28 @@ sink("outputs/summary_horse.txt")
 summary(fit_horse)
 sink()
 
-# --- C-index ---
 c_horse_train <- concordance(Surv(time_train, status_train) ~ fit_horse$train_predictions)
 c_horse_test  <- concordance(Surv(time_test, status_test) ~ fit_horse$test_predictions)
 
-sink("outputs/cindex.txt")
-cat("Train C-index — HorseTrees:", round(c_horse_train$concordance, 3), "\n")
-cat("Test C-index — HorseTrees:", round(c_horse_test$concordance, 3), "\n")
+# --- C-index: write both a per-model file and a combined comparison file ---
+sink("outputs/cindex_bart.txt")
+cat("Train C-index (SurvivalBART): ", round(c_bart_train$concordance, 3), "\n", sep = "")
+cat("Test C-index (SurvivalBART):  ", round(c_bart_test$concordance,  3), "\n", sep = "")
 sink()
 
-# --- Convergence diagnostics ---
+sink("outputs/cindex_horse.txt")
+cat("Train C-index (HorseTrees):   ", round(c_horse_train$concordance, 3), "\n", sep = "")
+cat("Test C-index (HorseTrees):    ", round(c_horse_test$concordance,  3), "\n", sep = "")
+sink()
+
+sink("outputs/cindex.txt")
+cat("Train C-index (SurvivalBART): ", round(c_bart_train$concordance, 3), "\n", sep = "")
+cat("Test C-index (SurvivalBART):  ", round(c_bart_test$concordance,  3), "\n", sep = "")
+cat("Train C-index (HorseTrees):   ", round(c_horse_train$concordance, 3), "\n", sep = "")
+cat("Test C-index (HorseTrees):    ", round(c_horse_test$concordance,  3), "\n", sep = "")
+sink()
+
+# --- Convergence diagnostics (HorseTrees) ---
 chain_cols <- c("steelblue", "indianred", "forestgreen", "darkorange")
 
 p_trace   <- plot(fit_horse, type = "trace") +
@@ -156,15 +204,15 @@ ggsave("figures/ate_posterior.pdf", p_ate, width = 4, height = 3)
 ggsave("figures/cate_caterpillar.pdf", p_cate, width = 4, height = 3.5)
 
 cat("\n=== All figures and outputs saved ===\n")
-cat("Figures: figures/trace_horse.pdf, density_horse.pdf, survival_individual.pdf,\n")
-cat("         survival_population.pdf, ate_posterior.pdf, cate_caterpillar.pdf\n")
-cat("Outputs: outputs/data_summary.txt, print_horse.txt, summary_horse.txt,\n")
-cat("         cindex.txt, patient_profiles.txt, summary_causal.txt\n")
+cat("Figures: figures/{trace,density}_horse.pdf, survival_{individual,population}.pdf,\n")
+cat("         ate_posterior.pdf, cate_caterpillar.pdf\n")
+cat("Outputs: outputs/data_summary.txt,\n")
+cat("         print_bart.txt, summary_bart.txt, cindex_bart.txt,\n")
+cat("         print_horse.txt, summary_horse.txt, cindex_horse.txt,\n")
+cat("         cindex.txt, summary_causal.txt\n")
 
-
-
-
-setwd("~/Library/CloudStorage/OneDrive-VrijeUniversiteitAmsterdam/Documents/GitHub/ShrinkageTrees/paper")
-
-rmarkdown::render("motivation-letter/motivation-letter.md")
-
+# Render the motivation letter too (optional convenience).
+if (requireNamespace("rmarkdown", quietly = TRUE) &&
+    file.exists("motivation-letter/motivation-letter.md")) {
+  rmarkdown::render("motivation-letter/motivation-letter.md")
+}

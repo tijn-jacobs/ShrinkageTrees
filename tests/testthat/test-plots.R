@@ -141,6 +141,17 @@ test_that("plot.CausalShrinkageForest type='ate' returns a ggplot", {
   expect_s3_class(out, "gg")
 })
 
+test_that("plot.CausalShrinkageForest type='ate' accepts bayesian_bootstrap toggle", {
+  .skip_plots()
+  fit <- .causal_fit(store = TRUE)
+  out_pate <- expect_no_error(plot(fit, type = "ate", bayesian_bootstrap = TRUE))
+  out_mate <- expect_no_error(plot(fit, type = "ate", bayesian_bootstrap = FALSE))
+  expect_s3_class(out_pate, "gg")
+  expect_s3_class(out_mate, "gg")
+  expect_equal(out_pate$labels$x, "PATE")
+  expect_equal(out_mate$labels$x, "MATE")
+})
+
 test_that("plot.CausalShrinkageForest type='ate' errors without posterior samples", {
   .skip_plots()
   fit <- .causal_fit(store = FALSE)

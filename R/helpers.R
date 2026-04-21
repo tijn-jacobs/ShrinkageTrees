@@ -217,3 +217,22 @@ censored_info <- function(y, status, left_time = NULL, right_time = NULL,
   out
 }
 
+#' Posterior ATE samples from a CATE draw matrix
+#'
+#' @param tau_samples S x n matrix of posterior CATE draws.
+#' @param bayesian_bootstrap If \code{TRUE}, reweight columns at each iteration
+#'   with Dirichlet(1, ..., 1) weights, giving posterior draws of the
+#'   population ATE. If \code{FALSE}, use equal 1/n weights (mixed ATE,
+#'   conditional on the observed covariates).
+#' @return Length-S numeric vector of posterior ATE draws.
+#' @importFrom stats rexp
+#' @noRd
+.ate_samples <- function(tau_samples, bayesian_bootstrap = TRUE) {
+  if (!bayesian_bootstrap) return(rowMeans(tau_samples))
+  S <- nrow(tau_samples)
+  n <- ncol(tau_samples)
+  W <- matrix(rexp(S * n), nrow = S, ncol = n)
+  W <- W / rowSums(W)
+  rowSums(W * tau_samples)
+}
+

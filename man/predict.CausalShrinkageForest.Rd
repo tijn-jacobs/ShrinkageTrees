@@ -4,7 +4,14 @@
 \alias{predict.CausalShrinkageForest}
 \title{Posterior predictive inference for a CausalShrinkageForest model}
 \usage{
-\method{predict}{CausalShrinkageForest}(object, newdata_control, newdata_treat, level = 0.95, ...)
+\method{predict}{CausalShrinkageForest}(
+  object,
+  newdata_control,
+  newdata_treat,
+  level = 0.95,
+  bayesian_bootstrap = TRUE,
+  ...
+)
 }
 \arguments{
 \item{object}{A fitted \code{CausalShrinkageForest} model object.}
@@ -17,6 +24,11 @@ with the same number of columns as \code{X_train_treat} at fit time.
 Must have the same number of rows as \code{newdata_control}.}
 
 \item{level}{Credible interval width. Default \code{0.95}.}
+
+\item{bayesian_bootstrap}{Logical; if \code{TRUE} (default), the ATE over
+\code{newdata} is computed by reweighting each iteration's CATE vector
+with Dirichlet(1, ..., 1) weights (population ATE, PATE). If \code{FALSE},
+equal \eqn{1/n} weights are used (mixed ATE, MATE).}
 
 \item{...}{Currently unused.}
 }
@@ -31,6 +43,14 @@ posterior summaries of the CATE \eqn{\tau(X_{\text{new}})}.}
 \item{total}{List with \code{mean}, \code{lower}, \code{upper}:
 posterior summaries of the total outcome
 \eqn{\mu(X_{\text{new}}) + \tau(X_{\text{new}})}.}
+\item{ate}{List with \code{mean}, \code{lower}, \code{upper}: posterior
+summary of the average treatment effect over \code{newdata}. For
+survival with \code{timescale = "time"}, reported as a multiplicative
+time ratio on the original scale.}
+\item{cate_samples}{\eqn{S \times n_{\text{new}}} matrix of posterior
+CATE draws on the scale reported in \code{cate}.}
+\item{bayesian_bootstrap}{Flag indicating whether the reported ATE CI
+used Dirichlet reweighting.}
 \item{n}{Number of test observations.}
 \item{level}{Credible level used.}
 \item{outcome_type}{Outcome type inherited from the fitted model.}

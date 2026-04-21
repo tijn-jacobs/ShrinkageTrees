@@ -10,18 +10,15 @@ Outcome: Right-censored (AFT, timescale = time) | Prior: horseshoe | Trees: 200
 Data:    n = 285, p = 1004 | Draws: 5000 x 4 chains (burn-in 5000)
 
 Posterior sigma:
-  Mean: 0.994  SD: 0.054  95% CI: [0.894, 1.106]
+  Mean: 0.995  SD: 0.055  95% CI: [0.894, 1.108]
 
 Predictions (posterior mean):
-  Train: mean = 29.693, sd = 2.66, range = [22.241, 36.15]
-  Test:  mean = 4409.529, sd = 37150.366, range = [26.256, 315262.606]
+  Train: mean = 38.401, sd = 2.525, range = [31.585, 44.519]
+  Test:  mean = 38.275, sd = 1.882, range = [34.29, 41.915]
 
-Variable importance (posterior inclusion probability):
-  X488: 0.001   X599: 0.001   X94: 0.001   X492: 0.001   X431: 0.001   X491: 0.001   X419: 0.001   X503: 0.001   X812: 0.001   X162: 0.001 
-
-MCMC acceptance ratio (per chain): 0.502, 0.502, 0.502, 0.502
+MCMC acceptance ratio (per chain): 0.503, 0.504, 0.502, 0.503
 
 Convergence diagnostics (coda):
-  Gelman-Rubin R-hat:  = 1
-  Effective sample size: sigma = 8671
+  Gelman-Rubin R-hat:  = 1.001
+  Effective sample size: sigma = 8854
 

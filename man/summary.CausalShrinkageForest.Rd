@@ -4,10 +4,19 @@
 \alias{summary.CausalShrinkageForest}
 \title{Summarise a CausalShrinkageForest model}
 \usage{
-\method{summary}{CausalShrinkageForest}(object, ...)
+\method{summary}{CausalShrinkageForest}(object, bayesian_bootstrap = TRUE, ...)
 }
 \arguments{
 \item{object}{A fitted \code{CausalShrinkageForest} model object.}
+
+\item{bayesian_bootstrap}{Logical; if \code{TRUE} (default), the ATE
+posterior is computed by reweighting the per-iteration CATE vector with
+Dirichlet(1, ..., 1) weights (Bayesian bootstrap). This gives a draw from
+the posterior of the \emph{population} ATE (PATE), with a credible
+interval that accounts for uncertainty in the covariate distribution. If
+\code{FALSE}, equal \eqn{1/n} weights are used, giving the mixed ATE
+(MATE), which conditions on the observed covariates. Ignored when
+posterior samples are not stored.}
 
 \item{...}{Currently unused.}
 }
@@ -22,8 +31,9 @@ A \code{summary.CausalShrinkageForest} object with elements:
 \item{data_info}{Training and test data dimensions.}
 \item{treatment_effect}{List with \code{ate} (posterior mean ATE),
 \code{cate_sd} (SD of individual CATEs), and optionally
-\code{ate_lower} and \code{ate_upper} (95\\% CI; requires
-\code{store_posterior_sample = TRUE}).}
+\code{ate_lower}, \code{ate_upper} (95\\% CI; requires
+\code{store_posterior_sample = TRUE}) and
+\code{bayesian_bootstrap} (the flag used to produce the CI).}
 \item{prognostic}{Summary of the prognostic function (mean, SD, range).}
 \item{sigma}{Named vector with posterior mean, SD, and 95\\% CI of sigma
 (if estimated).}

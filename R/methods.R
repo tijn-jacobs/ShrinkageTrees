@@ -500,9 +500,12 @@ print.summary.ShrinkageTrees <- function(x, n_vi = 10, ...) {
     cat("  Test:  ", fmt_pred(x$predictions$test), "\n", sep = "")
 
   if (!is.null(x$variable_importance)) {
-    cat("\nVariable importance (posterior inclusion probability):\n")
-    vi <- head(x$variable_importance, n_vi)
-    cat(" ", paste(names(vi), round(vi, 3), sep = ": ", collapse = "   "), "\n")
+    p_vi <- length(x$variable_importance)
+    if (p_vi <= n_vi) {
+      cat("\nVariable importance (posterior inclusion probability):\n")
+      vi <- head(x$variable_importance, n_vi)
+      cat(" ", paste(names(vi), round(vi, 3), sep = ": ", collapse = "   "), "\n")
+    }
   }
 
   if (!is.null(x$chains)) {
@@ -536,6 +539,14 @@ print.summary.ShrinkageTrees <- function(x, n_vi = 10, ...) {
 #' and MCMC diagnostics.
 #'
 #' @param object A fitted \code{CausalShrinkageForest} model object.
+#' @param bayesian_bootstrap Logical; if \code{TRUE} (default), the ATE
+#'   posterior is computed by reweighting the per-iteration CATE vector with
+#'   Dirichlet(1, ..., 1) weights (Bayesian bootstrap). This gives a draw from
+#'   the posterior of the \emph{population} ATE (PATE), with a credible
+#'   interval that accounts for uncertainty in the covariate distribution. If
+#'   \code{FALSE}, equal \eqn{1/n} weights are used, giving the mixed ATE
+#'   (MATE), which conditions on the observed covariates. Ignored when
+#'   posterior samples are not stored.
 #' @param ... Currently unused.
 #' @return A \code{summary.CausalShrinkageForest} object with elements:
 #'   \describe{
@@ -547,8 +558,9 @@ print.summary.ShrinkageTrees <- function(x, n_vi = 10, ...) {
 #'     \item{data_info}{Training and test data dimensions.}
 #'     \item{treatment_effect}{List with \code{ate} (posterior mean ATE),
 #'       \code{cate_sd} (SD of individual CATEs), and optionally
-#'       \code{ate_lower} and \code{ate_upper} (95\% CI; requires
-#'       \code{store_posterior_sample = TRUE}).}
+#'       \code{ate_lower}, \code{ate_upper} (95\% CI; requires
+#'       \code{store_posterior_sample = TRUE}) and
+#'       \code{bayesian_bootstrap} (the flag used to produce the CI).}
 #'     \item{prognostic}{Summary of the prognostic function (mean, SD, range).}
 #'     \item{sigma}{Named vector with posterior mean, SD, and 95\% CI of sigma
 #'       (if estimated).}
@@ -561,7 +573,7 @@ print.summary.ShrinkageTrees <- function(x, n_vi = 10, ...) {
 #' @seealso \code{\link{print.summary.CausalShrinkageForest}},
 #'   \code{\link{CausalHorseForest}}, \code{\link{CausalShrinkageForest}}
 #' @export
-summary.CausalShrinkageForest <- function(object, ...) {
+summary.CausalShrinkageForest <- function(object, bayesian_bootstrap = TRUE, ...) {
 
 
   out <- list(
@@ -577,9 +589,12 @@ summary.CausalShrinkageForest <- function(object, ...) {
   te  <- list(ate = mean(tau), cate_sd = sd(tau))
 
   if (!is.null(object$train_predictions_sample_treat)) {
-    ate_samples  <- rowMeans(object$train_predictions_sample_treat)
+    ate_samples  <- .ate_samples(object$train_predictions_sample_treat,
+                                 bayesian_bootstrap = bayesian_bootstrap)
+    te$ate       <- mean(ate_samples)
     te$ate_lower <- unname(quantile(ate_samples, 0.025))
     te$ate_upper <- unname(quantile(ate_samples, 0.975))
+    te$bayesian_bootstrap <- bayesian_bootstrap
   }
   out$treatment_effect <- te
 
@@ -645,12 +660,17 @@ print.summary.CausalShrinkageForest <- function(x, n_vi = 10, ...) {
       ", p_treat = ", x$data_info$p_treat,
       " | Draws: ", draws_str, "\n", sep = "")
 
-  cat("\nTreatment effect (CATE):\n")
+  cat("\nTreatment effect:\n")
   te <- x$treatment_effect
   if (!is.null(te$ate_lower)) {
-    cat("  ATE:     ", round(te$ate, 4),
-        "  95% CI: [", round(te$ate_lower, 4), ", ",
-                       round(te$ate_upper, 4), "]\n", sep = "")
+    ate_label <- if (isTRUE(te$bayesian_bootstrap)) "PATE" else "MATE"
+    ci_label  <- if (isTRUE(te$bayesian_bootstrap))
+      "95% CI (Bayesian bootstrap)"
+    else
+      "95% CI"
+    cat("  ", ate_label, ":    ", round(te$ate, 4),
+        "  ", ci_label, ": [", round(te$ate_lower, 4), ", ",
+                               round(te$ate_upper, 4), "]\n", sep = "")
   } else {
     cat("  ATE:     ", round(te$ate, 4),
         "  (no CI -- refit with store_posterior_sample = TRUE)\n", sep = "")
@@ -676,14 +696,18 @@ print.summary.CausalShrinkageForest <- function(x, n_vi = 10, ...) {
     vi <- head(vi, n_vi)
     paste(names(vi), round(vi, 3), sep = ": ", collapse = "   ")
   }
-  if (!is.null(x$variable_importance_control)) {
-    cat("\nVariable importance - control forest (posterior inclusion probability):\n")
-    cat(" ", fmt_vi(x$variable_importance_control), "\n")
+  show_vi <- function(vi, forest_label, access_field) {
+    if (is.null(vi)) return(invisible(NULL))
+    if (length(vi) <= n_vi) {
+      cat("\nVariable importance - ", forest_label,
+          " (posterior inclusion probability):\n", sep = "")
+      cat(" ", fmt_vi(vi), "\n")
+    }
   }
-  if (!is.null(x$variable_importance_treat)) {
-    cat("\nVariable importance - treatment forest (posterior inclusion probability):\n")
-    cat(" ", fmt_vi(x$variable_importance_treat), "\n")
-  }
+  show_vi(x$variable_importance_control, "control forest",
+          "variable_importance_control")
+  show_vi(x$variable_importance_treat,   "treatment forest",
+          "variable_importance_treat")
 
   if (!is.null(x$acceptance_ratios$per_chain)) {
     pc <- x$acceptance_ratios$per_chain
@@ -901,6 +925,10 @@ as.mcmc.list.ShrinkageTrees <- function(x, ...) {
 #'   with the same number of columns as \code{X_train_treat} at fit time.
 #'   Must have the same number of rows as \code{newdata_control}.
 #' @param level Credible interval width. Default \code{0.95}.
+#' @param bayesian_bootstrap Logical; if \code{TRUE} (default), the ATE over
+#'   \code{newdata} is computed by reweighting each iteration's CATE vector
+#'   with Dirichlet(1, ..., 1) weights (population ATE, PATE). If \code{FALSE},
+#'   equal \eqn{1/n} weights are used (mixed ATE, MATE).
 #' @param ... Currently unused.
 #' @return A \code{CausalShrinkageForestPrediction} object with elements:
 #'   \describe{
@@ -912,6 +940,14 @@ as.mcmc.list.ShrinkageTrees <- function(x, ...) {
 #'     \item{total}{List with \code{mean}, \code{lower}, \code{upper}:
 #'       posterior summaries of the total outcome
 #'       \eqn{\mu(X_{\text{new}}) + \tau(X_{\text{new}})}.}
+#'     \item{ate}{List with \code{mean}, \code{lower}, \code{upper}: posterior
+#'       summary of the average treatment effect over \code{newdata}. For
+#'       survival with \code{timescale = "time"}, reported as a multiplicative
+#'       time ratio on the original scale.}
+#'     \item{cate_samples}{\eqn{S \times n_{\text{new}}} matrix of posterior
+#'       CATE draws on the scale reported in \code{cate}.}
+#'     \item{bayesian_bootstrap}{Flag indicating whether the reported ATE CI
+#'       used Dirichlet reweighting.}
 #'     \item{n}{Number of test observations.}
 #'     \item{level}{Credible level used.}
 #'     \item{outcome_type}{Outcome type inherited from the fitted model.}
@@ -922,7 +958,8 @@ as.mcmc.list.ShrinkageTrees <- function(x, ...) {
 #'   \code{\link{summary.CausalShrinkageForestPrediction}}
 #' @export
 predict.CausalShrinkageForest <- function(object, newdata_control, newdata_treat,
-                                          level = 0.95, ...) {
+                                          level = 0.95,
+                                          bayesian_bootstrap = TRUE, ...) {
 
   if (!is.matrix(newdata_control)) newdata_control <- as.matrix(newdata_control)
   if (!is.matrix(newdata_treat))   newdata_treat   <- as.matrix(newdata_treat)
@@ -1076,14 +1113,38 @@ predict.CausalShrinkageForest <- function(object, newdata_control, newdata_treat
     upper = apply(mat, 2, quantile, 1 - alpha)
   )
 
+  # Posterior ATE draws over newdata. For survival-with-time-timescale, reduce
+  # on the log scale and exponentiate the summaries; otherwise the per-iteration
+  # CATE is already additive on the response scale.
+  if (survival && object$timescale == "time") {
+    ate_draws_raw <- .ate_samples(treat_std * sigma_hat,
+                                  bayesian_bootstrap = bayesian_bootstrap)
+    ate_summary <- list(
+      mean  = exp(mean(ate_draws_raw)),
+      lower = unname(exp(quantile(ate_draws_raw, alpha))),
+      upper = unname(exp(quantile(ate_draws_raw, 1 - alpha)))
+    )
+  } else {
+    ate_draws_raw <- .ate_samples(cate_sample,
+                                  bayesian_bootstrap = bayesian_bootstrap)
+    ate_summary <- list(
+      mean  = mean(ate_draws_raw),
+      lower = unname(quantile(ate_draws_raw, alpha)),
+      upper = unname(quantile(ate_draws_raw, 1 - alpha))
+    )
+  }
+
   out <- list(
-    prognostic   = ci(prognostic_sample),
-    cate         = ci(cate_sample),
-    total        = ci(total_sample),
-    n            = n_new,
-    level        = level,
-    outcome_type = object$outcome_type,
-    timescale    = object$timescale
+    prognostic         = ci(prognostic_sample),
+    cate               = ci(cate_sample),
+    total              = ci(total_sample),
+    ate                = ate_summary,
+    cate_samples       = cate_sample,
+    bayesian_bootstrap = bayesian_bootstrap,
+    n                  = n_new,
+    level              = level,
+    outcome_type       = object$outcome_type,
+    timescale          = object$timescale
   )
   class(out) <- "CausalShrinkageForestPrediction"
   out
@@ -1118,6 +1179,19 @@ print.CausalShrinkageForestPrediction <- function(x, n_head = 6, digits = 3, ...
   cat(lbl("Observations:"),      x$n,            "\n", sep = "")
   cat(lbl("Credible interval:"), ci_pct,         "\n", sep = "")
   cat(lbl("Outcome type:"),      x$outcome_type, "\n", sep = "")
+
+  if (!is.null(x$ate)) {
+    ate_label <- if (isTRUE(x$bayesian_bootstrap)) "PATE" else "MATE"
+    ci_suffix <- if (isTRUE(x$bayesian_bootstrap))
+      " (Bayesian bootstrap)"
+    else
+      ""
+    ate_scale <- if (time_scale) " [time ratio]" else ""
+    cat("\n", ate_label, ate_scale, ": ", round(x$ate$mean, digits),
+        "  ", ci_pct, " CI", ci_suffix,
+        ": [", round(x$ate$lower, digits), ", ",
+               round(x$ate$upper, digits), "]\n", sep = "")
+  }
 
   n_show <- min(n_head, x$n)
   hdr    <- sprintf("  %5s  %8s  %8s  %8s\n", "", "mean", "lower", "upper")

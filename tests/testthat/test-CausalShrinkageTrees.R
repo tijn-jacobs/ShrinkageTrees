@@ -449,6 +449,139 @@ test_that("CausalShrinkageForest returns CausalShrinkageForest S3 object with wo
 })
 
 
+# ── Bayesian bootstrap PATE ───────────────────────────────────────────────────
+
+test_that("bayesian_bootstrap widens the ATE credible interval", {
+  n <- 40; p <- 3
+  X <- matrix(runif(n * p), ncol = p)
+  treatment <- rbinom(n, 1, 0.5)
+  y <- X[, 1] + treatment * 2 + rnorm(n)
+  lh <- 0.1 / sqrt(5)
+
+  set.seed(1)
+  fit <- CausalShrinkageForest(
+    y = y,
+    X_train_control = X, X_train_treat = X,
+    treatment_indicator_train = treatment,
+    outcome_type = "continuous",
+    number_of_trees_control = 5, number_of_trees_treat = 5,
+    prior_type_control = "horseshoe", prior_type_treat = "horseshoe",
+    local_hp_control = lh, global_hp_control = lh,
+    local_hp_treat  = lh, global_hp_treat  = lh,
+    N_post = 200, N_burn = 50,
+    store_posterior_sample = TRUE,
+    verbose = FALSE
+  )
+
+  set.seed(2); smry_pate <- summary(fit, bayesian_bootstrap = TRUE)
+  smry_mate <- summary(fit, bayesian_bootstrap = FALSE)
+
+  te_p <- smry_pate$treatment_effect
+  te_m <- smry_mate$treatment_effect
+
+  expect_true(isTRUE(te_p$bayesian_bootstrap))
+  expect_false(isTRUE(te_m$bayesian_bootstrap))
+
+  # MATE CI matches legacy rowMeans behaviour.
+  ate_rowmean <- rowMeans(fit$train_predictions_sample_treat)
+  expect_equal(te_m$ate_lower, unname(quantile(ate_rowmean, 0.025)))
+  expect_equal(te_m$ate_upper, unname(quantile(ate_rowmean, 0.975)))
+
+  # Posterior means track each other closely.
+  expect_equal(te_p$ate, te_m$ate, tolerance = 0.2)
+})
+
+
+test_that(".ate_samples PATE variance decomposes correctly and beats MATE on a fixed matrix", {
+  # Construct a tau matrix with clear between-observation spread so the
+  # Dirichlet reweighting has room to add variance beyond the MCMC variation.
+  set.seed(42)
+  S <- 5000
+  n <- 50
+  tau_iter  <- rnorm(S, mean = 0.5, sd = 0.1)             # iteration-level signal
+  tau_obs   <- rnorm(n, mean = 0,   sd = 1.0)             # across-observation spread
+  tau <- matrix(tau_iter, S, n) + matrix(tau_obs, S, n, byrow = TRUE)
+
+  mate <- ShrinkageTrees:::.ate_samples(tau, bayesian_bootstrap = FALSE)
+  pate <- ShrinkageTrees:::.ate_samples(tau, bayesian_bootstrap = TRUE)
+
+  # MATE equals rowMeans exactly.
+  expect_equal(mate, rowMeans(tau))
+
+  # With large S the PATE variance is (very reliably) larger than MATE variance,
+  # because the Dirichlet reweighting injects extra variability from F_X.
+  expect_gt(var(pate), var(mate))
+
+  # Posterior means agree in expectation.
+  expect_equal(mean(pate), mean(mate), tolerance = 0.01)
+})
+
+
+test_that("bayesian_bootstrap_ate helper returns coherent PATE and MATE", {
+  n <- 40; p <- 3
+  X <- matrix(runif(n * p), ncol = p)
+  treatment <- rbinom(n, 1, 0.5)
+  y <- X[, 1] + treatment * 2 + rnorm(n)
+  lh <- 0.1 / sqrt(5)
+
+  set.seed(1)
+  fit <- CausalShrinkageForest(
+    y = y,
+    X_train_control = X, X_train_treat = X,
+    treatment_indicator_train = treatment,
+    outcome_type = "continuous",
+    number_of_trees_control = 5, number_of_trees_treat = 5,
+    prior_type_control = "horseshoe", prior_type_treat = "horseshoe",
+    local_hp_control = lh, global_hp_control = lh,
+    local_hp_treat  = lh, global_hp_treat  = lh,
+    N_post = 200, N_burn = 50,
+    store_posterior_sample = TRUE,
+    verbose = FALSE
+  )
+
+  set.seed(3)
+  bb <- bayesian_bootstrap_ate(fit)
+
+  expect_named(bb, c("pate_mean", "pate_ci", "pate_samples",
+                     "mate_mean", "mate_ci", "mate_samples", "n", "S"))
+  expect_equal(bb$n, n)
+  expect_equal(bb$S, 200)
+  expect_length(bb$pate_samples, 200)
+  expect_length(bb$mate_samples, 200)
+  expect_equal(bb$mate_samples, rowMeans(fit$train_predictions_sample_treat))
+  expect_true(bb$pate_ci$lower <= bb$pate_mean)
+  expect_true(bb$pate_mean <= bb$pate_ci$upper)
+  expect_equal(bb$pate_mean, bb$mate_mean, tolerance = 0.2)
+})
+
+
+test_that("bayesian_bootstrap_ate errors without stored posterior samples", {
+  n <- 30; p <- 3
+  X <- matrix(runif(n * p), ncol = p)
+  treatment <- rbinom(n, 1, 0.5)
+  y <- X[, 1] + treatment + rnorm(n)
+  lh <- 0.1 / sqrt(5)
+
+  set.seed(1)
+  fit <- CausalShrinkageForest(
+    y = y,
+    X_train_control = X, X_train_treat = X,
+    treatment_indicator_train = treatment,
+    outcome_type = "continuous",
+    number_of_trees_control = 5, number_of_trees_treat = 5,
+    prior_type_control = "horseshoe", prior_type_treat = "horseshoe",
+    local_hp_control = lh, global_hp_control = lh,
+    local_hp_treat  = lh, global_hp_treat  = lh,
+    N_post = 10, N_burn = 5,
+    store_posterior_sample = FALSE,
+    verbose = FALSE
+  )
+
+  expect_error(bayesian_bootstrap_ate(fit), "store_posterior_sample")
+  expect_error(bayesian_bootstrap_ate(list()), "CausalShrinkageForest")
+})
+
+
 # ── Multi-chain (n_chains) ────────────────────────────────────────────────────
 
 test_that("CausalShrinkageForest n_chains > 1 pools chains correctly", {

@@ -5,7 +5,7 @@
 \alias{ovarian}
 \title{TCGA Ovarian Cancer Dataset}
 \format{
-A data frame with n rows (patients) and 2006 columns:
+A data frame with n rows (patients) and 2007 columns:
 \describe{
 \item{OS_time}{Numeric. Overall survival time in days. Defined as days
 to death for deceased patients and days to last follow-up for
@@ -22,6 +22,11 @@ Patients with ambiguous or missing treatment records were excluded.}
 \item{tumor_grade}{Integer. Histologic tumor grade coded as
 2 = G2, 3 = G3, 4 = G4. GX (unknown grade) was coded as
 \code{NA} and excluded.}
+\item{year_of_diagnosis}{Integer. Year of initial pathologic diagnosis.
+Ranges from approximately 1992 to 2013, spanning the TCGA enrollment
+window. Acts as an instrumental variable: strongly predicts treatment
+assignment (cisplatin was standard before ~2000, carboplatin after)
+and has a direct prognostic effect on survival.}
 \item{X1, X2, ..., X2000}{Numeric. Log2(TPM + 1) normalised gene
 expression levels. Genes were selected as the top 2000 most variable
 genes across all TCGA-OV samples, ranked by median absolute

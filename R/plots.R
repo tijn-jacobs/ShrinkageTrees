@@ -65,7 +65,7 @@
   ggplot2::ggplot(df, ggplot2::aes(
     x = .data$iteration, y = .data$value, colour = .data$chain
   )) +
-    ggplot2::geom_line(alpha = 0.7, linewidth = 0.3) +
+    ggplot2::geom_line(alpha = 0.45, linewidth = 0.3) +
     ggplot2::labs(x = "Iteration", y = par_name, colour = "Chain") +
     ggplot2::theme_bw()
 }
@@ -511,6 +511,11 @@ plot.ShrinkageTrees <- function(x,
 #'   When \code{"both"}, a named list of two \pkg{ggplot2} objects is returned.
 #' @param n_vi Integer; number of top variables for \code{type = "vi"}.
 #'   Default \code{10}.
+#' @param bayesian_bootstrap Logical; only used when \code{type = "ate"}. If
+#'   \code{TRUE} (default), the ATE posterior is computed by reweighting each
+#'   iteration's CATE vector with Dirichlet(1, ..., 1) weights, giving the
+#'   population ATE (PATE). If \code{FALSE}, equal \eqn{1/n} weights are used,
+#'   giving the mixed ATE (MATE).
 #' @param ... Additional arguments (currently unused).
 #' @return A \pkg{ggplot2} object, or (for \code{type = "vi"} with
 #'   \code{forest = "both"}) a named list with elements \code{control} and
@@ -553,6 +558,7 @@ plot.CausalShrinkageForest <- function(x,
                                                   "ate", "cate", "vi"),
                                        forest = c("both", "control", "treat"),
                                        n_vi   = 10,
+                                       bayesian_bootstrap = TRUE,
                                        ...) {
   type   <- match.arg(type)
   forest <- match.arg(forest)
@@ -576,8 +582,9 @@ plot.CausalShrinkageForest <- function(x,
     if (is.null(st))
       stop("ATE plot requires store_posterior_sample = TRUE.", call. = FALSE)
 
-    ate_draws <- rowMeans(st)
-    return(.area_plot(ate_draws, "ATE", prob = 0.95, ...))
+    ate_draws <- .ate_samples(st, bayesian_bootstrap = bayesian_bootstrap)
+    label <- if (bayesian_bootstrap) "PATE" else "MATE"
+    return(.area_plot(ate_draws, label, prob = 0.95, ...))
   }
 
   # -- CATE distribution ------------------------------------------------------
@@ -605,9 +612,9 @@ plot.CausalShrinkageForest <- function(x,
                             colour = "grey50") +
         ggplot2::geom_linerange(
           ggplot2::aes(xmin = .data$lo, xmax = .data$hi),
-          colour = "grey70"
+          colour = "grey70", alpha = 0.35
         ) +
-        ggplot2::geom_point(size = 0.8) +
+        ggplot2::geom_point(size = 0.8, alpha = 0.6) +
         ggplot2::labs(
           x     = "CATE",
           y     = "Observation (sorted by posterior mean CATE)",

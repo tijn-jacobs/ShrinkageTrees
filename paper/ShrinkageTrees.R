@@ -5,13 +5,23 @@
 knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
 library(ShrinkageTrees)
 
+# Helper: inline a text output file produced by scripts/generate_figures.R
+# so summary/print blocks never drift from the actual fitted model.
+show_output <- function(path) {
+  if (file.exists(path)) {
+    cat(readLines(path), sep = "\n")
+  } else {
+    cat(sprintf("[%s not found -- run scripts/generate_figures.R first]", path))
+  }
+}
+
 
 ## ----quickstart, echo=TRUE, eval=FALSE----------------------------------------
 # library(ShrinkageTrees)
 # data("ovarian")
 # time   <- ovarian$OS_time / 30.44  # days to months
 # status <- ovarian$OS_event
-# X      <- as.matrix(ovarian[, -(1:6)])
+# X      <- as.matrix(ovarian[, -(1:3)])
 # fit    <- HorseTrees(y = time, status = status, X_train = X,
 #                      outcome_type = "right-censored", number_of_trees = 200)
 
@@ -25,7 +35,7 @@ library(ShrinkageTrees)
 # status    <- ovarian$OS_event
 # treatment <- ovarian$treatment
 # 
-# X <- as.matrix(ovarian[, -(1:3)])   # drop OS_time, OS_event, treatment
+# X <- as.matrix(ovarian[, -(1:3)])   # select the covariates
 
 
 ## ----split, echo=TRUE, eval=FALSE---------------------------------------------
@@ -39,11 +49,10 @@ library(ShrinkageTrees)
 
 ## ----survival-bart, echo=TRUE, eval=FALSE-------------------------------------
 # fit_bart <- SurvivalBART(
-#   y               = time_train,
+#   time            = time_train,
 #   status          = status_train,
 #   X_train         = X_train,
 #   X_test          = X_test,
-#   outcome_type    = "right-censored",
 #   timescale       = "time",
 #   number_of_trees = 200,
 #   N_post          = 5000,
@@ -56,12 +65,20 @@ library(ShrinkageTrees)
 # print(fit_bart)
 
 
+## ----survival-bart-print-out, echo=FALSE, comment=""--------------------------
+show_output("outputs/print_bart.txt")
+
+
 ## ----cindex-bart, echo=TRUE, eval=FALSE---------------------------------------
 # library(survival)
 # c_train <- concordance(Surv(time_train, status_train) ~ fit_bart$train_predictions)
 # c_test  <- concordance(Surv(time_test, status_test) ~ fit_bart$test_predictions)
 # cat("Train C-index:", round(c_train$concordance, 3),
 #     " Test C-index:", round(c_test$concordance, 3), "\n")
+
+
+## ----cindex-bart-out, echo=FALSE, comment=""----------------------------------
+show_output("outputs/cindex_bart.txt")
 
 
 ## ----population-survival-bart, echo=TRUE, eval=FALSE--------------------------
@@ -75,6 +92,14 @@ library(ShrinkageTrees)
 
 ## ----ExampleTree, echo=FALSE, fig.cap="Schematic of a single regression tree. Interior nodes contain binary splitting rules of the form $x_\\rho < c$; terminal nodes (leaves) contain step heights $h_\\ell$. An observation traverses the tree from root to leaf, and its prediction is the step height of the leaf it reaches.", fig.scap="Schematic of a regression tree.", out.width="85%", fig.align='center'----
 knitr::include_graphics("figures/ExampleTree_standalone.pdf")
+
+
+## ----regularisation-landscape, echo=FALSE, fig.cap="Regularisation landscape for \\CRANpkg{ShrinkageTrees}. Columns: step-height prior on the leaves, from no shrinkage (conjugate normal) to local shrinkage (half-Cauchy) to global--local shrinkage (horseshoe). Rows: splitting rule, with and without the Dirichlet (DART) structural prior. Blue cells name the fitting function and \\texttt{prior\\_type} value directly exposed in the package; the orange cell marks the Horseshoe Forest, the package's headline contribution. Dashed cells indicate combinations that pair structural sparsity with parametric shrinkage.", fig.scap="Regularisation landscape.", out.width="92%", fig.align='center'----
+knitr::include_graphics("figures/regularisation_landscape.pdf")
+
+
+## ----tau-learner, echo=FALSE, fig.cap="The $\\tau$-learner decomposition in \\CRANpkg{ShrinkageTrees}. The outcome splits into a prognostic forest $\\mu(\\mathbf{x}, \\hat e(\\mathbf{x}))$ (blue) and a treatment-effect forest $\\tau(\\mathbf{x})$ (orange). Each box lists the function arguments that control its forest. The bottom row shows the fitting functions that realise the decomposition for continuous and AFT-survival outcomes, with and without horseshoe shrinkage on the leaves.", fig.scap="$\\tau$-learner decomposition.", out.width="95%", fig.align='center'----
+knitr::include_graphics("figures/tau_learner.pdf")
 
 
 ## ----survival-horse, echo=TRUE, eval=FALSE------------------------------------
@@ -97,8 +122,16 @@ knitr::include_graphics("figures/ExampleTree_standalone.pdf")
 # print(fit_horse)
 
 
+## ----survival-print-horse-out, echo=FALSE, comment=""-------------------------
+show_output("outputs/print_horse.txt")
+
+
 ## ----survival-summary2, echo=TRUE, eval=FALSE---------------------------------
 # summary(fit_horse)
+
+
+## ----survival-summary-horse-out, echo=FALSE, comment=""-----------------------
+show_output("outputs/summary_horse.txt")
 
 
 ## ----cindex-horse, echo=TRUE, eval=FALSE--------------------------------------
@@ -106,6 +139,10 @@ knitr::include_graphics("figures/ExampleTree_standalone.pdf")
 # c_test  <- concordance(Surv(time_test, status_test) ~ fit_horse$test_predictions)
 # cat("Train C-index:", round(c_train$concordance, 3),
 #     " Test C-index:", round(c_test$concordance, 3), "\n")
+
+
+## ----cindex-horse-out, echo=FALSE, comment=""---------------------------------
+show_output("outputs/cindex.txt")
 
 
 ## ----convergence, echo=TRUE, eval=FALSE---------------------------------------
@@ -167,6 +204,10 @@ knitr::include_graphics(c("figures/survival_individual.pdf", "figures/survival_p
 # summary(fit_causal)
 
 
+## ----causal-summary-out, echo=FALSE, comment=""-------------------------------
+show_output("outputs/summary_causal.txt")
+
+
 ## ----treatment-effects, echo=TRUE, eval=FALSE---------------------------------
 # plot(fit_causal, type = "ate")
 # plot(fit_causal, type = "cate")
@@ -206,18 +247,19 @@ knitr::include_graphics(c("figures/ate_posterior.pdf", "figures/cate_caterpillar
 # 
 # # --- Fit models ---
 # fit_bart <- SurvivalBART(
-#   y = left_time, X_train = X, outcome_type = "interval-censored",
-#   right_time = right_time, number_of_trees = 200,
+#   left_time = left_time, right_time = right_time,
+#   X_train = X, number_of_trees = 200,
 #   N_post = 1000, N_burn = 250
 # )
 # fit_dart <- SurvivalDART(
-#   y = left_time, X_train = X, outcome_type = "interval-censored",
-#   right_time = right_time, number_of_trees = 200,
+#   left_time = left_time, right_time = right_time,
+#   X_train = X, number_of_trees = 200,
 #   N_post = 1000, N_burn = 250
 # )
 # fit_horse <- HorseTrees(
-#   y = left_time, X_train = X, outcome_type = "interval-censored",
-#   right_time = right_time, number_of_trees = 200, k = 0.1,
+#   left_time = left_time, right_time = right_time,
+#   X_train = X, outcome_type = "interval-censored",
+#   number_of_trees = 200, k = 0.1,
 #   N_post = 1000, N_burn = 250
 # )
 
@@ -266,24 +308,39 @@ knitr::kable(df,
   kableExtra::row_spec(4, hline_after = TRUE)
 
 
+## ----architecture, echo=FALSE, fig.cap="Package architecture. The R layer (top) handles input validation, preprocessing, hyperparameter calibration, S3 construction, and post-processing methods. The C++ backend (middle) runs the outer Gibbs sampler, dispatching to the reversible-jump \\texttt{Forest} class or the conjugate birth--death \\texttt{StanForest} class depending on the leaf prior; the \\texttt{ScaleMixture} wrapper selects one of four \\texttt{EtaPrior} subclasses at runtime via a factory. The output layer (bottom) exposes posterior draws, predictions, diagnostics, and a \\CRANpkg{coda} bridge to the user.", fig.scap="Package architecture.", out.width="92%", fig.align='center'----
+knitr::include_graphics("figures/architecture.pdf")
+
+
 ## ----pkg-comparison, echo=FALSE-----------------------------------------------
 df <- data.frame(
-  Package             = c("BART", "dbarts", "bcf", "stochtree", "SoftBart", "ShrinkageTrees"),
-  `Survival`          = c("Yes", "No", "No", "No", "No", "Yes"),
-  `Interval\nCensoring` = c("No", "No", "No", "No", "No", "Yes"),
-  `Causal\n($\\tau$-learner)` = c("No", "No", "Yes", "Yes", "No", "Yes"),
-  `Dirichlet\n(DART)` = c("Yes", "No", "No", "No", "No", "Yes"),
-  `Global--local\nshrinkage` = c("No", "No", "No", "No", "No", "Yes"),
-  check.names         = FALSE
+  Package               = c("BART", "dbarts", "bcf", "stochtree", "SoftBart", "ShrinkageTrees"),
+  Survival              = c("Yes", "No", "No", "No", "No", "Yes"),
+  IntervalCensoring     = c("No", "No", "No", "No", "No", "Yes"),
+  CausalTauLearner      = c("No", "No", "Yes", "Yes", "No", "Yes"),
+  DirichletDART         = c("Yes", "No", "No", "No", "No", "Yes"),
+  GlobalLocalShrinkage  = c("No", "No", "No", "No", "No", "Yes"),
+  check.names           = FALSE
+)
+pretty_headers <- kableExtra::linebreak(
+  c("Package",
+    "Survival",
+    "Interval\ncensoring",
+    "Causal\n($\\tau$-learner)",
+    "Dirichlet\n(DART)",
+    "Global--local\nshrinkage"),
+  align = "c"
 )
 knitr::kable(df,
-             caption = "Comparison of Bayesian tree ensemble packages in R.",
-             booktabs = TRUE,
-             format = "latex") |>
+             col.names = pretty_headers,
+             caption   = "Comparison of Bayesian tree ensemble packages in R.",
+             booktabs  = TRUE,
+             format    = "latex",
+             escape    = FALSE) |>
   kableExtra::kable_styling(
     latex_options = c("hold_position"),
-    font_size = 9
+    font_size     = 9
   ) |>
   kableExtra::column_spec(1, width = "2.2cm") |>
-  kableExtra::column_spec(2:6, width = "1.4cm")
+  kableExtra::column_spec(2:6, width = "1.8cm")
 

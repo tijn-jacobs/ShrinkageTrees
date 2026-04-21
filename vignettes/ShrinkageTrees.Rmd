@@ -990,6 +990,44 @@ cat("ATE 95% CI: [",
     round(smry_c$treatment_effect$ate_upper, 3), "]\n")
 ```
 
+##### Population vs. mixed ATE
+
+By default the ATE credible interval is obtained by a **Bayesian
+bootstrap**: at each MCMC iteration $s$ the observation-level CATEs
+$\tau^{(s)}(x_i)$ are reweighted with Dirichlet(1, ..., 1) weights,
+
+$$
+\widehat{\mathrm{PATE}}^{(s)} \;=\; \sum_{i=1}^n w_i^{(s)}\, \tau^{(s)}(x_i),
+\qquad (w_1^{(s)}, \dots, w_n^{(s)}) \sim \mathrm{Dir}(1, \dots, 1).
+$$
+
+The collection $\{\widehat{\mathrm{PATE}}^{(s)}\}$ approximates the
+posterior of the **population ATE** and therefore propagates uncertainty
+in both $\tau(\cdot)$ and the covariate distribution $F_X$. Setting
+`bayesian_bootstrap = FALSE` reverts to equal $1/n$ weights, giving the
+**mixed ATE** (MATE) that conditions on the observed covariates and has a
+narrower credible interval.
+
+```{r summary-pate-mate}
+smry_pate <- summary(fit_chf, bayesian_bootstrap = TRUE)   # default
+smry_mate <- summary(fit_chf, bayesian_bootstrap = FALSE)
+```
+
+The standalone helper `bayesian_bootstrap_ate()` returns both posteriors
+and their draws in a single list, and also works on a
+`CausalShrinkageForestPrediction` returned by `predict()` so that the
+PATE integrates over a prespecified target population.
+
+```{r bb-ate}
+bb <- bayesian_bootstrap_ate(fit_chf)
+cat("PATE:", round(bb$pate_mean, 3),
+    " 95% CI: [", round(bb$pate_ci$lower, 3), ",",
+                  round(bb$pate_ci$upper, 3), "]\n")
+cat("MATE:", round(bb$mate_mean, 3),
+    " 95% CI: [", round(bb$mate_ci$lower, 3), ",",
+                  round(bb$mate_ci$upper, 3), "]\n")
+```
+
 ### predict()
 
 `predict()` computes the posterior predictive distribution on new data.
@@ -1063,8 +1101,13 @@ plot(fit_hs, type = "trace")
 
 #### Posterior ATE distribution (causal models)
 
+The ATE density uses the Bayesian-bootstrap PATE posterior by default;
+pass `bayesian_bootstrap = FALSE` to plot the (narrower) mixed ATE
+density instead. See the summary section above for the definitions.
+
 ```{r plot-ate, eval=requireNamespace("ggplot2", quietly=TRUE)}
-plot(fit_chf, type = "ate")
+plot(fit_chf, type = "ate")                         # PATE (default)
+plot(fit_chf, type = "ate", bayesian_bootstrap = FALSE)  # MATE
 ```
 
 #### CATE caterpillar plot

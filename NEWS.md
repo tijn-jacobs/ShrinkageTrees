@@ -1,3 +1,30 @@
+# ShrinkageTrees 2.0.2
+
+## Bayesian bootstrap for the average treatment effect
+
+`summary()`, `plot(type = "ate")`, and `predict()` for
+`CausalShrinkageForest` (and `CausalHorseForest`) now default to a
+Bayesian-bootstrap posterior for the average treatment effect: at each
+MCMC iteration the per-observation CATEs are reweighted with
+Dirichlet(1, ..., 1) weights before being summed, giving a draw from the
+posterior of the *population* ATE (PATE). Credible intervals are
+correspondingly wider than before because they now propagate uncertainty
+in the covariate distribution, not only in `tau(x)`.
+
+- New argument `bayesian_bootstrap = TRUE` on `summary.CausalShrinkageForest()`,
+  `plot.CausalShrinkageForest()` (for `type = "ate"`), and
+  `predict.CausalShrinkageForest()`. Set to `FALSE` to recover the
+  previous equal-weight mixed ATE (MATE).
+- `predict()` now also returns an `ate` summary for the new data and
+  retains the posterior CATE sample matrix as `cate_samples`.
+- New exported helper `bayesian_bootstrap_ate()` returns PATE and MATE
+  summaries (means, CIs, and full posterior draws) from either a fitted
+  `CausalShrinkageForest` or a `CausalShrinkageForestPrediction`.
+
+This is a *breaking change for printed/plotted numerics*: existing
+scripts will report wider CIs than before. Use
+`bayesian_bootstrap = FALSE` to reproduce previous output.
+
 # ShrinkageTrees 2.0.1
 
 ## `ovarian` dataset restructured
