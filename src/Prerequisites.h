@@ -9,23 +9,18 @@
 #ifndef GUARD_Prerequisites_h
 #define GUARD_Prerequisites_h
 
-#include <iostream>    // Standard input/output operations (e.g., cout, endl)
 #include <vector>      // Vector data structure from the STL
 #include <cmath>       // Common math functions (e.g., sqrt, pow)
 #include <random>      // C++ random number generation library
 #include <cstddef>     // Definitions for size_t
-#include <algorithm>   // Algorithms like std::min, std::max, std::sort
+#include <algorithm>   // Algorithms like std::min, std::max, std::sort, std::find
 #include <iomanip>     // Input/output manipulators (e.g., for formatting output)
 #include <map>         // Associative containers (e.g., map)
-#include <fstream>     // File stream operations for input/output with files
 #include <ctime>       // Time functions (e.g., clock, time)
-#include <stdexcept>   // 
+#include <stdexcept>
 #include <memory>      // For dynamic memory management (e.g., std::shared_ptr)
 #include <limits>      // for std::numeric_limits<size_t>::max()
-
-// New dependencies
-#include <cstdint>   // for uint8_t (integers 0 to 255)
-#include <algorithm> // for std::find
+#include <cstdint>     // for uint8_t (integers 0 to 255)
 
 #include "Rcpp.h"
 
@@ -34,12 +29,13 @@ double LogSumExp(std::vector<double>& v);
 // Random number generation library
 #include "Random.h"
 
-// Namespace declarations for commonly used entities
+// Namespace declarations for commonly used entities.
+// Note: `using namespace Rcpp;` is kept here for historical reasons; the
+// `#define cout Rcpp::Rcout` / `#define printf Rprintf` macros have been
+// removed and call sites now use `Rcpp::Rcout` / `Rprintf` explicitly.
 using namespace Rcpp;
 using std::endl;
 using std::string;
-#define cout Rcpp::Rcout
-#define printf Rprintf
 
 // Define commonly used mathematical constants for convenience
 #define PI 3.141592653589793238462643383280
@@ -54,7 +50,7 @@ inline double standard_normal_cdf(double x) {
 // Inverse normal CDF (approximation)
 inline double standard_normal_quantile(double p) {
   if (p <= 0.0 || p >= 1.0) {
-    throw std::invalid_argument("p must be in (0,1)");
+    Rcpp::stop("p must be in (0,1)");
   }
 
   // Approximation constants

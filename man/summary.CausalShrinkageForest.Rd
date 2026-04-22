@@ -31,12 +31,12 @@ A \code{summary.CausalShrinkageForest} object with elements:
 \item{data_info}{Training and test data dimensions.}
 \item{treatment_effect}{List with \code{ate} (posterior mean ATE),
 \code{cate_sd} (SD of individual CATEs), and optionally
-\code{ate_lower}, \code{ate_upper} (95\\% CI; requires
-\code{store_posterior_sample = TRUE}) and
+\code{ate_lower}, \code{ate_upper} (95 percent credible interval;
+requires \code{store_posterior_sample = TRUE}) and
 \code{bayesian_bootstrap} (the flag used to produce the CI).}
 \item{prognostic}{Summary of the prognostic function (mean, SD, range).}
-\item{sigma}{Named vector with posterior mean, SD, and 95\\% CI of sigma
-(if estimated).}
+\item{sigma}{Named vector with posterior mean, SD, and 95 percent
+credible interval of sigma (if estimated).}
 \item{variable_importance_control}{Variable importance for the control
 forest (if available).}
 \item{variable_importance_treat}{Variable importance for the treatment

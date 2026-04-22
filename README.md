@@ -159,7 +159,7 @@ The package ships with two TCGA datasets for high-dimensional survival analysis 
 
 ```r
 data("pdac")     # data frame with time, status, treatment, gene expression, ...
-data("ovarian")  # list: ovarian$X (gene matrix), ovarian$clinical (data frame)
+data("ovarian")  # data frame with OS_time, OS_event, treatment, clinical vars, and gene expression columns
 ```
 
 ## 🩺 Pancreatic Cancer Analysis Demo

@@ -492,15 +492,15 @@ void PrintTreeWithSizesRecursive(Tree* node, Cutpoints& cutpoints, Data& data,
                                  int depth) {
   // Indentation based on depth to visualize the tree structure
   for (int i = 0; i < depth; ++i) {
-    cout << "  ";  // Two spaces per depth level
+    Rcpp::Rcout << "  ";  // Two spaces per depth level
   }
 
   // Print node ID
-  cout << "Node " << node->NodeID() << ": ";
+  Rcpp::Rcout << "Node " << node->NodeID() << ": ";
 
   // Print split information if it's not a leaf node
   if (node->GetLeft() != nullptr || node->GetRight() != nullptr) {
-    cout << " (Splitting variable: " << node->GetSplitVar() 
+    Rcpp::Rcout << " (Splitting variable: " << node->GetSplitVar() 
               << ", Cut value: " 
               << cutpoints.values[node->GetSplitVar()][node->GetCutVal()]
               << ")";
@@ -512,14 +512,14 @@ void PrintTreeWithSizesRecursive(Tree* node, Cutpoints& cutpoints, Data& data,
     double node_residual_sum = bottom_node_map.count(node) 
                                ? residual_sum_vector[bottom_node_map[node]] 
                                : 0.0;
-    cout << " (Parameter: " << node->GetParameters(0) 
+    Rcpp::Rcout << " (Parameter: " << node->GetParameters(0) 
               << ", Node size: " << node_size 
               << ", Mean residual: " 
               << (node_size > 0 ? node_residual_sum / node_size : 0.0)
               << ")";
   }
 
-  cout << "\n";
+  Rcpp::Rcout << "\n";
 
   // Recursively print left and right children if they exist
   if (node->GetLeft() != nullptr) {

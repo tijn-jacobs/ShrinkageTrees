@@ -3,34 +3,39 @@
 \docType{data}
 \name{ovarian}
 \alias{ovarian}
-\title{TCGA Ovarian Cancer Dataset}
+\title{Semi-synthesised TCGA Ovarian Cancer Dataset}
 \format{
-A data frame with n rows (patients) and 2007 columns:
-\describe{
-\item{OS_time}{Numeric. Overall survival time in days. Defined as days
-to death for deceased patients and days to last follow-up for
-censored patients.}
-\item{OS_event}{Integer. Overall survival event indicator.
-1 = death observed, 0 = censored.}
-\item{treatment}{Integer. First-line platinum-based chemotherapy.
-1 = carboplatin, 0 = cisplatin. Patients who received both
-carboplatin and cisplatin were coded as 0 (cisplatin group).
-Patients with ambiguous or missing treatment records were excluded.}
-\item{age}{Integer. Age at initial pathologic diagnosis in years.}
-\item{figo_stage}{Integer. FIGO staging score coded as
-2 = Stage II, 3 = Stage III, 4 = Stage IV.}
-\item{tumor_grade}{Integer. Histologic tumor grade coded as
-2 = G2, 3 = G3, 4 = G4. GX (unknown grade) was coded as
-\code{NA} and excluded.}
-\item{year_of_diagnosis}{Integer. Year of initial pathologic diagnosis.
-Ranges from approximately 1992 to 2013, spanning the TCGA enrollment
-window. Acts as an instrumental variable: strongly predicts treatment
-assignment (cisplatin was standard before ~2000, carboplatin after)
-and has a direct prognostic effect on survival.}
-\item{X1, X2, ..., X2000}{Numeric. Log2(TPM + 1) normalised gene
-expression levels. Genes were selected as the top 2000 most variable
-genes across all TCGA-OV samples, ranked by median absolute
-deviation (MAD).}
+A data frame with 357 rows (patients) and 1007 columns:
+\itemize{
+\item \strong{OS_time}: Numeric. Observed survival time in days (simulated).
+\item \strong{OS_event}: Integer. Event indicator (simulated).
+1 = event observed, 0 = right-censored.
+\item \strong{treatment}: Integer. Simulated treatment assignment.
+1 = carboplatin, 0 = cisplatin. Driven primarily by
+\code{year_of_diagnosis} as an instrumental variable
+(cisplatin era pre-~2000, carboplatin after).
+\item \strong{age}: Integer. Age at initial pathologic diagnosis in years.
+\item \strong{figo_stage}: Integer. FIGO stage coded as 2 = Stage II,
+3 = Stage III, 4 = Stage IV.
+\item \strong{tumor_grade}: Integer. Histologic tumor grade coded as
+2 = G2, 3 = G3, 4 = G4. Rows with GX (unknown grade) were
+excluded.
+\item \strong{year_of_diagnosis}: Integer. Year of initial pathologic diagnosis
+(approx. 1992--2013). Used as an instrumental variable for
+treatment assignment in the DGP.
+\item \strong{right_time, left_time}: Numeric. Interval-censoring bounds
+derived from the simulated survival times, suitable for passing
+to the package's interval-censored survival interface
+(\code{right_time = Inf} for right-censored observations,
+\code{left_time == right_time} for exact events).
+\item \strong{year_of_diagnosis.1}: Integer. Duplicate of
+\code{year_of_diagnosis} left in place from the data-assembly
+join; retained for reproducibility and may be ignored.
+\item \strong{ENSG...}: Numeric. Log2(TPM + 1) normalised gene expression
+levels for 997 Ensembl genes (columns named by versioned Ensembl
+gene IDs, e.g. \code{ENSG00000270372.1}). Genes were selected as
+the most variable transcripts across TCGA-OV samples, ranked by
+median absolute deviation (MAD).
 }
 }
 \source{
@@ -40,10 +45,13 @@ deviation (MAD).}
 ovarian
 }
 \description{
-Gene expression and clinical data for ovarian cancer patients from
-The Cancer Genome Atlas (TCGA-OV). The dataset contains log2-normalised
-gene expression profiles alongside overall survival outcomes, treatment
-assignment, and clinical covariates.
+Gene expression and clinical covariates for ovarian cancer patients from
+The Cancer Genome Atlas (TCGA-OV), combined with semi-synthetic
+survival outcomes and treatment assignment. Real covariates (age,
+FIGO stage, tumor grade, gene expression) are retained; survival
+times, event indicator, and treatment assignment are simulated from a
+known data-generating process so that the true treatment effect is
+available for validation (see \code{\link{ovarian_truth}}).
 }
 \details{
 RNA-seq data were downloaded from the GDC portal using the

@@ -4,24 +4,24 @@
 // Function to print the data object
 void Data::Print() const {
   // Print general information about the data object
-  cout << "Data Object:" << endl;
-  cout << "Number of variables (p): " << p << endl;
-  cout << "Number of observations (n): " << n << endl;
+  Rcpp::Rcout << "Data Object:" << endl;
+  Rcpp::Rcout << "Number of variables (p): " << p << endl;
+  Rcpp::Rcout << "Number of observations (n): " << n << endl;
 
   // Print covariate (X) data for each observation
-  cout << "X (covariates):" << endl;
+  Rcpp::Rcout << "X (covariates):" << endl;
   for (size_t i = 0; i < n; ++i) {
-    cout << "Observation " << i + 1 << ": ";
+    Rcpp::Rcout << "Observation " << i + 1 << ": ";
     for (size_t j = 0; j < p; ++j) {
-      cout << X[i * p + j] << " ";  // Print each covariate value
+      Rcpp::Rcout << X[i * p + j] << " ";  // Print each covariate value
     }
-    cout << endl;
+    Rcpp::Rcout << endl;
   }
 
   // Print outcome (y) data for each observation
-  cout << "y (outcomes):" << endl;
+  Rcpp::Rcout << "y (outcomes):" << endl;
   for (size_t i = 0; i < n; ++i) {
-    cout << "Observation " << i + 1 << ": " << y[i] << endl;
+    Rcpp::Rcout << "Observation " << i + 1 << ": " << y[i] << endl;
   }
 }
 
@@ -30,24 +30,24 @@ void Data::Print() const {
 void TreePrior::Print() const {
   
   // Print header for the prior parameters
-  cout << "----------------------------------" << std::endl;
-  cout << "         Prior Parameters         " << std::endl;
-  cout << "----------------------------------" << std::endl;
+  Rcpp::Rcout << "----------------------------------" << std::endl;
+  Rcpp::Rcout << "         Prior Parameters         " << std::endl;
+  Rcpp::Rcout << "----------------------------------" << std::endl;
 
   // Print each prior parameter with a fixed-width label and value format
-  cout << std::left << std::setw(15) << "p_GROW:"    
+  Rcpp::Rcout << std::left << std::setw(15) << "p_GROW:"    
             << std::setw(10) << p_GROW   << std::endl;
-  cout << std::left << std::setw(15) << "p_PRUNE:"   
+  Rcpp::Rcout << std::left << std::setw(15) << "p_PRUNE:"   
             << std::setw(10) << p_PRUNE  << std::endl;
-  cout << std::left << std::setw(15) << "base:"      
+  Rcpp::Rcout << std::left << std::setw(15) << "base:"      
             << std::setw(10) << base     << std::endl;
-  cout << std::left << std::setw(15) << "power:"     
+  Rcpp::Rcout << std::left << std::setw(15) << "power:"     
             << std::setw(10) << power    << std::endl;
-  cout << std::left << std::setw(15) << "eta:"       
+  Rcpp::Rcout << std::left << std::setw(15) << "eta:"       
             << std::setw(10) << eta      << std::endl;
 
   // Print footer
-  cout << "----------------------------------" << std::endl;
+  Rcpp::Rcout << "----------------------------------" << std::endl;
 }
 
 
@@ -126,24 +126,24 @@ void Cutpoints::SetCutpoints(size_t _p, size_t n, double* X, int* number_of_cuts
 // Function to print the cutpoints
 void Cutpoints::Print() const {
   // Print header for the cutpoints information
-  cout << "Cutpoints Information:\n";
-  cout << "-----------------------\n";
+  Rcpp::Rcout << "Cutpoints Information:\n";
+  Rcpp::Rcout << "-----------------------\n";
 
   // Loop over each variable and print its cutpoints
   for (size_t i = 0; i < p; ++i) {
-    cout << "Variable " << i << " cutpoints: ";
+    Rcpp::Rcout << "Variable " << i << " cutpoints: ";
 
     // Print each cutpoint value with fixed precision
     for (size_t j = 0; j < values[i].size(); ++j) {
-      cout << std::fixed << std::setprecision(3) 
+      Rcpp::Rcout << std::fixed << std::setprecision(3) 
                 << values[i][j] << " ";
     }
 
     // New line after printing all cutpoints for the variable
-    cout << std::endl;
+    Rcpp::Rcout << std::endl;
   }
 
   // Print footer
-  cout << "-----------------------\n";
+  Rcpp::Rcout << "-----------------------\n";
 }
 

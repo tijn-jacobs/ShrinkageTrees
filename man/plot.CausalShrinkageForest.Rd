@@ -21,10 +21,10 @@
 \item{\code{"trace"}}{Sigma traceplot (chain mixing).}
 \item{\code{"density"}}{Overlaid posterior density of sigma per chain.}
 \item{\code{"ate"}}{Posterior density of the average treatment effect
-(ATE) with 95 \\% credible region. Requires
+(ATE) with 95 percent credible region. Requires
 \code{store_posterior_sample = TRUE}.}
-\item{\code{"cate"}}{Point estimates and 95 \\% credible intervals for
-the CATE of each training observation, sorted by posterior mean.
+\item{\code{"cate"}}{Point estimates and 95 percent credible intervals
+for the CATE of each training observation, sorted by posterior mean.
 Requires \code{store_posterior_sample = TRUE}.}
 \item{\code{"vi"}}{Posterior credible intervals for variable inclusion
 probabilities (Dirichlet prior only). Controlled by \code{forest}.}
@@ -55,34 +55,30 @@ Visualises posterior draws using \pkg{ggplot2}.
 Requires the suggested package \pkg{ggplot2}.
 }
 \examples{
-\dontrun{
-set.seed(1)
-n <- 60; p <- 5
-X <- matrix(rnorm(n * p), ncol = p)
-w <- rbinom(n, 1, 0.5)
-y <- X[, 1] + w * 1.5 * (X[, 2] > 0) + rnorm(n, sd = 0.5)
+\donttest{
+if (requireNamespace("ggplot2", quietly = TRUE)) {
+  set.seed(1)
+  n <- 60; p <- 5
+  X <- matrix(rnorm(n * p), ncol = p)
+  w <- rbinom(n, 1, 0.5)
+  y <- X[, 1] + w * 1.5 * (X[, 2] > 0) + rnorm(n, sd = 0.5)
 
-fit <- CausalShrinkageForest(
-  y = y,
-  X_train_control = X, X_train_treat = X,
-  treatment_indicator_train = w,
-  prior_type_control = "horseshoe", prior_type_treat = "horseshoe",
-  local_hp_control = 0.1, global_hp_control = 0.1,
-  local_hp_treat  = 0.1, global_hp_treat  = 0.1,
-  N_post = 200, N_burn = 100,
-  store_posterior_sample = TRUE
-)
+  fit <- CausalShrinkageForest(
+    y = y,
+    X_train_control = X, X_train_treat = X,
+    treatment_indicator_train = w,
+    prior_type_control = "horseshoe", prior_type_treat = "horseshoe",
+    local_hp_control = 0.1, global_hp_control = 0.1,
+    local_hp_treat  = 0.1, global_hp_treat  = 0.1,
+    number_of_trees_control = 5, number_of_trees_treat = 5,
+    N_post = 50, N_burn = 25,
+    store_posterior_sample = TRUE,
+    verbose = FALSE
+  )
 
-# Sigma traceplot -- check chain mixing
-plot(fit, type = "trace")
-
-# Overlaid posterior densities of sigma
-plot(fit, type = "density")
-
-# Posterior distribution of the average treatment effect
-plot(fit, type = "ate")
-
-# Conditional treatment effects for each observation
-plot(fit, type = "cate")
+  plot(fit, type = "trace")
+  plot(fit, type = "ate")
+  plot(fit, type = "cate")
+}
 }
 }

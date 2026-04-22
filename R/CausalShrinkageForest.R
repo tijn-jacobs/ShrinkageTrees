@@ -366,8 +366,7 @@ CausalShrinkageForest <- function(y = NULL,
       verbose                   = FALSE
     )
 
-    n_cores <- if (.Platform$OS.type == "windows") 1L
-                else min(n_chains, parallel::detectCores(logical = FALSE))
+    n_cores <- .resolve_cores(n_chains)
     if (verbose)
       message("Running ", n_chains, " chains (", n_cores, " cores) ...")
 
@@ -1138,7 +1137,7 @@ CausalShrinkageForest <- function(y = NULL,
   
   # remove burn-in of sigma
   if (!sigma_known) {
-    fit$sigma <- fit$sigma[-(1:N_burn)]
+    fit$sigma <- fit$sigma[-seq_len(N_burn)]
   } 
 
   prior_type_control_cpp <- prior_type_control

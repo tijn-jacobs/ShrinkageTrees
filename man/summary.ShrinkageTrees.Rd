@@ -22,8 +22,8 @@ A \code{summary.ShrinkageTrees} object with elements:
 \item{prior}{Prior specification.}
 \item{mcmc}{MCMC settings (trees, draws, burn-in).}
 \item{data_info}{Training and test data dimensions.}
-\item{sigma}{Named vector with posterior mean, SD, and 95\\% CI of sigma
-(continuous and survival outcomes only).}
+\item{sigma}{Named vector with posterior mean, SD, and 95 percent
+credible interval of sigma (continuous and survival outcomes only).}
 \item{predictions}{List with \code{train} (and optionally \code{test})
 prediction summaries (mean, SD, range).}
 \item{variable_importance}{Named vector of posterior inclusion

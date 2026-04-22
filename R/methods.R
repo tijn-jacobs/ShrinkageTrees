@@ -161,7 +161,7 @@ predict.ShrinkageTrees <- function(object, newdata, level = 0.95, ...) {
       out$predictions_sample <- sample_pred   # N_post x n_new
       # sigma is jointly sampled with the trees (sigma_known = FALSE for
       # survival); remove burn-in to match predictions_sample rows.
-      out$sigma <- fit$sigma[-(1:object$mcmc$N_burn)] * pre$sigma_hat
+      out$sigma <- fit$sigma[-seq_len(object$mcmc$N_burn)] * pre$sigma_hat
     }
 
     class(out) <- "ShrinkageTreesPrediction"
@@ -399,8 +399,8 @@ print.ShrinkageTrees <- function(x, ...) {
 #'     \item{prior}{Prior specification.}
 #'     \item{mcmc}{MCMC settings (trees, draws, burn-in).}
 #'     \item{data_info}{Training and test data dimensions.}
-#'     \item{sigma}{Named vector with posterior mean, SD, and 95\% CI of sigma
-#'       (continuous and survival outcomes only).}
+#'     \item{sigma}{Named vector with posterior mean, SD, and 95 percent
+#'       credible interval of sigma (continuous and survival outcomes only).}
 #'     \item{predictions}{List with \code{train} (and optionally \code{test})
 #'       prediction summaries (mean, SD, range).}
 #'     \item{variable_importance}{Named vector of posterior inclusion
@@ -558,12 +558,12 @@ print.summary.ShrinkageTrees <- function(x, n_vi = 10, ...) {
 #'     \item{data_info}{Training and test data dimensions.}
 #'     \item{treatment_effect}{List with \code{ate} (posterior mean ATE),
 #'       \code{cate_sd} (SD of individual CATEs), and optionally
-#'       \code{ate_lower}, \code{ate_upper} (95\% CI; requires
-#'       \code{store_posterior_sample = TRUE}) and
+#'       \code{ate_lower}, \code{ate_upper} (95 percent credible interval;
+#'       requires \code{store_posterior_sample = TRUE}) and
 #'       \code{bayesian_bootstrap} (the flag used to produce the CI).}
 #'     \item{prognostic}{Summary of the prognostic function (mean, SD, range).}
-#'     \item{sigma}{Named vector with posterior mean, SD, and 95\% CI of sigma
-#'       (if estimated).}
+#'     \item{sigma}{Named vector with posterior mean, SD, and 95 percent
+#'       credible interval of sigma (if estimated).}
 #'     \item{variable_importance_control}{Variable importance for the control
 #'       forest (if available).}
 #'     \item{variable_importance_treat}{Variable importance for the treatment
@@ -830,7 +830,7 @@ print.CausalShrinkageForest <- function(x, ...) {
 #' fit <- HorseTrees(y = rnorm(50), X_train = matrix(rnorm(250), 50, 5),
 #'                   N_post = 200, N_burn = 100, n_chains = 2)
 #' if (requireNamespace("coda", quietly = TRUE)) {
-#'   mcmc_obj <- as.mcmc.list(fit)
+#'   mcmc_obj <- coda::as.mcmc.list(fit)
 #'   coda::gelman.diag(mcmc_obj)
 #'   coda::effectiveSize(mcmc_obj)
 #' }

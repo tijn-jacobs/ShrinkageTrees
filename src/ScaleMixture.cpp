@@ -376,7 +376,7 @@ EtaPrior* CreateEtaPrior(PriorType type, double param1, double param2) {
   case PriorType::Horseshoe_fw:
     return new Horseshoe_fw(param1);
   default:
-    throw std::invalid_argument("Unsupported prior type");
+    Rcpp::stop("Unsupported prior type");
   }
 }
 

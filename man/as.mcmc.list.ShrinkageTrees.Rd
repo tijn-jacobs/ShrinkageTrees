@@ -34,7 +34,7 @@ For single-chain fits the returned object contains one chain.
 fit <- HorseTrees(y = rnorm(50), X_train = matrix(rnorm(250), 50, 5),
                   N_post = 200, N_burn = 100, n_chains = 2)
 if (requireNamespace("coda", quietly = TRUE)) {
-  mcmc_obj <- as.mcmc.list(fit)
+  mcmc_obj <- coda::as.mcmc.list(fit)
   coda::gelman.diag(mcmc_obj)
   coda::effectiveSize(mcmc_obj)
 }

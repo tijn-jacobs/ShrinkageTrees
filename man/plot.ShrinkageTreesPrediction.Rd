@@ -34,22 +34,24 @@ a \code{ShrinkageTreesPrediction} object. Only available for survival
 outcome types (\code{"right-censored"} or \code{"interval-censored"}).
 }
 \examples{
-\dontrun{
-# Fit a survival model
-fit_surv <- SurvivalBART(
-  time = time, status = status, X_train = X,
-  number_of_trees = 20, N_post = 200, N_burn = 100,
-  store_posterior_sample = TRUE, verbose = FALSE
-)
+\donttest{
+if (requireNamespace("ggplot2", quietly = TRUE)) {
+  set.seed(1)
+  n <- 40; p <- 3
+  X <- matrix(rnorm(n * p), ncol = p)
+  X_test <- matrix(rnorm(10 * p), ncol = p)
+  time <- rexp(n, rate = exp(0.5 * X[, 1]))
+  status <- rbinom(n, 1, 0.7)
 
-# Predict on new data
-pred <- predict(fit_surv, newdata = X_test)
+  fit_surv <- SurvivalBART(
+    time = time, status = status, X_train = X,
+    number_of_trees = 5, N_post = 50, N_burn = 25,
+    store_posterior_sample = TRUE, verbose = FALSE
+  )
 
-# Population-averaged posterior predictive survival curve
-plot(pred, type = "survival")
-
-# Individual posterior predictive curves
-plot(pred, type = "survival", obs = c(1, 5, 10))
+  pred <- predict(fit_surv, newdata = X_test)
+  plot(pred, type = "survival")
+}
 }
 }
 \seealso{

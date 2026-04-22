@@ -1,3 +1,26 @@
+#' Resolve the number of worker cores for multi-chain MCMC
+#'
+#' Returns a safe core count that never exceeds CRAN's two-core policy
+#' when running under `R CMD check`, honours the `OMP_THREAD_LIMIT`
+#' environment variable, and falls back to sequential execution on Windows
+#' (where `mclapply` cannot fork).
+#'
+#' @param n_chains Requested number of chains.
+#' @return Integer number of cores to use.
+#' @keywords internal
+#' @noRd
+.resolve_cores <- function(n_chains) {
+  if (.Platform$OS.type == "windows") return(1L)
+  cap <- if (nzchar(Sys.getenv("_R_CHECK_LIMIT_CORES_"))) 2L else Inf
+  tl <- suppressWarnings(as.integer(Sys.getenv("OMP_THREAD_LIMIT", "")))
+  if (!is.na(tl) && tl > 0) cap <- min(cap, tl)
+  detected <- tryCatch(parallel::detectCores(logical = FALSE),
+                       error = function(e) 1L)
+  if (is.na(detected) || detected < 1L) detected <- 1L
+  as.integer(max(1L, min(n_chains, detected, cap)))
+}
+
+
 #' Compute mean estimate for censored data
 #'
 #' Estimates the mean and standard deviation for right-censored or

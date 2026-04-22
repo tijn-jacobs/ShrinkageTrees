@@ -26,11 +26,11 @@ bool StanTree::Birth(size_t nid, size_t split_var, size_t cut_val,
 {
   StanTree* target = GetNodePointer(nid);
   if (target == nullptr) {
-    cout << "error in Birth: bottom node not found\n";
+    Rcpp::warning("StanTree::Birth: bottom node not found");
     return false;
   }
   if (target->left != nullptr) {
-    cout << "error in Birth: found node has children\n";
+    Rcpp::warning("StanTree::Birth: found node has children");
     return false;
   }
 
@@ -77,7 +77,7 @@ bool StanTree::Death(size_t nid, double new_step_height)
 {
   StanTree* nog_node = GetNodePointer(nid);
   if (nog_node == nullptr) {
-    cout << "error in Death: nid invalid\n";
+    Rcpp::warning("StanTree::Death: nid invalid");
     return false;
   }
   if (nog_node->IsNog()) {
@@ -90,7 +90,7 @@ bool StanTree::Death(size_t nid, double new_step_height)
     nog_node->step_height = new_step_height;
     return true;
   } else {
-    cout << "error in Death: node is not a nog node\n";
+    Rcpp::warning("StanTree::Death: node is not a nog node");
     return false;
   }
 }
@@ -228,7 +228,7 @@ void StanTree::Clear()
 void StanTree::CopyTree(StanTree* destination, const StanTree* source)
 {
   if (destination->left) {
-    cout << "CopyTree: error, destination node already has children\n";
+    Rcpp::warning("StanTree::CopyTree: destination node already has children");
     return;
   }
 

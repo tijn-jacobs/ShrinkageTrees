@@ -24,7 +24,8 @@
 #'   with \code{store_posterior_sample = TRUE}) or a
 #'   \code{CausalShrinkageForestPrediction} (from
 #'   \code{\link{predict.CausalShrinkageForest}}).
-#' @param alpha One minus the credible level. Default \code{0.05} (95\% CI).
+#' @param alpha One minus the credible level. Default \code{0.05}
+#'   (a 95 percent credible interval).
 #' @return A list with
 #'   \describe{
 #'     \item{pate_mean, pate_ci, pate_samples}{Posterior mean, credible
@@ -37,6 +38,33 @@
 #' @seealso \code{\link{summary.CausalShrinkageForest}},
 #'   \code{\link{plot.CausalShrinkageForest}},
 #'   \code{\link{predict.CausalShrinkageForest}}
+#'
+#' @examples
+#' # Small toy causal model (binary outcome, for speed)
+#' set.seed(1)
+#' n <- 40; p <- 3
+#' X <- matrix(runif(n * p), ncol = p)
+#' trt <- rbinom(n, 1, 0.5)
+#' y <- X[, 1] + trt * (0.5 + X[, 2]) + rnorm(n)
+#'
+#' fit <- CausalShrinkageForest(
+#'   y = y,
+#'   X_train_control = X, X_train_treat = X,
+#'   treatment_indicator_train = trt,
+#'   outcome_type = "continuous",
+#'   number_of_trees_control = 5, number_of_trees_treat = 5,
+#'   prior_type_control = "horseshoe", prior_type_treat = "horseshoe",
+#'   local_hp_control = 0.1, global_hp_control = 0.1,
+#'   local_hp_treat = 0.1, global_hp_treat = 0.1,
+#'   N_post = 20, N_burn = 10,
+#'   store_posterior_sample = TRUE,
+#'   verbose = FALSE
+#' )
+#'
+#' bb <- bayesian_bootstrap_ate(fit, alpha = 0.05)
+#' bb$pate_mean
+#' bb$pate_ci
+#'
 #' @export
 bayesian_bootstrap_ate <- function(object, alpha = 0.05) {
 

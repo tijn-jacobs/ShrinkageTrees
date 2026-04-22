@@ -370,7 +370,7 @@
 #'   range of observed training times. Used only when
 #'   \code{type = "survival"}.
 #' @param level Width of the pointwise credible band for
-#'   \code{type = "survival"}. Default \code{0.95} (i.e.\ 95\% credible
+#'   \code{type = "survival"}. Default \code{0.95} (a 95 percent credible
 #'   interval at each time point).
 #' @param km Logical; if \code{TRUE} and \code{type = "survival"}
 #'   with \code{obs = NULL}, overlay the Kaplan--Meier curve (dashed black
@@ -381,51 +381,29 @@
 #' @return A \pkg{ggplot2} object.
 #'
 #' @examples
-#' \dontrun{
-#' set.seed(1)
-#' n <- 50; p <- 5
-#' X <- matrix(rnorm(n * p), ncol = p)
-#' y <- X[, 1] + rnorm(n)
+#' \donttest{
+#' if (requireNamespace("ggplot2", quietly = TRUE)) {
+#'   set.seed(1)
+#'   n <- 50; p <- 5
+#'   X <- matrix(rnorm(n * p), ncol = p)
+#'   y <- X[, 1] + rnorm(n)
 #'
-#' # Fit a continuous model
-#' fit <- ShrinkageTrees(
-#'   y = y, X_train = X,
-#'   prior_type = "horseshoe",
-#'   local_hp = 0.1, global_hp = 0.1,
-#'   N_post = 200, N_burn = 100
-#' )
+#'   # Fit a small continuous model
+#'   fit <- ShrinkageTrees(
+#'     y = y, X_train = X,
+#'     prior_type = "horseshoe",
+#'     local_hp = 0.1, global_hp = 0.1,
+#'     number_of_trees = 5,
+#'     N_post = 50, N_burn = 25,
+#'     verbose = FALSE
+#'   )
 #'
-#' # Sigma traceplot -- check chain mixing
-#' plot(fit, type = "trace")
+#'   # Sigma traceplot -- check chain mixing
+#'   plot(fit, type = "trace")
 #'
-#' # Overlaid posterior densities of sigma per chain
-#' plot(fit, type = "density")
-#'
-#' # --- Survival curves (requires survival outcome) ---
-#' time <- rexp(n, rate = exp(0.5 * X[, 1]))
-#' status <- rbinom(n, 1, 0.7)
-#'
-#' fit_surv <- SurvivalBART(
-#'   time = time, status = status, X_train = X,
-#'   number_of_trees = 10, N_post = 200, N_burn = 100,
-#'   verbose = FALSE
-#' )
-#'
-#' # Population-averaged survival curve with 95% credible band
-#' plot(fit_surv, type = "survival")
-#'
-#' # With Kaplan-Meier overlay for comparison
-#' plot(fit_surv, type = "survival", km = TRUE)
-#'
-#' # Individual curves for selected observations
-#' plot(fit_surv, type = "survival", obs = c(1, 5, 10))
-#'
-#' # Single individual with 90% credible band
-#' plot(fit_surv, type = "survival", obs = 1, level = 0.90)
-#'
-#' # Custom time grid
-#' plot(fit_surv, type = "survival", obs = c(1, 10),
-#'      t_grid = seq(0.1, 20, length.out = 100))
+#'   # Overlaid posterior densities of sigma per chain
+#'   plot(fit, type = "density")
+#' }
 #' }
 #' @export
 plot.ShrinkageTrees <- function(x,
@@ -498,10 +476,10 @@ plot.ShrinkageTrees <- function(x,
 #'     \item{\code{"trace"}}{Sigma traceplot (chain mixing).}
 #'     \item{\code{"density"}}{Overlaid posterior density of sigma per chain.}
 #'     \item{\code{"ate"}}{Posterior density of the average treatment effect
-#'       (ATE) with 95 \% credible region. Requires
+#'       (ATE) with 95 percent credible region. Requires
 #'       \code{store_posterior_sample = TRUE}.}
-#'     \item{\code{"cate"}}{Point estimates and 95 \% credible intervals for
-#'       the CATE of each training observation, sorted by posterior mean.
+#'     \item{\code{"cate"}}{Point estimates and 95 percent credible intervals
+#'       for the CATE of each training observation, sorted by posterior mean.
 #'       Requires \code{store_posterior_sample = TRUE}.}
 #'     \item{\code{"vi"}}{Posterior credible intervals for variable inclusion
 #'       probabilities (Dirichlet prior only). Controlled by \code{forest}.}
@@ -522,35 +500,31 @@ plot.ShrinkageTrees <- function(x,
 #'   \code{treat}.
 #'
 #' @examples
-#' \dontrun{
-#' set.seed(1)
-#' n <- 60; p <- 5
-#' X <- matrix(rnorm(n * p), ncol = p)
-#' w <- rbinom(n, 1, 0.5)
-#' y <- X[, 1] + w * 1.5 * (X[, 2] > 0) + rnorm(n, sd = 0.5)
+#' \donttest{
+#' if (requireNamespace("ggplot2", quietly = TRUE)) {
+#'   set.seed(1)
+#'   n <- 60; p <- 5
+#'   X <- matrix(rnorm(n * p), ncol = p)
+#'   w <- rbinom(n, 1, 0.5)
+#'   y <- X[, 1] + w * 1.5 * (X[, 2] > 0) + rnorm(n, sd = 0.5)
 #'
-#' fit <- CausalShrinkageForest(
-#'   y = y,
-#'   X_train_control = X, X_train_treat = X,
-#'   treatment_indicator_train = w,
-#'   prior_type_control = "horseshoe", prior_type_treat = "horseshoe",
-#'   local_hp_control = 0.1, global_hp_control = 0.1,
-#'   local_hp_treat  = 0.1, global_hp_treat  = 0.1,
-#'   N_post = 200, N_burn = 100,
-#'   store_posterior_sample = TRUE
-#' )
+#'   fit <- CausalShrinkageForest(
+#'     y = y,
+#'     X_train_control = X, X_train_treat = X,
+#'     treatment_indicator_train = w,
+#'     prior_type_control = "horseshoe", prior_type_treat = "horseshoe",
+#'     local_hp_control = 0.1, global_hp_control = 0.1,
+#'     local_hp_treat  = 0.1, global_hp_treat  = 0.1,
+#'     number_of_trees_control = 5, number_of_trees_treat = 5,
+#'     N_post = 50, N_burn = 25,
+#'     store_posterior_sample = TRUE,
+#'     verbose = FALSE
+#'   )
 #'
-#' # Sigma traceplot -- check chain mixing
-#' plot(fit, type = "trace")
-#'
-#' # Overlaid posterior densities of sigma
-#' plot(fit, type = "density")
-#'
-#' # Posterior distribution of the average treatment effect
-#' plot(fit, type = "ate")
-#'
-#' # Conditional treatment effects for each observation
-#' plot(fit, type = "cate")
+#'   plot(fit, type = "trace")
+#'   plot(fit, type = "ate")
+#'   plot(fit, type = "cate")
+#' }
 #' }
 #' @export
 plot.CausalShrinkageForest <- function(x,
@@ -671,22 +645,24 @@ plot.CausalShrinkageForest <- function(x,
 #' @return A \pkg{ggplot2} object.
 #'
 #' @examples
-#' \dontrun{
-#' # Fit a survival model
-#' fit_surv <- SurvivalBART(
-#'   time = time, status = status, X_train = X,
-#'   number_of_trees = 20, N_post = 200, N_burn = 100,
-#'   store_posterior_sample = TRUE, verbose = FALSE
-#' )
+#' \donttest{
+#' if (requireNamespace("ggplot2", quietly = TRUE)) {
+#'   set.seed(1)
+#'   n <- 40; p <- 3
+#'   X <- matrix(rnorm(n * p), ncol = p)
+#'   X_test <- matrix(rnorm(10 * p), ncol = p)
+#'   time <- rexp(n, rate = exp(0.5 * X[, 1]))
+#'   status <- rbinom(n, 1, 0.7)
 #'
-#' # Predict on new data
-#' pred <- predict(fit_surv, newdata = X_test)
+#'   fit_surv <- SurvivalBART(
+#'     time = time, status = status, X_train = X,
+#'     number_of_trees = 5, N_post = 50, N_burn = 25,
+#'     store_posterior_sample = TRUE, verbose = FALSE
+#'   )
 #'
-#' # Population-averaged posterior predictive survival curve
-#' plot(pred, type = "survival")
-#'
-#' # Individual posterior predictive curves
-#' plot(pred, type = "survival", obs = c(1, 5, 10))
+#'   pred <- predict(fit_surv, newdata = X_test)
+#'   plot(pred, type = "survival")
+#' }
 #' }
 #' @seealso \code{\link{predict.ShrinkageTrees}},
 #'   \code{\link{plot.ShrinkageTrees}}

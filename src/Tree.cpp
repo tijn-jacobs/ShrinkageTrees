@@ -105,11 +105,11 @@ void Tree::PrintTree(bool also_print_children) const {
   
   // Print tree size if printing the whole tree and this is the top node.
   if (also_print_children && (parent == nullptr)) {
-    cout << "Tree size: " << TreeSize() << std::endl;
+    Rcpp::Rcout << "Tree size: " << TreeSize() << std::endl;
   } 
   
   // Print node details.
-  cout << padding << "(ID, parent): " << ID << separator << parent_id
+  Rcpp::Rcout << padding << "(ID, parent): " << ID << separator << parent_id
             << separator << "(v, c): " << split_var << separator << cut_val
             << separator << "Parameter: " << GetParameters(0)
             << separator << "Depth of the node: " << node_depth
@@ -446,7 +446,7 @@ bool Tree::KillChildren(size_t node_ID, Parameters parameters) {
   
   // If the node pointer is null, the node ID is invalid.
   if (node == nullptr) {
-    cout << "error in KillChildren: invalid node ID\n";
+    Rcpp::warning("Tree::KillChildren: invalid node ID");
     return false;
   }
   
@@ -470,9 +470,9 @@ bool Tree::KillChildren(size_t node_ID, Parameters parameters) {
     node->leaf_index_ = std::numeric_limits<size_t>::max();
 
     return true;
-  } else { 
-    // If the node is not a "nog" node, print an error message.
-    cout << "error in death: node is not a nog node\n";
+  } else {
+    // If the node is not a "nog" node, surface an error.
+    Rcpp::warning("Tree::KillChildren: node is not a nog node");
     return false;
   }
 } // Partially updated
@@ -534,23 +534,23 @@ void Tree::EvaluateTree(Cutpoints& cutpoints, size_t p, size_t n,
 void Tree::PrintFullTree(int depth, Cutpoints& cutpoints, Data& data) {
   // Indentation based on depth to visualize the tree structure
   for (int i = 0; i < depth; ++i) {
-    cout << "  ";  // Two spaces per depth level
+    Rcpp::Rcout << "  ";  // Two spaces per depth level
   }
 
   // Print node ID
-  cout << "Node ID: " << NodeID() << ": ";
+  Rcpp::Rcout << "Node ID: " << NodeID() << ": ";
 
   // Print split information if it's not a leaf node
   if (left != nullptr || right != nullptr) {
-    cout << " (Splitting variable: " << split_var 
+    Rcpp::Rcout << " (Splitting variable: " << split_var 
               << ", Cut value: " 
               << cutpoints.values[split_var][cut_val] << ")";
   } else {
     // Print parameter and node size for leaf nodes
-    cout << " (Parameters: " << GetParameters(0) << ")";
+    Rcpp::Rcout << " (Parameters: " << GetParameters(0) << ")";
   }
 
-  cout << "\n";
+  Rcpp::Rcout << "\n";
 
   // Recursively print left and right children
   if (left != nullptr) {
@@ -574,7 +574,7 @@ size_t Tree::NodeSize(Data& data, Cutpoints& cutpoints) {
     Tree* leaf = FindLeaf(x, cutpoints);
 
     // Debug output to show which observation falls into which leaf node
-    cout << "i: " << i << ", loc: " << leaf << ", x: " << x << endl;
+    Rcpp::Rcout << "i: " << i << ", loc: " << leaf << ", x: " << x << endl;
 
     // Check if this node is the leaf node
     if (leaf->NodeID() == this->NodeID()) {

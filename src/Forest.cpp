@@ -167,22 +167,22 @@ void Forest::PrintForest(size_t tree_index) {
   if (tree_index == std::numeric_limits<size_t>::max()) {
     // Print the entire forest if no specific tree index is provided
     for (size_t i = 0; i < trees.size(); ++i) {
-      cout << "Tree " << i + 1 << ":\n";
+      Rcpp::Rcout << "Tree " << i + 1 << ":\n";
       PrintTreeWithSizes(trees[i], cutpoints, data);
-      cout << endl;
+      Rcpp::Rcout << endl;
     }
   } else {
     // Ensure the provided index is valid
     if (tree_index < trees.size()) {
-      cout << "Tree " << tree_index + 1 << ":\n";
+      Rcpp::Rcout << "Tree " << tree_index + 1 << ":\n";
       PrintTreeWithSizes(trees[tree_index], cutpoints, data);
-      cout << endl;
+      Rcpp::Rcout << endl;
     } else {
-      cout << "Error: Tree index out of range.\n";
+      Rcpp::warning("Forest::PrintForest: tree index out of range");
       return;
     }
   }
 
-  cout << endl;
+  Rcpp::Rcout << endl;
 }
 

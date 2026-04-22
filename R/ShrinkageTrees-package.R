@@ -1,5 +1,5 @@
 #' @keywords internal
-#' @importFrom stats median quantile
+#' @importFrom stats median quantile pnorm sd
 #' @importFrom utils head
 "_PACKAGE"
 
