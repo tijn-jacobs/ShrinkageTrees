@@ -1,2 +1,0 @@
-Train C-index (SurvivalBART): 0.989
-Train C-index (HorseTrees):   0.727

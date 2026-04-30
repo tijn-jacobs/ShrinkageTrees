@@ -1,7 +1,13 @@
 **/.DS_Store
-/.RData
+**/.RData
+**/.Rhistory
+**/.Rapp.history
 /.Rbuildignore
-/.Rhistory
+.Rproj.user/
+.Ruserdata
+.Renviron
+.Rprofile
+*.Rproj
 /.claude
 /.devcontainer
 /doc/
