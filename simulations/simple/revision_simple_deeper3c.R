@@ -190,20 +190,21 @@ run_one_sim <- function(
     N_burn = 2000
 ) {
   
+  # Seed the data so every method sees the same dataset.
   set.seed(seed)
-  
   dat <- data_gen(
     n = n,
     p = p,
     sigma = sigma,
     sparse = TRUE
   )
-  
-  # Fit models
-  # chf0.1_res   <- fit_chf(dat, k = 0.1, N_post = N_post, N_burn = N_burn)
-  # bart_res     <- fit_bart(dat, N_post = N_post, N_burn = N_burn)
-  # dart_res     <- fit_dart(dat, N_post = N_post, N_burn = N_burn)
-  softbart_res <- fit_softbart(dat, N_post = N_post, N_burn = N_burn)
+
+  # Re-seed before every fit so each method also starts its MCMC from the
+  # same RNG state — results are directly comparable across methods.
+  # set.seed(seed); chf0.1_res   <- fit_chf(dat, k = 0.1, N_post = N_post, N_burn = N_burn)
+  # set.seed(seed); bart_res     <- fit_bart(dat, N_post = N_post, N_burn = N_burn)
+  # set.seed(seed); dart_res     <- fit_dart(dat, N_post = N_post, N_burn = N_burn)
+  set.seed(seed); softbart_res <- fit_softbart(dat, N_post = N_post, N_burn = N_burn)
   
   # Metrics
   # chf0.1_metrics      <- compute_metrics(chf0.1_res$f_hat,

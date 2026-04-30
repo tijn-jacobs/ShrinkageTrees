@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.29 (TeX Live 2026) (preloaded format=pdflatex 2026.4.20)  21 APR 2026 10:47
+This is pdfTeX, Version 3.141592653-2.6-1.40.29 (TeX Live 2026) (preloaded format=pdflatex 2026.4.20)  30 APR 2026 22:17
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -338,7 +338,7 @@ File: t1ppl.fd 2001/06/04 font definitions for T1/ppl.
 \Urlmuskip=\muskip17
 Package: url 2013/09/16  ver 3.4  Verb mode for urls, etc.
 ) (/Users/tijnjacobs/Library/TinyTeX/texmf-dist/tex/latex/hyperref/hyperref.sty
-Package: hyperref 2026-01-29 v7.01p Hypertext links for LaTeX
+Package: hyperref 2026-04-24 v7.01q Hypertext links for LaTeX
 (/Users/tijnjacobs/Library/TinyTeX/texmf-dist/tex/latex/kvsetkeys/kvsetkeys.sty
 Package: kvsetkeys 2022-10-05 v1.19 Key value parser (HO)
 ) (/Users/tijnjacobs/Library/TinyTeX/texmf-dist/tex/generic/kvdefinekeys/kvdefinekeys.sty
@@ -374,7 +374,7 @@ Package: stringenc 2019/11/29 v1.12 Convert strings between diff. encodings (HO)
 \Hy@linkcounter=\count314
 \Hy@pagecounter=\count315
 (/Users/tijnjacobs/Library/TinyTeX/texmf-dist/tex/latex/hyperref/pd1enc.def
-File: pd1enc.def 2026-01-29 v7.01p Hyperref: PDFDocEncoding definition (HO)
+File: pd1enc.def 2026-04-24 v7.01q Hyperref: PDFDocEncoding definition (HO)
 Now handling font encoding PD1 ...
 ... no UTF-8 mapping file for font encoding PD1
 ) (/Users/tijnjacobs/Library/TinyTeX/texmf-dist/tex/generic/intcalc/intcalc.sty
@@ -382,17 +382,17 @@ Package: intcalc 2019/12/15 v1.3 Expandable calculations with integers (HO)
 )
 \Hy@SavedSpaceFactor=\count316
 (/Users/tijnjacobs/Library/TinyTeX/texmf-dist/tex/latex/hyperref/puenc.def
-File: puenc.def 2026-01-29 v7.01p Hyperref: PDF Unicode definition (HO)
+File: puenc.def 2026-04-24 v7.01q Hyperref: PDF Unicode definition (HO)
 Now handling font encoding PU ...
 ... no UTF-8 mapping file for font encoding PU
 )
-Package hyperref Info: Hyper figures OFF on input line 4201.
-Package hyperref Info: Link nesting OFF on input line 4206.
-Package hyperref Info: Hyper index ON on input line 4209.
-Package hyperref Info: Plain pages OFF on input line 4216.
-Package hyperref Info: Backreferencing ON on input line 4219.
+Package hyperref Info: Hyper figures OFF on input line 4199.
+Package hyperref Info: Link nesting OFF on input line 4204.
+Package hyperref Info: Hyper index ON on input line 4207.
+Package hyperref Info: Plain pages OFF on input line 4214.
+Package hyperref Info: Backreferencing ON on input line 4217.
 Package hyperref Info: Implicit mode ON; LaTeX internals redefined.
-Package hyperref Info: Bookmarks ON on input line 4468.
+Package hyperref Info: Bookmarks ON on input line 4466.
 (/Users/tijnjacobs/Library/TinyTeX/texmf-dist/tex/latex/hyperref/backref.sty
 Package: backref 2025-06-21 v1.45 Bibliographical back referencing
 (/Users/tijnjacobs/Library/TinyTeX/texmf-dist/tex/latex/rerunfilecheck/rerunfilecheck.sty
@@ -405,7 +405,7 @@ Package: bigintcalc 2019/12/15 v1.5 Expandable calculations on big integers (HO)
 Package uniquecounter Info: New unique counter `rerunfilecheck' on input line 284.
 ))
 \c@Hy@tempcnt=\count317
-LaTeX Info: Redefining \url on input line 4807.
+LaTeX Info: Redefining \url on input line 4805.
 \XeTeXLinkMargin=\dimen269
 (/Users/tijnjacobs/Library/TinyTeX/texmf-dist/tex/generic/bitset/bitset.sty
 Package: bitset 2019/12/09 v1.3 Handle bit-vector datatype (HO)
@@ -413,20 +413,20 @@ Package: bitset 2019/12/09 v1.3 Handle bit-vector datatype (HO)
 \Fld@menulength=\count318
 \Field@Width=\dimen270
 \Fld@charsize=\dimen271
-Package hyperref Info: Hyper figures OFF on input line 6084.
-Package hyperref Info: Link nesting OFF on input line 6089.
-Package hyperref Info: Hyper index ON on input line 6092.
-Package hyperref Info: backreferencing ON on input line 6097.
-Package hyperref Info: Link coloring OFF on input line 6104.
-Package hyperref Info: Link coloring with OCG OFF on input line 6109.
-Package hyperref Info: PDF/A mode OFF on input line 6114.
+Package hyperref Info: Hyper figures OFF on input line 6091.
+Package hyperref Info: Link nesting OFF on input line 6096.
+Package hyperref Info: Hyper index ON on input line 6099.
+Package hyperref Info: backreferencing ON on input line 6104.
+Package hyperref Info: Link coloring OFF on input line 6111.
+Package hyperref Info: Link coloring with OCG OFF on input line 6116.
+Package hyperref Info: PDF/A mode OFF on input line 6121.
 \Hy@abspage=\count319
 \c@Item=\count320
 \c@Hfootnote=\count321
 )
 Package hyperref Info: Driver (autodetected): hpdftex.
 (/Users/tijnjacobs/Library/TinyTeX/texmf-dist/tex/latex/hyperref/hpdftex.def
-File: hpdftex.def 2026-01-29 v7.01p Hyperref driver for pdfTeX
+File: hpdftex.def 2026-04-24 v7.01q Hyperref driver for pdfTeX
 \Fld@listcount=\count322
 \c@bookmark@seq@number=\count323
 \Hy@SectionHShift=\skip66
@@ -624,30 +624,72 @@ LaTeX Info: Redefining \setlength on input line 86.
 LaTeX Info: Redefining \addtolength on input line 87.
 \calc@Ccount=\count353
 \calc@Cskip=\skip84
+) (/Users/tijnjacobs/Library/TinyTeX/texmf-dist/tex/latex/floatrow/floatrow.sty
+Package: floatrow 2008/08/02 v0.3b floatrow: float package extension
+\c@float@type=\count354
+\float@exts=\toks49
+\float@box=\box76
+\@floatcapt=\box77
+Package floatrow Info: Modified float package code loaded on input line 455.
+Package floatrow Info: Modified rotfloat package code loaded on input line 473.
+\FR@everyfloat=\toks50
+\flrow@foot=\insert252
+\FB@wd=\dimen313
+\FBo@wd=\dimen314
+\FBc@wd=\dimen315
+\FBo@ht=\skip85
+\FBc@ht=\skip86
+\FBf@ht=\skip87
+\FBo@max=\skip88
+\FBc@max=\skip89
+\FBf@max=\skip90
+\c@FBl@b=\count355
+\floatbox@depth=\count356
+\c@FRobj=\count357
+\c@FRsobj=\count358
+\Xhsize=\skip91
+\sXhsize=\skip92
+\Zhsize=\skip93
+\sZhsize=\skip94
+\flrow@rowbox=\box78
+\FR@Zunitlength=\dimen316
+\c@FBcnt=\count359
+\FPOScnt=\count360
+\LTleft=\skip95
+\LTright=\skip96
+\LTleft=\skip97
+\LTright=\skip98
+\flrow@types=\toks51
+) (/Users/tijnjacobs/Library/TinyTeX/texmf-dist/tex/latex/multirow/multirow.sty
+Package: multirow 2024/11/12 v2.9 Span multiple rows of a table
+\multirow@colwidth=\skip99
+\multirow@cntb=\count361
+\multirow@dima=\skip100
+\bigstrutjot=\dimen317
 ) (/Users/tijnjacobs/Library/TinyTeX/texmf-dist/tex/latex/l3backend/l3backend-pdftex.def
 File: l3backend-pdftex.def 2026-02-18 L3 backend support: PDF output (pdfTeX)
-\l__color_backend_stack_int=\count354
+\l__color_backend_stack_int=\count362
 ) (./RJwrapper.aux)
 \openout1 = `RJwrapper.aux'.
 
-LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 54.
-LaTeX Font Info:    ... okay on input line 54.
-LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 54.
-LaTeX Font Info:    ... okay on input line 54.
-LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 54.
-LaTeX Font Info:    ... okay on input line 54.
-LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 54.
-LaTeX Font Info:    ... okay on input line 54.
-LaTeX Font Info:    Checking defaults for TS1/cmr/m/n on input line 54.
-LaTeX Font Info:    ... okay on input line 54.
-LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 54.
-LaTeX Font Info:    ... okay on input line 54.
-LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 54.
-LaTeX Font Info:    ... okay on input line 54.
-LaTeX Font Info:    Checking defaults for PD1/pdf/m/n on input line 54.
-LaTeX Font Info:    ... okay on input line 54.
-LaTeX Font Info:    Checking defaults for PU/pdf/m/n on input line 54.
-LaTeX Font Info:    ... okay on input line 54.
+LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 59.
+LaTeX Font Info:    ... okay on input line 59.
+LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 59.
+LaTeX Font Info:    ... okay on input line 59.
+LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 59.
+LaTeX Font Info:    ... okay on input line 59.
+LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 59.
+LaTeX Font Info:    ... okay on input line 59.
+LaTeX Font Info:    Checking defaults for TS1/cmr/m/n on input line 59.
+LaTeX Font Info:    ... okay on input line 59.
+LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 59.
+LaTeX Font Info:    ... okay on input line 59.
+LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 59.
+LaTeX Font Info:    ... okay on input line 59.
+LaTeX Font Info:    Checking defaults for PD1/pdf/m/n on input line 59.
+LaTeX Font Info:    ... okay on input line 59.
+LaTeX Font Info:    Checking defaults for PU/pdf/m/n on input line 59.
+LaTeX Font Info:    ... okay on input line 59.
 (/Users/tijnjacobs/Library/TinyTeX/texmf-dist/tex/latex/epstopdf-pkg/epstopdf-base.sty
 Package: epstopdf-base 2020-01-24 v2.11 Base part for package epstopdf
 Package epstopdf-base Info: Redefining graphics rule for `.eps' on input line 485.
@@ -690,15 +732,15 @@ File: epstopdf-sys.cfg 2010/07/13 v1.3 Configuration of (r)epstopdf for TeX Live
 * \@reversemarginfalse
 * (1in=72.27pt=25.4mm, 1cm=28.453pt)
 
-LaTeX Info: Redefining \microtypecontext on input line 54.
-Package microtype Info: Applying patch `item' on input line 54.
-Package microtype Info: Applying patch `toc' on input line 54.
-Package microtype Info: Applying patch `eqnum' on input line 54.
+LaTeX Info: Redefining \microtypecontext on input line 59.
+Package microtype Info: Applying patch `item' on input line 59.
+Package microtype Info: Applying patch `toc' on input line 59.
+Package microtype Info: Applying patch `eqnum' on input line 59.
 
-Package microtype Warning: Unable to apply patch `footnote' on input line 54.
+Package microtype Warning: Unable to apply patch `footnote' on input line 59.
 
-Package microtype Info: Applying patch `verbatim' on input line 54.
-LaTeX Info: Redefining \microtypesetup on input line 54.
+Package microtype Info: Applying patch `verbatim' on input line 59.
+LaTeX Info: Redefining \microtypesetup on input line 59.
 Package microtype Info: Generating PDF output.
 Package microtype Info: Character protrusion enabled (level 2).
 Package microtype Info: Using default protrusion set `alltext'.
@@ -714,36 +756,45 @@ File: mt-ppl.cfg 2005/11/16 v1.6 microtype config. file: Palatino (RS)
 ) (/Users/tijnjacobs/Library/TinyTeX/texmf-dist/tex/latex/upquote/upquote.sty
 Package: upquote 2012/04/19 v1.3 upright-quote and grave-accent glyphs in verbatim
 )
-Package backref Info: ** backref set up for natbib ** on input line 54.
-Package hyperref Info: Link coloring ON on input line 54.
+Package backref Info: ** backref set up for natbib ** on input line 59.
+Package hyperref Info: Link coloring ON on input line 59.
 (./RJwrapper.out) (./RJwrapper.out)
 \@outlinefile=\write5
 \openout5 = `RJwrapper.out'.
 
 Package caption Info: Begin \AtBeginDocument code.
+Package caption Info: float package is loaded.
+Package caption Info: floatrow package is loaded.
+Package caption Info: floatrow package is loaded.
 Package caption Info: longtable package is loaded.
 (/Users/tijnjacobs/Library/TinyTeX/texmf-dist/tex/latex/caption/ltcaption.sty
 Package: ltcaption 2021/01/08 v1.4c longtable captions (AR)
 )
+Package caption Info: Fixing longtable code of `floatrow' package.
 Package caption Info: End \AtBeginDocument code.
-(./ShrinkageTrees.tex
-LaTeX Font Info:    Trying to load font information for OT1+ppl on input line 11.
+(/Users/tijnjacobs/Library/TinyTeX/texmf-dist/tex/latex/floatrow/fr-longtable.sty
+Package: fr-longtable 2007/11/28 v0.1b (beta) floatrow: additions for longtable
+\flrow@LT@lasthead=\box79
+\flrow@LT@prelastfoot=\box80
+\c@FBLTpage=\count363
+) (./ShrinkageTrees.tex
+LaTeX Font Info:    Trying to load font information for OT1+ppl on input line 17.
 (/Users/tijnjacobs/Library/TinyTeX/texmf-dist/tex/latex/psnfss/ot1ppl.fd
 File: ot1ppl.fd 2001/06/04 font definitions for OT1/ppl.
 )
-LaTeX Font Info:    Trying to load font information for OML+zplm on input line 11.
+LaTeX Font Info:    Trying to load font information for OML+zplm on input line 17.
 (/Users/tijnjacobs/Library/TinyTeX/texmf-dist/tex/latex/psnfss/omlzplm.fd
 File: omlzplm.fd 2002/09/08 Fontinst v1.914 font definitions for OML/zplm.
 )
-LaTeX Font Info:    Trying to load font information for OMS+zplm on input line 11.
+LaTeX Font Info:    Trying to load font information for OMS+zplm on input line 17.
 (/Users/tijnjacobs/Library/TinyTeX/texmf-dist/tex/latex/psnfss/omszplm.fd
 File: omszplm.fd 2002/09/08 Fontinst v1.914 font definitions for OMS/zplm.
 )
-LaTeX Font Info:    Trying to load font information for OMX+zplm on input line 11.
+LaTeX Font Info:    Trying to load font information for OMX+zplm on input line 17.
 (/Users/tijnjacobs/Library/TinyTeX/texmf-dist/tex/latex/psnfss/omxzplm.fd
 File: omxzplm.fd 2002/09/08 Fontinst v1.914 font definitions for OMX/zplm.
 )
-LaTeX Font Info:    Trying to load font information for OT1+zplm on input line 11.
+LaTeX Font Info:    Trying to load font information for OT1+zplm on input line 17.
 (/Users/tijnjacobs/Library/TinyTeX/texmf-dist/tex/latex/psnfss/ot1zplm.fd
 File: ot1zplm.fd 2002/09/08 Fontinst v1.914 font definitions for OT1/zplm.
 )
@@ -752,29 +803,29 @@ Package microtype Info: Loading generic protrusion settings for font family
 (microtype)             For optimal results, create family-specific settings.
 (microtype)             See the microtype manual for details.
 LaTeX Font Info:    Font shape `U/msa/m/n' will be
-(Font)              scaled to size 9.37807pt on input line 11.
+(Font)              scaled to size 9.37807pt on input line 17.
 (/Users/tijnjacobs/Library/TinyTeX/texmf-dist/tex/latex/microtype/mt-msa.cfg
 File: mt-msa.cfg 2006/02/04 v1.1 microtype config. file: AMS symbols (a) (RS)
 )
 LaTeX Font Info:    Font shape `U/msa/m/n' will be
-(Font)              scaled to size 7.29405pt on input line 11.
+(Font)              scaled to size 7.29405pt on input line 17.
 LaTeX Font Info:    Font shape `U/msa/m/n' will be
-(Font)              scaled to size 5.21004pt on input line 11.
+(Font)              scaled to size 5.21004pt on input line 17.
 LaTeX Font Info:    Font shape `U/msb/m/n' will be
-(Font)              scaled to size 9.37807pt on input line 11.
+(Font)              scaled to size 9.37807pt on input line 17.
 (/Users/tijnjacobs/Library/TinyTeX/texmf-dist/tex/latex/microtype/mt-msb.cfg
 File: mt-msb.cfg 2005/06/01 v1.0 microtype config. file: AMS symbols (b) (RS)
 )
 LaTeX Font Info:    Font shape `U/msb/m/n' will be
-(Font)              scaled to size 7.29405pt on input line 11.
+(Font)              scaled to size 7.29405pt on input line 17.
 LaTeX Font Info:    Font shape `U/msb/m/n' will be
-(Font)              scaled to size 5.21004pt on input line 11.
-LaTeX Font Info:    Trying to load font information for T1+zi4 on input line 23.
+(Font)              scaled to size 5.21004pt on input line 17.
+LaTeX Font Info:    Trying to load font information for T1+zi4 on input line 21.
 (/Users/tijnjacobs/Library/TinyTeX/texmf-dist/tex/latex/inconsolata/t1zi4.fd
 File: t1zi4.fd 2018/01/14 T1/zi4 (Inconsolata)
 )
 LaTeX Font Info:    Font shape `T1/zi4/m/n' will be
-(Font)              scaled to size 9.18004pt on input line 23.
+(Font)              scaled to size 9.18004pt on input line 21.
 Package microtype Info: Loading generic protrusion settings for font family
 (microtype)             `zi4' (encoding: T1).
 (microtype)             For optimal results, create family-specific settings.
@@ -782,123 +833,139 @@ Package microtype Info: Loading generic protrusion settings for font family
 [1{/Users/tijnjacobs/Library/TinyTeX/texmf-var/fonts/map/pdftex/updmap/pdftex.map}{/Users/tijnjacobs/Library/TinyTeX/texmf-dist/fonts/enc/dvips/base/8r.enc}
 
 {/Users/tijnjacobs/Library/TinyTeX/texmf-dist/fonts/enc/dvips/inconsolata/i4-t1-0.enc}] [2]
-<figures/ExampleTree_standalone.pdf, id=147, 421.05907pt x 179.34001pt>
-File: figures/ExampleTree_standalone.pdf Graphic file (type pdf)
-<use figures/ExampleTree_standalone.pdf>
-Package pdftex.def Info: figures/ExampleTree_standalone.pdf  used on input line 145.
-(pdftex.def)             Requested size: 338.59021pt x 144.22198pt.
-[3] [4 <./figures/ExampleTree_standalone.pdf>]
-<figures/regularisation_landscape.pdf, id=215, 473.91756pt x 249.75208pt>
-File: figures/regularisation_landscape.pdf Graphic file (type pdf)
-<use figures/regularisation_landscape.pdf>
-Package pdftex.def Info: figures/regularisation_landscape.pdf  used on input line 195.
-(pdftex.def)             Requested size: 366.47075pt x 193.12901pt.
-LaTeX Font Info:    Font shape `U/msa/m/n' will be
-(Font)              scaled to size 10.42007pt on input line 202.
-LaTeX Font Info:    Font shape `U/msa/m/n' will be
-(Font)              scaled to size 7.91925pt on input line 202.
-LaTeX Font Info:    Font shape `U/msa/m/n' will be
-(Font)              scaled to size 6.25204pt on input line 202.
-LaTeX Font Info:    Font shape `U/msb/m/n' will be
-(Font)              scaled to size 10.42007pt on input line 202.
-LaTeX Font Info:    Font shape `U/msb/m/n' will be
-(Font)              scaled to size 7.91925pt on input line 202.
-LaTeX Font Info:    Font shape `U/msb/m/n' will be
-(Font)              scaled to size 6.25204pt on input line 202.
-[5 <./figures/regularisation_landscape.pdf>]
-LaTeX Font Info:    Trying to load font information for U+fplmbb on input line 208.
+<figures/survival_population_bart.pdf, id=144, 361.35pt x 252.945pt>
+File: figures/survival_population_bart.pdf Graphic file (type pdf)
+<use figures/survival_population_bart.pdf>
+Package pdftex.def Info: figures/survival_population_bart.pdf  used on input line 103.
+(pdftex.def)             Requested size: 258.91763pt x 181.24413pt.
+LaTeX Font Info:    Trying to load font information for U+fplmbb on input line 116.
 (/Users/tijnjacobs/Library/TinyTeX/texmf-dist/tex/latex/psnfss/ufplmbb.fd
 File: ufplmbb.fd 2003/10/30 Fontinst v1.914 font definitions for U/fplmbb.
-)
-Overfull \hbox (9.9888pt too wide) in paragraph at lines 214--215
-\T1/ppl/m/n/9 (-20) (\T1/zi4/m/n/9 prior_type_control\T1/ppl/m/n/9 (-20) , \T1/zi4/m/n/9 prior_type_treat\T1/ppl/m/n/9 (-20) ); the treat-ment cod-ing $\OML/zplm/m/it/9 b[]$ \T1/ppl/m/n/9 (-20) is se-lected through \T1/zi4/m/n/9 treatment_coding\T1/ppl/m/n/9 (-20) .
- []
-
-<figures/tau_learner.pdf, id=291, 568.04721pt x 272.62451pt>
+) [3 <./figures/survival_population_bart.pdf>]
+<figures/ExampleTree_standalone.pdf, id=165, 421.05907pt x 179.34001pt>
+File: figures/ExampleTree_standalone.pdf Graphic file (type pdf)
+<use figures/ExampleTree_standalone.pdf>
+Package pdftex.def Info: figures/ExampleTree_standalone.pdf  used on input line 128.
+(pdftex.def)             Requested size: 338.59021pt x 144.22198pt.
+[4 <./figures/ExampleTree_standalone.pdf>]
+<figures/regularisation_landscape.pdf, id=225, 473.94966pt x 250.05219pt>
+File: figures/regularisation_landscape.pdf Graphic file (type pdf)
+<use figures/regularisation_landscape.pdf>
+Package pdftex.def Info: figures/regularisation_landscape.pdf  used on input line 183.
+(pdftex.def)             Requested size: 366.47075pt x 193.34966pt.
+[5]
+LaTeX Font Info:    Font shape `U/msa/m/n' will be
+(Font)              scaled to size 10.42007pt on input line 192.
+LaTeX Font Info:    Font shape `U/msa/m/n' will be
+(Font)              scaled to size 7.91925pt on input line 192.
+LaTeX Font Info:    Font shape `U/msa/m/n' will be
+(Font)              scaled to size 6.25204pt on input line 192.
+LaTeX Font Info:    Font shape `U/msb/m/n' will be
+(Font)              scaled to size 10.42007pt on input line 192.
+LaTeX Font Info:    Font shape `U/msb/m/n' will be
+(Font)              scaled to size 7.91925pt on input line 192.
+LaTeX Font Info:    Font shape `U/msb/m/n' will be
+(Font)              scaled to size 6.25204pt on input line 192.
+<figures/tau_learner.pdf, id=258, 551.71219pt x 189.45581pt>
 File: figures/tau_learner.pdf Graphic file (type pdf)
 <use figures/tau_learner.pdf>
-Package pdftex.def Info: figures/tau_learner.pdf  used on input line 218.
-(pdftex.def)             Requested size: 378.42043pt x 181.61748pt.
-[6 <./figures/tau_learner.pdf>] [7]
-<figures/trace_horse.pdf, id=403, 361.35pt x 216.81pt>
+Package pdftex.def Info: figures/tau_learner.pdf  used on input line 208.
+(pdftex.def)             Requested size: 378.42043pt x 129.95277pt.
+[6 <./figures/regularisation_landscape.pdf>] [7 <./figures/tau_learner.pdf>]
+<figures/trace_horse.pdf, id=415, 361.35pt x 216.81pt>
 File: figures/trace_horse.pdf Graphic file (type pdf)
 <use figures/trace_horse.pdf>
-Package pdftex.def Info: figures/trace_horse.pdf  used on input line 333.
+Package pdftex.def Info: figures/trace_horse.pdf  used on input line 318.
 (pdftex.def)             Requested size: 191.2008pt x 114.72017pt.
-<figures/density_horse.pdf, id=404, 361.35pt x 216.81pt>
+<figures/density_horse.pdf, id=416, 361.35pt x 216.81pt>
 File: figures/density_horse.pdf Graphic file (type pdf)
 <use figures/density_horse.pdf>
-Package pdftex.def Info: figures/density_horse.pdf  used on input line 333.
+Package pdftex.def Info: figures/density_horse.pdf  used on input line 318.
 (pdftex.def)             Requested size: 191.2008pt x 114.72017pt.
-[8 <./figures/trace_horse.pdf> <./figures/density_horse.pdf>]
-<figures/survival_individual.pdf, id=427, 361.35pt x 252.945pt>
+[8]
+<figures/survival_individual.pdf, id=423, 361.35pt x 252.945pt>
 File: figures/survival_individual.pdf Graphic file (type pdf)
 <use figures/survival_individual.pdf>
-Package pdftex.def Info: figures/survival_individual.pdf  used on input line 363.
+Package pdftex.def Info: figures/survival_individual.pdf  used on input line 350.
 (pdftex.def)             Requested size: 191.2008pt x 133.84021pt.
-<figures/survival_population.pdf, id=428, 361.35pt x 252.945pt>
+<figures/survival_population.pdf, id=424, 361.35pt x 252.945pt>
 File: figures/survival_population.pdf Graphic file (type pdf)
 <use figures/survival_population.pdf>
-Package pdftex.def Info: figures/survival_population.pdf  used on input line 363.
+Package pdftex.def Info: figures/survival_population.pdf  used on input line 350.
 (pdftex.def)             Requested size: 191.2008pt x 133.84021pt.
 
-Overfull \hbox (22.25009pt too wide) in paragraph at lines 374--375
+Overfull \hbox (22.25009pt too wide) in paragraph at lines 361--362
 \T1/ppl/m/n/9 (-20) We now es-ti-mate het-ero-ge-neous treat-ment ef-fects of car-bo-platin ver-sus cis-platin us-ing \T1/zi4/m/n/9 CausalHorseForest()\T1/ppl/m/n/9 (-20) ,
  []
 
-[9 <./figures/survival_individual.pdf> <./figures/survival_population.pdf>]
-<figures/ate_posterior.pdf, id=453, 289.08pt x 216.81pt>
+[9 <./figures/trace_horse.pdf> <./figures/density_horse.pdf> <./figures/survival_individual.pdf> <./figures/survival_population.pdf>] [10]
+<figures/ate_posterior.pdf, id=473, 289.08pt x 216.81pt>
 File: figures/ate_posterior.pdf Graphic file (type pdf)
 <use figures/ate_posterior.pdf>
-Package pdftex.def Info: figures/ate_posterior.pdf  used on input line 450.
+Package pdftex.def Info: figures/ate_posterior.pdf  used on input line 437.
 (pdftex.def)             Requested size: 191.2008pt x 143.3994pt.
-<figures/cate_caterpillar.pdf, id=454, 289.08pt x 252.945pt>
+<figures/cate_caterpillar.pdf, id=474, 289.08pt x 252.945pt>
 File: figures/cate_caterpillar.pdf Graphic file (type pdf)
 <use figures/cate_caterpillar.pdf>
-Package pdftex.def Info: figures/cate_caterpillar.pdf  used on input line 450.
+Package pdftex.def Info: figures/cate_caterpillar.pdf  used on input line 437.
 (pdftex.def)             Requested size: 191.2008pt x 167.2993pt.
-[10] [11 <./figures/ate_posterior.pdf> <./figures/cate_caterpillar.pdf>]
-Overfull \hbox (26.90779pt too wide) in paragraph at lines 538--539
+
+Overfull \hbox (10.6439pt too wide) in paragraph at lines 456--457
+[]\T1/ppl/m/n/9 (-20) Each train-ing sub-ject is ob-served at three in-spec-tion times $\OML/zplm/m/it/9 V[] < V[] < V[]$ \T1/ppl/m/n/9 (-20) drawn from $[]\OT1/zplm/m/n/9 (\OML/zplm/m/it/9 L\OT1/ppl/m/n/9 (-20) ,  \OML/zplm/m/it/9 U\OT1/zplm/m/n/9 )$\T1/ppl/m/n/9 (-20) ,
+ []
+
+
+Overfull \hbox (18.72289pt too wide) in paragraph at lines 458--459
+[]\T1/ppl/m/n/9 (-20) We fit three mod-els per repli-cate on the same data: \T1/zi4/m/n/9 SurvivalBART()\T1/ppl/m/n/9 (-20) , \T1/zi4/m/n/9 SurvivalDART()\T1/ppl/m/n/9 (-20) , and \T1/zi4/m/n/9 HorseTrees()
+ []
+
+[11 <./figures/ate_posterior.pdf> <./figures/cate_caterpillar.pdf>]
+Overfull \hbox (26.90779pt too wide) in paragraph at lines 499--500
 [][]\T1/ppl/b/n/9 (-20) ShrinkageTrees[][] \T1/ppl/m/n/9 (-20) is avail-able on CRAN and on GitHub at [][]$\T1/zi4/m/n/9 https : / / github . com / tijn -[] jacobs / ShrinkageTrees$[][]\T1/ppl/m/n/9 (-20) .
  []
 
 LaTeX Font Info:    Font shape `T1/zi4/m/n' will be
-(Font)              scaled to size 10.20004pt on input line 553.
+(Font)              scaled to size 10.20004pt on input line 515.
 
-Overfull \hbox (24.0pt too wide) in paragraph at lines 549--565
+Overfull \hbox (24.0pt too wide) in paragraph at lines 511--527
  [][] 
  []
 
-[12] [13]
-<figures/architecture.pdf, id=504, 695.27657pt x 402.62921pt>
+
+LaTeX Warning: `!h' float specifier changed to `!ht'.
+
+[12]
+<figures/architecture.pdf, id=524, 695.27657pt x 402.62921pt>
 File: figures/architecture.pdf Graphic file (type pdf)
 <use figures/architecture.pdf>
-Package pdftex.def Info: figures/architecture.pdf  used on input line 583.
+Package pdftex.def Info: figures/architecture.pdf  used on input line 545.
 (pdftex.def)             Requested size: 366.47075pt x 212.22517pt.
-
-Overfull \hbox (3.15167pt too wide) in paragraph at lines 592--593
-\T1/ppl/m/n/9 (-20) are dis-patched in par-al-lel via \T1/zi4/m/n/9 parallel::mclapply() \T1/ppl/m/n/9 (-20) us-ing \T1/zi4/m/n/9 min(n_chains, parallel::detectCores())
- []
-
+[13]
+<figures/benchmark_scaling.pdf, id=548, 433.62pt x 252.945pt>
+File: figures/benchmark_scaling.pdf Graphic file (type pdf)
+<use figures/benchmark_scaling.pdf>
+Package pdftex.def Info: figures/benchmark_scaling.pdf  used on input line 570.
+(pdftex.def)             Requested size: 318.67207pt x 185.9027pt.
+LaTeX Font Info:    Font shape `U/msa/m/n' will be
+(Font)              scaled to size 8.33606pt on input line 579.
+LaTeX Font Info:    Font shape `U/msb/m/n' will be
+(Font)              scaled to size 8.33606pt on input line 579.
 [14 <./figures/architecture.pdf>]
 
-LaTeX Warning: Reference `fig:scaling' on page 15 undefined on input line 608.
+LaTeX Warning: `!h' float specifier changed to `!ht'.
 
-
-LaTeX Warning: Reference `fig:scaling' on page 15 undefined on input line 610.
-
-[15] (./RJwrapper.bbl (./RJwrapper.brf)
+[15 <./figures/benchmark_scaling.pdf>] (./RJwrapper.bbl (./RJwrapper.brf)
 \tf@brf=\write6
 \openout6 = `RJwrapper.brf'.
 
-[16] [17])
+[16])
 
 LaTeX Font Warning: Font shape `T1/zi4/m/it' undefined
-(Font)              using `T1/zi4/m/n' instead on input line 672.
+(Font)              using `T1/zi4/m/n' instead on input line 635.
 
 LaTeX Font Info:    Font shape `T1/zi4/m/it' will be
-(Font)              scaled to size 9.18004pt on input line 672.
-) [18] (./RJwrapper.aux)
+(Font)              scaled to size 9.18004pt on input line 635.
+[17]) [18] (./RJwrapper.aux)
  ***********
 LaTeX2e <2025-11-01>
 L3 programming layer <2026-03-20>
@@ -906,27 +973,27 @@ L3 programming layer <2026-03-20>
 
 LaTeX Font Warning: Some font shapes were not available, defaults substituted.
 
-
-LaTeX Warning: There were undefined references.
-
 Package rerunfilecheck Info: File `RJwrapper.out' has not changed.
-(rerunfilecheck)             Checksum: 5D1525E69DA8039B2726B36137DC4260;4437.
+(rerunfilecheck)             Checksum: 394E7B01E169A55954BCCD56D69B628D;4605.
 Package rerunfilecheck Info: File `RJwrapper.brf' has not changed.
-(rerunfilecheck)             Checksum: 4CE7D4A7422446FC831FCF0A5B21944E;2540.
+(rerunfilecheck)             Checksum: 18C09603B8731F6BE4AE8394D25951B0;2592.
  ) 
 Here is how much of TeX's memory you used:
- 27451 strings out of 469339
- 502471 string characters out of 5465322
- 925987 words of memory out of 5000000
- 55359 multiletter control sequences out of 15000+600000
- 687682 words of font info for 365 fonts, out of 8000000 for 9000
+ 28206 strings out of 469339
+ 516295 string characters out of 5465322
+ 941931 words of memory out of 5000000
+ 56076 multiletter control sequences out of 15000+600000
+ 694201 words of font info for 391 fonts, out of 8000000 for 9000
  14 hyphenation exceptions out of 8191
- 117i,12n,131p,1464b,984s stack positions out of 10000i,1000n,20000p,200000b,200000s
+ 117i,12n,131p,1301b,965s stack positions out of 10000i,1000n,20000p,200000b,200000s
+
+pdfTeX warning (dest): name{Hfootnote.1} has been referenced but does not exist, replaced by a fixed one
+
 </Users/tijnjacobs/Library/TinyTeX/texmf-dist/fonts/type1/public/inconsolata/Inconsolata-zi4r.pfb></Users/tijnjacobs/Library/TinyTeX/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx7.pfb></Users/tijnjacobs/Library/TinyTeX/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx9.pfb></Users/tijnjacobs/Library/TinyTeX/texmf-dist/fonts/type1/public/amsfonts/cm/cmex10.pfb></Users/tijnjacobs/Library/TinyTeX/texmf-dist/fonts/type1/public/amsfonts/cmextra/cmex9.pfb></Users/tijnjacobs/Library/TinyTeX/texmf-dist/fonts/type1/public/amsfonts/cm/cmitt10.pfb></Users/tijnjacobs/Library/TinyTeX/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi10.pfb></Users/tijnjacobs/Library/TinyTeX/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi5.pfb></Users/tijnjacobs/Library/TinyTeX/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi6.pfb></Users/tijnjacobs/Library/TinyTeX/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi7.pfb></Users/tijnjacobs/Library/TinyTeX/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi9.pfb></Users/tijnjacobs/Library/TinyTeX/texmf-dist/fonts/type1/public/amsfonts/cm/cmr10.pfb></Users/tijnjacobs/Library/TinyTeX/texmf-dist/fonts/type1/public/amsfonts/cm/cmr5.pfb></Users/tijnjacobs/Library/TinyTeX/texmf-dist/fonts/type1/public/amsfonts/cm/cmr6.pfb></Users/tijnjacobs/Library/TinyTeX/texmf-dist/fonts/type1/public/amsfonts/cm/cmr7.pfb></Users/tijnjacobs/Library/TinyTeX/texmf-dist/fonts/type1/public/amsfonts/cm/cmr9.pfb></Users/tijnjacobs/Library/TinyTeX/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy10.pfb></Users/tijnjacobs/Library/TinyTeX/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy7.pfb></Users/tijnjacobs/Library/TinyTeX/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy8.pfb></Users/tijnjacobs/Library/TinyTeX/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy9.pfb></Users/tijnjacobs/Library/TinyTeX/texmf-dist/fonts/type1/public/amsfonts/cm/cmtt8.pfb></Users/tijnjacobs/Library/TinyTeX/texmf-dist/fonts/type1/public/amsfonts/cm/cmtt9.pfb></Users/tijnjacobs/Library/TinyTeX/texmf-dist/fonts/type1/public/mathpazo/fplmbb.pfb></Users/tijnjacobs/Library/TinyTeX/texmf-dist/fonts/type1/public/mathpazo/fplmr.pfb></Users/tijnjacobs/Library/TinyTeX/texmf-dist/fonts/type1/public/mathpazo/fplmri.pfb></Users/tijnjacobs/Library/TinyTeX/texmf-dist/fonts/type1/urw/helvetic/uhvb8a.pfb></Users/tijnjacobs/Library/TinyTeX/texmf-dist/fonts/type1/urw/helvetic/uhvr8a.pfb></Users/tijnjacobs/Library/TinyTeX/texmf-dist/fonts/type1/urw/helvetic/uhvro8a.pfb></Users/tijnjacobs/Library/TinyTeX/texmf-dist/fonts/type1/urw/palatino/uplb8a.pfb></Users/tijnjacobs/Library/TinyTeX/texmf-dist/fonts/type1/urw/palatino/uplr8a.pfb></Users/tijnjacobs/Library/TinyTeX/texmf-dist/fonts/type1/urw/palatino/uplri8a.pfb>
-Output written on RJwrapper.pdf (18 pages, 621894 bytes).
+Output written on RJwrapper.pdf (18 pages, 636857 bytes).
 PDF statistics:
- 769 PDF objects out of 1000 (max. 8388607)
- 641 compressed objects within 7 object streams
- 73 named destinations out of 1000 (max. 500000)
- 66791 words of extra memory for PDF output out of 74296 (max. 10000000)
+ 813 PDF objects out of 1000 (max. 8388607)
+ 681 compressed objects within 7 object streams
+ 80 named destinations out of 1000 (max. 500000)
+ 78577 words of extra memory for PDF output out of 89155 (max. 10000000)
 

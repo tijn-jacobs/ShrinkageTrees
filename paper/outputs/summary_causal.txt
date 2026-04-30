@@ -12,17 +12,17 @@ Prior:   control = horseshoe, treatment = horseshoe
 Trees:   control = 200, treatment = 200
 Data:    n = 357, p_control = 1005, p_treat = 1004 | Draws: 5000 x 4 chains (burn-in 5000)
 
-Treatment effect (CATE):
-  PATE:    0.022  95% CI (Bayesian bootstrap): [-0.0964, 0.1455]
+Treatment effect:
+  PATE:    0.0211  95% CI (Bayesian bootstrap): [-0.0993, 0.1459]
   CATE SD: 0.0077
 
 Prognostic function (mu):
-  Mean: 3.63  SD: 0.011  Range: [3.604, 3.649]
+  Mean: 3.63  SD: 0.011  Range: [3.604, 3.65]
 
 Posterior sigma:
-  Mean: 1  SD: 0.047  95% CI: [0.914, 1.099]
+  Mean: 1.001  SD: 0.048  95% CI: [0.913, 1.101]
 
 MCMC acceptance ratios (per chain):
-  control:   0.508, 0.508, 0.508, 0.507
-  treatment: 0.474, 0.476, 0.475, 0.475
+  control:   0.508, 0.509, 0.509, 0.509
+  treatment: 0.476, 0.475, 0.475, 0.475
 

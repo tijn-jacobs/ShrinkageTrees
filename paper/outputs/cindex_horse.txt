@@ -1,2 +1,1 @@
-Train C-index (HorseTrees):   0.763
-Test C-index (HorseTrees):    0.573
+Train C-index (HorseTrees):   0.727

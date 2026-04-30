@@ -1,2 +1,1 @@
-Train C-index (SurvivalBART): 0.986
-Test C-index (SurvivalBART):  0.519
+Train C-index (SurvivalBART): 0.989

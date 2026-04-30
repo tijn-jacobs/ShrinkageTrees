@@ -36,7 +36,7 @@
   \scriptsize \texttt{prior\_type = "standard"}\\[-1pt]
   \scriptsize classical BART baseline};
 
-\node[filled, below=4mm of h2] (c12) {%
+\node[key, below=4mm of h2] (c12) {%
   \texttt{ShrinkageTrees()}\\[-1pt]
   \scriptsize \texttt{prior\_type = "half-cauchy"}\\[-1pt]
   \scriptsize local shrinkage per leaf};
@@ -69,9 +69,9 @@
       {Dirichlet splits\\{\normalfont\scriptsize structural sparsity (DART)}};
 
 % ---------- Axis labels ----------
-\node[axislabel] at ($(h2)+(0,0.9)$) {step-height prior — parametric shrinkage on leaves $\longrightarrow$};
+\node[axislabel] at ($(h2)+(0,0.9)$) {shrinkage on the step heights $\longrightarrow$};
 \node[axislabel, rotate=90] at ($(c21.west)+(-2.2,1.4)$)
-     {$\longleftarrow$ splitting rule — structural sparsity};
+     {$\longleftarrow$ regularisation of the tree structure};
 
 % ---------- Legend (centred below the middle column) ----------
 \begin{scope}[shift={($(c22.south)+(-5.2,-1.6)$)}]

@@ -8,20 +8,18 @@ Call: ShrinkageTrees(y = time, status = status, X_train = X_train,
     n_chains = 4, verbose = verbose)
 
 Outcome: Right-censored (AFT, timescale = time) | Prior: standard | Trees: 200
-Data:    n = 285, p = 1004 | Draws: 5000 x 4 chains (burn-in 5000)
+Data:    n = 357, p = 1004 | Draws: 5000 x 4 chains (burn-in 5000)
 
 Posterior sigma:
-  Mean: 0.258  SD: 0.043  95% CI: [0.182, 0.351]
+  Mean: 0.23  SD: 0.037  95% CI: [0.169, 0.312]
 
 Predictions (posterior mean):
-  Train: mean = 47.119, sd = 23.804, range = [7.635, 127.415]
-  Test:  mean = 47.526, sd = 9.863, range = [25.744, 81.561]
+  Train: mean = 48.599, sd = 25.229, range = [7.177, 157.911]
+  Test:  mean = 40.51, sd = NA, range = [40.51, 40.51]
 
-Variable importance: omitted (1004 covariates; raise n_vi or inspect `summary(fit)$variable_importance`).
-
-MCMC acceptance ratio (per chain): 0.267, 0.266, 0.265, 0.265
+MCMC acceptance ratio (per chain): 0.244, 0.243, 0.247, 0.239
 
 Convergence diagnostics (coda):
-  Gelman-Rubin R-hat:  = 1.008
-  Effective sample size: sigma = 377
+  Gelman-Rubin R-hat:  = 1.052
+  Effective sample size: sigma = 323
 
