@@ -1,0 +1,55 @@
+CausalHorseForest       Causal Horseshoe Forests
+CausalShrinkageForest   General Causal Shrinkage Forests
+HorseTrees              Horseshoe Regression Trees (HorseTrees)
+ShrinkageTrees          General Shrinkage Regression Trees
+                        (ShrinkageTrees)
+SurvivalBART            SurvivalBART
+SurvivalBCF             SurvivalBCF (Bayesian Causal Forest for
+                        survival data)
+SurvivalDART            SurvivalDART
+SurvivalShrinkageBCF    SurvivalShrinkageBCF (Shrinkage Bayesian Causal
+                        Forest for survival data)
+as.mcmc.list.ShrinkageTrees
+                        Convert MCMC output to a coda mcmc.list
+bayesian_bootstrap_ate
+                        Bayesian bootstrap average treatment effect
+ovarian                 Semi-synthesised TCGA Ovarian Cancer Dataset
+ovarian_truth           Ground-truth quantities for the
+                        semi-synthesised ovarian dataset
+pdac                    Processed TCGA PAAD dataset (pdac)
+plot.CausalShrinkageForest
+                        Plot diagnostics for a CausalShrinkageForest
+                        model
+plot.ShrinkageTrees     Plot diagnostics for a ShrinkageTrees model
+plot.ShrinkageTreesPrediction
+                        Plot posterior predictive survival curves
+predict.CausalShrinkageForest
+                        Posterior predictive inference for a
+                        CausalShrinkageForest model
+predict.ShrinkageTrees
+                        Posterior predictive inference for a
+                        ShrinkageTrees model
+print.CausalShrinkageForest
+                        Print a CausalShrinkageForest model
+print.CausalShrinkageForestPrediction
+                        Print a CausalShrinkageForestPrediction object
+print.ShrinkageTrees    Print a ShrinkageTrees model
+print.ShrinkageTreesPrediction
+                        Print a ShrinkageTreesPrediction object
+print.summary.CausalShrinkageForest
+                        Print a CausalShrinkageForest model summary
+print.summary.CausalShrinkageForestPrediction
+                        Print a CausalShrinkageForestPrediction summary
+print.summary.ShrinkageTrees
+                        Print a ShrinkageTrees model summary
+print.summary.ShrinkageTreesPrediction
+                        Print a ShrinkageTreesPrediction summary
+summary.CausalShrinkageForest
+                        Summarise a CausalShrinkageForest model
+summary.CausalShrinkageForestPrediction
+                        Summarise a CausalShrinkageForestPrediction
+                        object
+summary.ShrinkageTrees
+                        Summarise a ShrinkageTrees model
+summary.ShrinkageTreesPrediction
+                        Summarise a ShrinkageTreesPrediction object

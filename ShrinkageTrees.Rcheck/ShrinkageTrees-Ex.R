@@ -1,0 +1,682 @@
+pkgname <- "ShrinkageTrees"
+source(file.path(R.home("share"), "R", "examples-header.R"))
+options(warn = 1)
+library('ShrinkageTrees')
+
+base::assign(".oldSearch", base::search(), pos = 'CheckExEnv')
+base::assign(".old_wd", base::getwd(), pos = 'CheckExEnv')
+cleanEx()
+nameEx("CausalHorseForest")
+### * CausalHorseForest
+
+flush(stderr()); flush(stdout())
+
+### Name: CausalHorseForest
+### Title: Causal Horseshoe Forests
+### Aliases: CausalHorseForest
+
+### ** Examples
+
+# Example: Continuous outcome and homogeneous treatment effect
+n <- 50
+p <- 3
+X_control <- matrix(runif(n * p), ncol = p)
+X_treat <- matrix(runif(n * p), ncol = p)
+treatment <- rbinom(n, 1, 0.5)
+tau <- 2
+y <- X_control[, 1] + (0.5 - treatment) * tau + rnorm(n)
+
+fit <- CausalHorseForest(
+  y = y,
+  X_train_control = X_control,
+  X_train_treat = X_treat,
+  treatment_indicator_train = treatment,
+  outcome_type = "continuous",
+  number_of_trees = 5,
+  N_post = 10,
+  N_burn = 5,
+  store_posterior_sample = TRUE,
+  verbose = FALSE
+)
+
+
+
+
+
+cleanEx()
+nameEx("CausalShrinkageForest")
+### * CausalShrinkageForest
+
+flush(stderr()); flush(stdout())
+
+### Name: CausalShrinkageForest
+### Title: General Causal Shrinkage Forests
+### Aliases: CausalShrinkageForest
+
+### ** Examples
+
+# Example: Continuous outcome, homogeneous treatment effect, two priors
+n <- 50
+p <- 3
+X <- matrix(runif(n * p), ncol = p)
+X_treat <- X_control <- X
+treat <- rbinom(n, 1, X[,1])
+tau <- 2
+y <- X[, 1] + (0.5 - treat) * tau + rnorm(n)
+
+# Fit a standard Causal Horseshoe Forest
+fit_horseshoe <- CausalShrinkageForest(y = y,
+                                       X_train_control = X_control,
+                                       X_train_treat = X_treat,
+                                       treatment_indicator_train = treat,
+                                       outcome_type = "continuous",
+                                       number_of_trees_treat = 5,
+                                       number_of_trees_control = 5,
+                                       prior_type_control = "horseshoe",
+                                       prior_type_treat = "horseshoe",
+                                       local_hp_control = 0.1/sqrt(5),
+                                       local_hp_treat = 0.1/sqrt(5),
+                                       global_hp_control = 0.1/sqrt(5),
+                                       global_hp_treat = 0.1/sqrt(5),
+                                       N_post = 10,
+                                       N_burn = 5,
+                                       store_posterior_sample = TRUE,
+                                       verbose = FALSE
+)
+
+# Fit a Causal Shrinkage Forest with half-cauchy prior
+fit_halfcauchy <- CausalShrinkageForest(y = y,
+                                        X_train_control = X_control,
+                                        X_train_treat = X_treat,
+                                        treatment_indicator_train = treat,
+                                        outcome_type = "continuous",
+                                        number_of_trees_treat = 5,
+                                        number_of_trees_control = 5,
+                                        prior_type_control = "half-cauchy",
+                                        prior_type_treat = "half-cauchy",
+                                        local_hp_control = 1/sqrt(5),
+                                        local_hp_treat = 1/sqrt(5),
+                                        N_post = 10,
+                                        N_burn = 5,
+                                        store_posterior_sample = TRUE,
+                                        verbose = FALSE
+)
+
+# Posterior mean CATEs
+CATE_horseshoe <- colMeans(fit_horseshoe$train_predictions_sample_treat)
+CATE_halfcauchy <- colMeans(fit_halfcauchy$train_predictions_sample_treat)
+
+# Posteriors of the ATE
+post_ATE_horseshoe <- rowMeans(fit_horseshoe$train_predictions_sample_treat)
+post_ATE_halfcauchy <- rowMeans(fit_halfcauchy$train_predictions_sample_treat)
+
+# Posterior mean ATE
+ATE_horseshoe <- mean(post_ATE_horseshoe)
+ATE_halfcauchy <- mean(post_ATE_halfcauchy)
+
+# Example: Interval-censored causal survival outcome
+n <- 50; p <- 3
+X_ic <- matrix(rnorm(n * p), ncol = p)
+treat_ic <- rbinom(n, 1, 0.5)
+true_t <- rexp(n, rate = exp(-X_ic[, 1] - 0.5 * treat_ic))
+left_t  <- true_t * runif(n, 0.5, 1)
+right_t <- true_t * runif(n, 1, 1.5)
+exact <- sample(n, 15)
+left_t[exact] <- true_t[exact]; right_t[exact] <- true_t[exact]
+rc <- sample(setdiff(seq_len(n), exact), 10); right_t[rc] <- Inf
+
+fit_ic <- CausalShrinkageForest(
+  left_time = left_t, right_time = right_t,
+  X_train_control = X_ic, X_train_treat = X_ic,
+  treatment_indicator_train = treat_ic,
+  outcome_type = "interval-censored",
+  number_of_trees_control = 5, number_of_trees_treat = 5,
+  prior_type_control = "horseshoe", prior_type_treat = "horseshoe",
+  local_hp_control = 0.1/sqrt(5), local_hp_treat = 0.1/sqrt(5),
+  global_hp_control = 0.1/sqrt(5), global_hp_treat = 0.1/sqrt(5),
+  N_post = 10, N_burn = 5,
+  store_posterior_sample = TRUE, verbose = FALSE)
+
+
+
+
+cleanEx()
+nameEx("HorseTrees")
+### * HorseTrees
+
+flush(stderr()); flush(stdout())
+
+### Name: HorseTrees
+### Title: Horseshoe Regression Trees (HorseTrees)
+### Aliases: HorseTrees
+
+### ** Examples
+
+# Minimal example: continuous outcome
+n <- 25
+p <- 5
+X <- matrix(rnorm(n * p), ncol = p)
+y <- X[, 1] + rnorm(n)
+fit1 <- HorseTrees(y = y, X_train = X, outcome_type = "continuous", 
+                   number_of_trees = 5, N_post = 75, N_burn = 25, 
+                   verbose = FALSE)
+
+# Minimal example: binary outcome
+X <- matrix(rnorm(n * p), ncol = p)
+y <- ifelse(X[, 1] + rnorm(n) > 0, 1, 0)
+fit2 <- HorseTrees(y = y, X_train = X, outcome_type = "binary", 
+                   number_of_trees = 5, N_post = 75, N_burn = 25, 
+                   verbose = FALSE)
+
+# Minimal example: right-censored outcome
+X <- matrix(rnorm(n * p), ncol = p)
+time <- rexp(n, rate = 0.1)
+status <- rbinom(n, 1, 0.7)
+fit3 <- HorseTrees(y = time, status = status, X_train = X,
+                   outcome_type = "right-censored", number_of_trees = 5,
+                   N_post = 75, N_burn = 25, verbose = FALSE)
+
+# Minimal example: interval-censored outcome
+X <- matrix(rnorm(n * p), ncol = p)
+true_t <- rexp(n, rate = 0.1)
+left_t  <- true_t * runif(n, 0.5, 1)
+right_t <- true_t * runif(n, 1, 1.5)
+# Mark some as exact, some as right-censored
+exact <- sample(n, 8); left_t[exact] <- true_t[exact]; right_t[exact] <- true_t[exact]
+rc <- sample(setdiff(seq_len(n), exact), 5); right_t[rc] <- Inf
+fit4 <- HorseTrees(left_time = left_t, right_time = right_t, X_train = X,
+                   outcome_type = "interval-censored", number_of_trees = 5,
+                   N_post = 75, N_burn = 25, verbose = FALSE)
+
+# Larger continuous example (not run automatically)
+                       
+
+
+
+cleanEx()
+nameEx("ShrinkageTrees")
+### * ShrinkageTrees
+
+flush(stderr()); flush(stdout())
+
+### Name: ShrinkageTrees
+### Title: General Shrinkage Regression Trees (ShrinkageTrees)
+### Aliases: ShrinkageTrees
+
+### ** Examples
+
+# Example: Continuous outcome with ShrinkageTrees, two priors
+n <- 50
+p <- 3
+X <- matrix(runif(n * p), ncol = p)
+X_test <- matrix(runif(n * p), ncol = p)
+y <- X[, 1] + rnorm(n)
+
+# Fit ShrinkageTrees with standard horseshoe prior
+fit_horseshoe <- ShrinkageTrees(y = y,
+                                X_train = X,
+                                X_test = X_test,
+                                outcome_type = "continuous",
+                                number_of_trees = 5,
+                                prior_type = "horseshoe",
+                                local_hp = 0.1 / sqrt(5),
+                                global_hp = 0.1 / sqrt(5),
+                                N_post = 10,
+                                N_burn = 5,
+                                store_posterior_sample = TRUE,
+                                verbose = FALSE)
+
+# Fit ShrinkageTrees with half-Cauchy prior
+fit_halfcauchy <- ShrinkageTrees(y = y,
+                                 X_train = X,
+                                 X_test = X_test,
+                                 outcome_type = "continuous",
+                                 number_of_trees = 5,
+                                 prior_type = "half-cauchy",
+                                 local_hp = 1 / sqrt(5),
+                                 N_post = 10,
+                                 N_burn = 5,
+                                 store_posterior_sample = TRUE,
+                                 verbose = FALSE)
+
+# Posterior mean predictions
+pred_horseshoe <- colMeans(fit_horseshoe$train_predictions_sample)
+pred_halfcauchy <- colMeans(fit_halfcauchy$train_predictions_sample)
+
+# Posteriors of the mean (global average prediction)
+post_mean_horseshoe <- rowMeans(fit_horseshoe$train_predictions_sample)
+post_mean_halfcauchy <- rowMeans(fit_halfcauchy$train_predictions_sample)
+
+# Posterior mean prediction averages
+mean_pred_horseshoe <- mean(post_mean_horseshoe)
+mean_pred_halfcauchy <- mean(post_mean_halfcauchy)
+
+# Example: Interval-censored survival outcome
+n <- 50; p <- 3
+X_ic <- matrix(rnorm(n * p), ncol = p)
+true_t <- rexp(n, rate = exp(-X_ic[, 1]))
+left_t  <- true_t * runif(n, 0.5, 1)
+right_t <- true_t * runif(n, 1, 1.5)
+exact <- sample(n, 15)
+left_t[exact] <- true_t[exact]; right_t[exact] <- true_t[exact]
+rc <- sample(setdiff(seq_len(n), exact), 10); right_t[rc] <- Inf
+
+fit_ic <- ShrinkageTrees(left_time = left_t, right_time = right_t,
+                         X_train = X_ic,
+                         outcome_type = "interval-censored",
+                         prior_type = "horseshoe",
+                         local_hp = 0.1 / sqrt(5),
+                         global_hp = 0.1 / sqrt(5),
+                         number_of_trees = 5,
+                         N_post = 10, N_burn = 5,
+                         verbose = FALSE)
+
+
+
+
+cleanEx()
+nameEx("SurvivalBART")
+### * SurvivalBART
+
+flush(stderr()); flush(stdout())
+
+### Name: SurvivalBART
+### Title: SurvivalBART
+### Aliases: SurvivalBART
+
+### ** Examples
+
+set.seed(1)
+n <- 30; p <- 5
+X <- matrix(rnorm(n * p), ncol = p)
+time <- rexp(n, rate = exp(0.5 * X[, 1]))
+status <- rbinom(n, 1, 0.7)
+
+fit <- SurvivalBART(time = time, status = status, X_train = X,
+                    number_of_trees = 5, N_post = 50, N_burn = 25,
+                    verbose = FALSE)
+
+# S3 methods
+print(fit)
+smry <- summary(fit)
+
+# Posterior predictions on new data
+X_new <- matrix(rnorm(10 * p), ncol = p)
+pred <- predict(fit, newdata = X_new)
+print(pred)
+
+# Diagnostic plot (requires ggplot2)
+if (requireNamespace("ggplot2", quietly = TRUE)) {
+  plot(fit, type = "trace")
+
+  # Posterior survival curves for training data
+  plot(fit, type = "survival")
+
+  # Posterior predictive survival curves for new data
+  plot(pred, type = "survival")
+  plot(pred, type = "survival", obs = c(1, 5))
+}
+
+# Interval-censored example
+set.seed(11)
+n <- 30; p <- 5
+X <- matrix(rnorm(n * p), ncol = p)
+true_t <- rexp(n, rate = exp(0.5 * X[, 1]))
+left_t  <- true_t * runif(n, 0.5, 1)
+right_t <- true_t * runif(n, 1, 1.5)
+exact <- sample(n, 10); left_t[exact] <- true_t[exact]; right_t[exact] <- true_t[exact]
+rc <- sample(setdiff(seq_len(n), exact), 5); right_t[rc] <- Inf
+
+fit_ic <- SurvivalBART(left_time = left_t, right_time = right_t,
+                        X_train = X, number_of_trees = 5,
+                        N_post = 50, N_burn = 25, verbose = FALSE)
+
+
+
+
+cleanEx()
+nameEx("SurvivalBCF")
+### * SurvivalBCF
+
+flush(stderr()); flush(stdout())
+
+### Name: SurvivalBCF
+### Title: SurvivalBCF (Bayesian Causal Forest for survival data)
+### Aliases: SurvivalBCF
+
+### ** Examples
+
+set.seed(3)
+n <- 30; p <- 5
+X <- matrix(rnorm(n * p), ncol = p)
+treatment <- rbinom(n, 1, 0.5)
+log_T <- X[, 1] + treatment * (-0.5) + rnorm(n)
+time <- exp(log_T)
+status <- rbinom(n, 1, 0.7)
+
+fit <- SurvivalBCF(time = time, status = status, X_train = X,
+                   treatment = treatment,
+                   number_of_trees_control = 5,
+                   number_of_trees_treat = 5,
+                   N_post = 50, N_burn = 25,
+                   verbose = FALSE)
+
+# S3 methods
+print(fit)
+smry <- summary(fit)
+
+# Posterior ATE
+cat("ATE:", round(smry$treatment_effect$ate, 3), "\n")
+
+# Diagnostic and treatment-effect plots (requires ggplot2)
+if (requireNamespace("ggplot2", quietly = TRUE)) {
+  plot(fit, type = "trace")
+  plot(fit, type = "ate")
+  plot(fit, type = "cate")
+}
+
+# Interval-censored causal example
+set.seed(13)
+n <- 30; p <- 5
+X <- matrix(rnorm(n * p), ncol = p)
+treatment <- rbinom(n, 1, 0.5)
+true_t <- exp(X[, 1] + treatment * (-0.5) + rnorm(n))
+left_t  <- true_t * runif(n, 0.5, 1)
+right_t <- true_t * runif(n, 1, 1.5)
+exact <- sample(n, 10); left_t[exact] <- true_t[exact]; right_t[exact] <- true_t[exact]
+rc <- sample(setdiff(seq_len(n), exact), 5); right_t[rc] <- Inf
+
+fit_ic <- SurvivalBCF(left_time = left_t, right_time = right_t,
+                       X_train = X, treatment = treatment,
+                       number_of_trees_control = 5,
+                       number_of_trees_treat = 5,
+                       N_post = 50, N_burn = 25, verbose = FALSE)
+
+
+
+
+cleanEx()
+nameEx("SurvivalDART")
+### * SurvivalDART
+
+flush(stderr()); flush(stdout())
+
+### Name: SurvivalDART
+### Title: SurvivalDART
+### Aliases: SurvivalDART
+
+### ** Examples
+
+set.seed(2)
+n <- 30; p <- 5
+X <- matrix(rnorm(n * p), ncol = p)
+time <- rexp(n, rate = exp(0.5 * X[, 1]))
+status <- rbinom(n, 1, 0.7)
+
+fit <- SurvivalDART(time = time, status = status, X_train = X,
+                    number_of_trees = 5, N_post = 50, N_burn = 25,
+                    verbose = FALSE)
+
+# S3 methods
+print(fit)
+smry <- summary(fit)
+
+# Posterior predictions on new data
+X_new <- matrix(rnorm(10 * p), ncol = p)
+pred <- predict(fit, newdata = X_new)
+print(pred)
+
+# Variable importance and survival plots (requires ggplot2)
+if (requireNamespace("ggplot2", quietly = TRUE)) {
+  plot(fit, type = "vi", n_vi = 5)
+
+  # Posterior survival curves for training data
+  plot(fit, type = "survival")
+
+  # Posterior predictive survival curves for new data
+  plot(pred, type = "survival")
+  plot(pred, type = "survival", obs = c(1, 5))
+}
+
+# Interval-censored example
+set.seed(12)
+n <- 30; p <- 5
+X <- matrix(rnorm(n * p), ncol = p)
+true_t <- rexp(n, rate = exp(0.5 * X[, 1]))
+left_t  <- true_t * runif(n, 0.5, 1)
+right_t <- true_t * runif(n, 1, 1.5)
+exact <- sample(n, 10); left_t[exact] <- true_t[exact]; right_t[exact] <- true_t[exact]
+rc <- sample(setdiff(seq_len(n), exact), 5); right_t[rc] <- Inf
+
+fit_ic <- SurvivalDART(left_time = left_t, right_time = right_t,
+                        X_train = X, number_of_trees = 5,
+                        N_post = 50, N_burn = 25, verbose = FALSE)
+
+
+
+
+cleanEx()
+nameEx("SurvivalShrinkageBCF")
+### * SurvivalShrinkageBCF
+
+flush(stderr()); flush(stdout())
+
+### Name: SurvivalShrinkageBCF
+### Title: SurvivalShrinkageBCF (Shrinkage Bayesian Causal Forest for
+###   survival data)
+### Aliases: SurvivalShrinkageBCF
+
+### ** Examples
+
+set.seed(4)
+n <- 30; p <- 5
+X <- matrix(rnorm(n * p), ncol = p)
+treatment <- rbinom(n, 1, 0.5)
+log_T <- X[, 1] + treatment * (-0.5) + rnorm(n)
+time <- exp(log_T)
+status <- rbinom(n, 1, 0.7)
+
+fit <- SurvivalShrinkageBCF(time = time, status = status, X_train = X,
+                             treatment = treatment,
+                             number_of_trees_control = 5,
+                             number_of_trees_treat = 5,
+                             N_post = 50, N_burn = 25,
+                             verbose = FALSE)
+
+# S3 methods
+print(fit)
+smry <- summary(fit)
+
+# Posterior ATE with 95% credible interval
+cat("ATE:", round(smry$treatment_effect$ate, 3), "\n")
+
+# Diagnostic and treatment-effect plots (requires ggplot2)
+if (requireNamespace("ggplot2", quietly = TRUE)) {
+  plot(fit, type = "trace")
+  plot(fit, type = "cate")
+}
+
+# Interval-censored causal example
+set.seed(14)
+n <- 30; p <- 5
+X <- matrix(rnorm(n * p), ncol = p)
+treatment <- rbinom(n, 1, 0.5)
+true_t <- exp(X[, 1] + treatment * (-0.5) + rnorm(n))
+left_t  <- true_t * runif(n, 0.5, 1)
+right_t <- true_t * runif(n, 1, 1.5)
+exact <- sample(n, 10); left_t[exact] <- true_t[exact]; right_t[exact] <- true_t[exact]
+rc <- sample(setdiff(seq_len(n), exact), 5); right_t[rc] <- Inf
+
+fit_ic <- SurvivalShrinkageBCF(left_time = left_t, right_time = right_t,
+                                X_train = X, treatment = treatment,
+                                number_of_trees_control = 5,
+                                number_of_trees_treat = 5,
+                                N_post = 50, N_burn = 25, verbose = FALSE)
+
+
+
+
+cleanEx()
+nameEx("as.mcmc.list.ShrinkageTrees")
+### * as.mcmc.list.ShrinkageTrees
+
+flush(stderr()); flush(stdout())
+
+### Name: as.mcmc.list.ShrinkageTrees
+### Title: Convert MCMC output to a coda mcmc.list
+### Aliases: as.mcmc.list.ShrinkageTrees
+
+### ** Examples
+
+
+
+
+cleanEx()
+nameEx("bayesian_bootstrap_ate")
+### * bayesian_bootstrap_ate
+
+flush(stderr()); flush(stdout())
+
+### Name: bayesian_bootstrap_ate
+### Title: Bayesian bootstrap average treatment effect
+### Aliases: bayesian_bootstrap_ate
+
+### ** Examples
+
+# Small toy causal model (binary outcome, for speed)
+set.seed(1)
+n <- 40; p <- 3
+X <- matrix(runif(n * p), ncol = p)
+trt <- rbinom(n, 1, 0.5)
+y <- X[, 1] + trt * (0.5 + X[, 2]) + rnorm(n)
+
+fit <- CausalShrinkageForest(
+  y = y,
+  X_train_control = X, X_train_treat = X,
+  treatment_indicator_train = trt,
+  outcome_type = "continuous",
+  number_of_trees_control = 5, number_of_trees_treat = 5,
+  prior_type_control = "horseshoe", prior_type_treat = "horseshoe",
+  local_hp_control = 0.1, global_hp_control = 0.1,
+  local_hp_treat = 0.1, global_hp_treat = 0.1,
+  N_post = 20, N_burn = 10,
+  store_posterior_sample = TRUE,
+  verbose = FALSE
+)
+
+bb <- bayesian_bootstrap_ate(fit, alpha = 0.05)
+bb$pate_mean
+bb$pate_ci
+
+
+
+
+cleanEx()
+nameEx("ovarian")
+### * ovarian
+
+flush(stderr()); flush(stdout())
+
+### Name: ovarian
+### Title: Semi-synthesised TCGA Ovarian Cancer Dataset
+### Aliases: ovarian
+### Keywords: datasets
+
+### ** Examples
+
+data(ovarian)
+
+# Dimensions: patients x (6 clinical + 2000 gene columns)
+dim(ovarian)
+
+# Survival outcome
+head(ovarian[, c("OS_time", "OS_event", "treatment")])
+
+# KM plot by treatment
+if (requireNamespace("survival", quietly = TRUE)) {
+  library(survival)
+  fit <- survfit(Surv(OS_time, OS_event) ~ treatment, data = ovarian)
+  plot(fit, col = c("blue", "red"), xlab = "Time (days)", ylab = "Survival")
+  legend("topright", c("Carboplatin", "Cisplatin"), col = c("blue", "red"), lty = 1)
+}
+
+
+
+cleanEx()
+nameEx("ovarian_truth")
+### * ovarian_truth
+
+flush(stderr()); flush(stdout())
+
+### Name: ovarian_truth
+### Title: Ground-truth quantities for the semi-synthesised ovarian dataset
+### Aliases: ovarian_truth
+### Keywords: datasets
+
+### ** Examples
+
+data(ovarian)
+data(ovarian_truth)
+stopifnot(nrow(ovarian) == nrow(ovarian_truth))
+# True (population) average treatment effect on the log-survival scale:
+mean(ovarian_truth$true_tau)
+
+
+
+cleanEx()
+nameEx("plot.CausalShrinkageForest")
+### * plot.CausalShrinkageForest
+
+flush(stderr()); flush(stdout())
+
+### Name: plot.CausalShrinkageForest
+### Title: Plot diagnostics for a CausalShrinkageForest model
+### Aliases: plot.CausalShrinkageForest
+
+### ** Examples
+
+
+
+
+cleanEx()
+nameEx("plot.ShrinkageTrees")
+### * plot.ShrinkageTrees
+
+flush(stderr()); flush(stdout())
+
+### Name: plot.ShrinkageTrees
+### Title: Plot diagnostics for a ShrinkageTrees model
+### Aliases: plot.ShrinkageTrees
+
+### ** Examples
+
+
+
+
+cleanEx()
+nameEx("plot.ShrinkageTreesPrediction")
+### * plot.ShrinkageTreesPrediction
+
+flush(stderr()); flush(stdout())
+
+### Name: plot.ShrinkageTreesPrediction
+### Title: Plot posterior predictive survival curves
+### Aliases: plot.ShrinkageTreesPrediction
+
+### ** Examples
+
+
+
+
+### * <FOOTER>
+###
+cleanEx()
+options(digits = 7L)
+base::cat("Time elapsed: ", proc.time() - base::get("ptime", pos = 'CheckExEnv'),"\n")
+grDevices::dev.off()
+###
+### Local variables: ***
+### mode: outline-minor ***
+### outline-regexp: "\\(> \\)?### [*]+" ***
+### End: ***
+quit('no')

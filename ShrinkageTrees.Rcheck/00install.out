@@ -1,0 +1,42 @@
+* installing *source* package ‘ShrinkageTrees’ ...
+** this is package ‘ShrinkageTrees’ version ‘2.0.2’
+** using staged installation
+** libs
+using C++ compiler: ‘Apple clang version 16.0.0 (clang-1600.0.26.6)’
+using SDK: ‘MacOSX15.2.sdk’
+clang++ -arch arm64 -std=gnu++17 -I"/Library/Frameworks/R.framework/Resources/include" -DNDEBUG  -I'/Library/Frameworks/R.framework/Versions/4.5-arm64/Resources/library/Rcpp/include' -I/opt/R/arm64/include    -fPIC  -O3 -fstrict-aliasing -DNDEBUG  -c CausalHorseForest.cpp -o CausalHorseForest.o
+clang++ -arch arm64 -std=gnu++17 -I"/Library/Frameworks/R.framework/Resources/include" -DNDEBUG  -I'/Library/Frameworks/R.framework/Versions/4.5-arm64/Resources/library/Rcpp/include' -I/opt/R/arm64/include    -fPIC  -O3 -fstrict-aliasing -DNDEBUG  -c Forest.cpp -o Forest.o
+clang++ -arch arm64 -std=gnu++17 -I"/Library/Frameworks/R.framework/Resources/include" -DNDEBUG  -I'/Library/Frameworks/R.framework/Versions/4.5-arm64/Resources/library/Rcpp/include' -I/opt/R/arm64/include    -fPIC  -O3 -fstrict-aliasing -DNDEBUG  -c Functions.cpp -o Functions.o
+clang++ -arch arm64 -std=gnu++17 -I"/Library/Frameworks/R.framework/Resources/include" -DNDEBUG  -I'/Library/Frameworks/R.framework/Versions/4.5-arm64/Resources/library/Rcpp/include' -I/opt/R/arm64/include    -fPIC  -O3 -fstrict-aliasing -DNDEBUG  -c HorseTrees.cpp -o HorseTrees.o
+clang++ -arch arm64 -std=gnu++17 -I"/Library/Frameworks/R.framework/Resources/include" -DNDEBUG  -I'/Library/Frameworks/R.framework/Versions/4.5-arm64/Resources/library/Rcpp/include' -I/opt/R/arm64/include    -fPIC  -O3 -fstrict-aliasing -DNDEBUG  -c Information.cpp -o Information.o
+clang++ -arch arm64 -std=gnu++17 -I"/Library/Frameworks/R.framework/Resources/include" -DNDEBUG  -I'/Library/Frameworks/R.framework/Versions/4.5-arm64/Resources/library/Rcpp/include' -I/opt/R/arm64/include    -fPIC  -O3 -fstrict-aliasing -DNDEBUG  -c OuterGibbsFunctions.cpp -o OuterGibbsFunctions.o
+clang++ -arch arm64 -std=gnu++17 -I"/Library/Frameworks/R.framework/Resources/include" -DNDEBUG  -I'/Library/Frameworks/R.framework/Versions/4.5-arm64/Resources/library/Rcpp/include' -I/opt/R/arm64/include    -fPIC  -O3 -fstrict-aliasing -DNDEBUG  -c Parameters.cpp -o Parameters.o
+clang++ -arch arm64 -std=gnu++17 -I"/Library/Frameworks/R.framework/Resources/include" -DNDEBUG  -I'/Library/Frameworks/R.framework/Versions/4.5-arm64/Resources/library/Rcpp/include' -I/opt/R/arm64/include    -fPIC  -O3 -fstrict-aliasing -DNDEBUG  -c RcppExports.cpp -o RcppExports.o
+clang++ -arch arm64 -std=gnu++17 -I"/Library/Frameworks/R.framework/Resources/include" -DNDEBUG  -I'/Library/Frameworks/R.framework/Versions/4.5-arm64/Resources/library/Rcpp/include' -I/opt/R/arm64/include    -fPIC  -O3 -fstrict-aliasing -DNDEBUG  -c ScaleMixture.cpp -o ScaleMixture.o
+clang++ -arch arm64 -std=gnu++17 -I"/Library/Frameworks/R.framework/Resources/include" -DNDEBUG  -I'/Library/Frameworks/R.framework/Versions/4.5-arm64/Resources/library/Rcpp/include' -I/opt/R/arm64/include    -fPIC  -O3 -fstrict-aliasing -DNDEBUG  -c StanBirthDeath.cpp -o StanBirthDeath.o
+clang++ -arch arm64 -std=gnu++17 -I"/Library/Frameworks/R.framework/Resources/include" -DNDEBUG  -I'/Library/Frameworks/R.framework/Versions/4.5-arm64/Resources/library/Rcpp/include' -I/opt/R/arm64/include    -fPIC  -O3 -fstrict-aliasing -DNDEBUG  -c StanForest.cpp -o StanForest.o
+clang++ -arch arm64 -std=gnu++17 -I"/Library/Frameworks/R.framework/Resources/include" -DNDEBUG  -I'/Library/Frameworks/R.framework/Versions/4.5-arm64/Resources/library/Rcpp/include' -I/opt/R/arm64/include    -fPIC  -O3 -fstrict-aliasing -DNDEBUG  -c StanForestFunctions.cpp -o StanForestFunctions.o
+clang++ -arch arm64 -std=gnu++17 -I"/Library/Frameworks/R.framework/Resources/include" -DNDEBUG  -I'/Library/Frameworks/R.framework/Versions/4.5-arm64/Resources/library/Rcpp/include' -I/opt/R/arm64/include    -fPIC  -O3 -fstrict-aliasing -DNDEBUG  -c StanTree.cpp -o StanTree.o
+clang++ -arch arm64 -std=gnu++17 -I"/Library/Frameworks/R.framework/Resources/include" -DNDEBUG  -I'/Library/Frameworks/R.framework/Versions/4.5-arm64/Resources/library/Rcpp/include' -I/opt/R/arm64/include    -fPIC  -O3 -fstrict-aliasing -DNDEBUG  -c StanTreeFunctions.cpp -o StanTreeFunctions.o
+clang++ -arch arm64 -std=gnu++17 -I"/Library/Frameworks/R.framework/Resources/include" -DNDEBUG  -I'/Library/Frameworks/R.framework/Versions/4.5-arm64/Resources/library/Rcpp/include' -I/opt/R/arm64/include    -fPIC  -O3 -fstrict-aliasing -DNDEBUG  -c Tree.cpp -o Tree.o
+clang++ -arch arm64 -std=gnu++17 -I"/Library/Frameworks/R.framework/Resources/include" -DNDEBUG  -I'/Library/Frameworks/R.framework/Versions/4.5-arm64/Resources/library/Rcpp/include' -I/opt/R/arm64/include    -fPIC  -O3 -fstrict-aliasing -DNDEBUG  -c TreeModifications.cpp -o TreeModifications.o
+clang++ -arch arm64 -std=gnu++17 -I"/Library/Frameworks/R.framework/Resources/include" -DNDEBUG  -I'/Library/Frameworks/R.framework/Versions/4.5-arm64/Resources/library/Rcpp/include' -I/opt/R/arm64/include    -fPIC  -O3 -fstrict-aliasing -DNDEBUG  -c TruncatedNormal.cpp -o TruncatedNormal.o
+clang++ -arch arm64 -std=gnu++17 -I"/Library/Frameworks/R.framework/Resources/include" -DNDEBUG  -I'/Library/Frameworks/R.framework/Versions/4.5-arm64/Resources/library/Rcpp/include' -I/opt/R/arm64/include    -fPIC  -O3 -fstrict-aliasing -DNDEBUG  -c probit-HorseTrees.cpp -o probit-HorseTrees.o
+clang++ -arch arm64 -std=gnu++17 -dynamiclib -Wl,-headerpad_max_install_names -undefined dynamic_lookup -L/Library/Frameworks/R.framework/Resources/lib -L/opt/R/arm64/lib -Wl,-dead_strip -o ShrinkageTrees.so CausalHorseForest.o Forest.o Functions.o HorseTrees.o Information.o OuterGibbsFunctions.o Parameters.o RcppExports.o ScaleMixture.o StanBirthDeath.o StanForest.o StanForestFunctions.o StanTree.o StanTreeFunctions.o Tree.o TreeModifications.o TruncatedNormal.o probit-HorseTrees.o -F/Library/Frameworks/R.framework/.. -framework R
+installing to /Users/tijnjacobs/Library/CloudStorage/OneDrive-VrijeUniversiteitAmsterdam/Documents/GitHub/ShrinkageTrees/ShrinkageTrees.Rcheck/00LOCK-ShrinkageTrees/00new/ShrinkageTrees/libs
+** R
+** data
+*** moving datasets to lazyload DB
+** demo
+** inst
+** byte-compile and prepare package for lazy loading
+** help
+*** installing help indices
+*** copying figures
+** building package indices
+** installing vignettes
+** testing if installed package can be loaded from temporary location
+** checking absolute paths in shared objects and dynamic libraries
+** testing if installed package can be loaded from final location
+** testing if installed package keeps a record of temporary installation path
+* DONE (ShrinkageTrees)

@@ -166,8 +166,8 @@ mu_genes <- X_genes_sc[, active_prog] %*% beta_prog
 # Interaction: gene 1 x figo_stage (biological: gene modifies stage prognosis)
 mu_interaction <- 0.06 * X_genes_sc[, 15] * figo_late
 
-mu <- as.numeric(mu_0 + mu_age + mu_year + mu_figo + mu_grade +
-                 mu_genes + mu_interaction)
+mu <- as.numeric(mu_0 + mu_age + mu_year + mu_figo + mu_grade)
+                 # + mu_genes + mu_interaction)
 
 cat(sprintf("\nmu(x): mean = %.2f, sd = %.2f, range = [%.2f, %.2f]\n",
             mean(mu), sd(mu), min(mu), max(mu)))
@@ -190,7 +190,7 @@ tau_age  <- -0.003 * age_sc            # older: slight carbo advantage
 tau_gene <- -0.15 * X_genes_sc[, 3] +  # gene 3: strong modifier
              0.08 * X_genes_sc[, 7]     # gene 7: moderate modifier
 
-tau <- as.numeric(-0.08 + tau_figo + tau_age + tau_gene)
+tau <- as.numeric(-0.2 + tau_figo + tau_age + tau_gene)
 
 # Verify: mean should be near 0, sd ≈ 0.15-0.25
 cat(sprintf("\ntau(x): mean = %.4f, sd = %.3f, range = [%.3f, %.3f]\n",
@@ -221,7 +221,7 @@ cat(sprintf("Median by treatment — carbo: %.1f, cis: %.1f months\n",
 # Target: ~62% events overall, similar rates across treatment groups
 # Use an exponential censoring mechanism, tune the rate
 
-generate_censored <- function(T_true, treatment, target_event_rate = 0.62,
+generate_censored <- function(T_true, treatment, target_event_rate = 0.32,
                               cens_rate_init = 0.01, tol = 0.01,
                               max_iter = 100) {
   cens_rate <- cens_rate_init
