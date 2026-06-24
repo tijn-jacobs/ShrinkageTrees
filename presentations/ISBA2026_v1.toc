@@ -1,0 +1,9 @@
+\beamer@sectionintoc {1}{Motivation}{2}{0}{1}
+\beamer@sectionintoc {2}{What's new}{4}{0}{2}
+\beamer@sectionintoc {3}{Problem setup}{5}{0}{3}
+\beamer@sectionintoc {4}{From BART to Horseshoe Forests}{7}{0}{4}
+\beamer@sectionintoc {5}{Posterior inference}{10}{0}{5}
+\beamer@sectionintoc {6}{Simulations}{11}{0}{6}
+\beamer@sectionintoc {7}{Application: pancreatic cancer}{15}{0}{7}
+\beamer@sectionintoc {8}{Wrap-up}{17}{0}{8}
+\beamer@sectionintoc {9}{Backup}{20}{1}{9}

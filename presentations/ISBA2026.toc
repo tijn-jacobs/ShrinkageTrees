@@ -1,0 +1,7 @@
+\beamer@sectionintoc {1}{Problem setup}{3}{0}{1}
+\beamer@sectionintoc {2}{From BART to Horseshoe Forests}{6}{0}{2}
+\beamer@sectionintoc {3}{Posterior inference}{9}{0}{3}
+\beamer@sectionintoc {4}{Simulations}{10}{0}{4}
+\beamer@sectionintoc {5}{Application: pancreatic cancer}{12}{0}{5}
+\beamer@sectionintoc {6}{Wrap-up}{14}{0}{6}
+\beamer@sectionintoc {7}{Additional slides}{16}{0}{7}

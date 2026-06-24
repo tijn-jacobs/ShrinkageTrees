@@ -1,0 +1,12 @@
+\beamer@sectionintoc {1}{Setup}{3}{0}{1}
+\beamer@sectionintoc {2}{Identification}{7}{0}{2}
+\beamer@sectionintoc {3}{A quick Bayesian refresher}{10}{0}{3}
+\beamer@sectionintoc {4}{A causal AFT model}{12}{0}{4}
+\beamer@sectionintoc {5}{Trees and BART}{13}{0}{5}
+\beamer@sectionintoc {6}{The horseshoe prior}{17}{0}{6}
+\beamer@sectionintoc {7}{Horseshoe Forests}{22}{0}{7}
+\beamer@sectionintoc {8}{Posterior inference}{24}{0}{8}
+\beamer@sectionintoc {9}{Simulations}{26}{0}{9}
+\beamer@sectionintoc {10}{Application: pancreatic cancer}{28}{0}{10}
+\beamer@sectionintoc {11}{Wrap-up}{29}{0}{11}
+\beamer@sectionintoc {12}{Additional slides}{31}{0}{12}
