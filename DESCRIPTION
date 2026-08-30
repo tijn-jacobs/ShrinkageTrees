@@ -29,8 +29,10 @@ LinkingTo:
 Suggests:
     coda,
     ggplot2,
+    glmnet,
     knitr,
     rmarkdown,
+    rpart,
     survival,
     testthat (>= 3.0.0)
 VignetteBuilder:
