@@ -1,3 +1,66 @@
+# ShrinkageTrees 2.1.0
+
+## Two corrections to the horseshoe global update (breaking)
+
+Two independent defects in `Horseshoe::GlobalUpdate()` have been fixed. Both
+affected every fit using `prior_type = "horseshoe"` (including `HorseTrees()`
+and `CausalHorseForest()`). Results from earlier versions will not reproduce
+under this release.
+
+1. **`global_hp` had no effect.** The scale entered the auxiliary draw as
+   `1.0 / alpha_global * alpha_global`, which by operator precedence is the
+   constant `1.0`. The user's `global_hp` was silently discarded, so every fit
+   behaved as though `global_hp = 1` regardless of what was supplied. This was
+   reported by a referee of the accompanying manuscript.
+
+2. **The error scale and the forest scale were swapped.** `EtaPrior::GlobalUpdate()`
+   declares `(..., sigma, omega, ...)` but was being called with `(omega, sigma)`.
+   Both are `const double&`, so the swap compiled silently. The `tau` draw
+   therefore divided by `sigma` where it should have divided by `omega`. The
+   effect is small where `omega = 1` (`HorseTrees()`, `ShrinkageTrees()`) and
+   substantial where `omega = 1/2` (the causal forests), where it grew with the
+   number of covariates.
+
+## Recalibrated default shrinkage (breaking)
+
+The old default of `k = 0.1` was chosen while defect (1) was present, so it was
+tuned for a model in which the global scale was pinned at 1. With the defect
+corrected, that value shrinks far too aggressively: in our simulations it drove
+pointwise coverage of the conditional treatment effect from roughly 0.95 down to
+about 0.4. Re-running existing scripts against this release *without* updating
+`k` is therefore worse than not upgrading at all.
+
+The defaults are now calibrated for the corrected sampler:
+
+| function | old | new |
+|---|---|---|
+| `HorseTrees()` | `k = 0.1` | `k = 1.0` |
+| `CausalHorseForest()` | `k = 0.1` | `k = 1.5` |
+| `ShrinkageTrees()` | `local_hp`, `global_hp` required | default to `1.0 / sqrt(number_of_trees)` |
+| `CausalShrinkageForest()` | four scales required | default to `1.5 / sqrt(number_of_trees_*)` |
+
+Values of `k` between roughly 0.5 and 1.5 (single-forest models) or 1 and 2
+(causal models) worked well across a range of simulated settings, with smaller
+values shrinking more aggressively and larger values being more conservative.
+The defaults sit in the middle of each range. The
+causal range is higher because the treatment forest enters as `b * tau(x)` with
+`b = +/- 1/2`, halving its contribution to the response; measured on the scale
+of that contribution the two recommendations nearly coincide. `k` remains
+exposed on all four functions and is a natural target for cross-validation.
+
+The `local_hp` / `global_hp` arguments are also no longer mandatory for
+`prior_type = "horseshoe"`; either may be supplied alone, with the other taking
+its default. Only their product identifies the prior, so setting them equal
+loses nothing. `prior_type = "horseshoe_fw"` is unchanged and still requires
+both to be given explicitly.
+
+## Reproducing earlier output
+
+There is no setting that reproduces pre-2.1.0 results exactly, because the
+sampler itself has changed. The closest correspondence is that the old code was
+equivalent to the corrected code with `global_hp = 1`, since the global scale
+was inert.
+
 # ShrinkageTrees 2.0.2
 
 ## Bayesian bootstrap for the average treatment effect

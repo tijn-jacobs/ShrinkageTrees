@@ -2,7 +2,7 @@
 
 
 //                //
-// Fixed variance // 
+// Fixed variance //
 //                // 
 
 
@@ -99,9 +99,12 @@ void HalfCauchy::Propose(Parameters& parameters,
 }
 
 // Global update for HalfCauchy is not required, so this function does nothing.
-void HalfCauchy::GlobalUpdate(Parameters& global_parameters, 
-                              const std::vector<Parameters*>& leaf_parameters, 
-                              const double& omega, const double& sigma, Random& random) {
+// Parameter names follow EtaPrior's declared order (sigma, then omega); the
+// previous reversed naming here is what made the swap in ScaleMixture::
+// GlobalUpdate look deliberate. Body is empty, so this is a rename only.
+void HalfCauchy::GlobalUpdate(Parameters& global_parameters,
+                              const std::vector<Parameters*>& leaf_parameters,
+                              const double& sigma, const double& omega, Random& random) {
   // No global update for Half-Cauchy
 }
 
@@ -240,10 +243,14 @@ void Horseshoe::GlobalUpdate(Parameters& global_parameters,
   
   // tau is a squared term
   double current_tau = global_parameters.GetGlobalParameters(0);
-  
-  // Draw a new auxiliary variable xi and store in the global parameters
-  double xi = random.inv_gamma(1.0, 1.0 / alpha_global * alpha_global 
-                                 + 1.0 / current_tau);
+
+  // Draw a new auxiliary variable xi and store in the global parameters.
+  // NOTE: the parentheses around alpha_global * alpha_global are essential.
+  // Written as 1.0 / alpha_global * alpha_global this groups left-to-right as
+  // (1.0 / alpha_global) * alpha_global == 1.0, which silently discards
+  // alpha_global (the user's global_hp) entirely.
+  double xi_scale = 1.0 / (alpha_global * alpha_global) + 1.0 / current_tau;
+  double xi = random.inv_gamma(1.0, xi_scale);
   global_parameters.SetGlobalParameters(1, xi);
   
   // Initialize the sum for h^2 / lambda
@@ -499,7 +506,13 @@ void ScaleMixture::GlobalUpdate(Parameters& global_parameters,
                                 const double& omega,  
                                 Random& random) {
   
-  eta_prior->GlobalUpdate(global_parameters, leaf_parameters, omega, sigma, random);
+  // NOTE: argument order matters and is not type-checked here.
+  // EtaPrior::GlobalUpdate declares (..., sigma, omega, random) and both are
+  // const double&, so passing them the other way round compiles silently and
+  // makes Horseshoe::GlobalUpdate divide by sigma where it should divide by
+  // omega. Keep these two in the order EtaPrior declares them.
+  eta_prior->GlobalUpdate(global_parameters, leaf_parameters,
+                          sigma, omega, random);
 }
 
 // Check if global parameters are required for ScaleMixture class

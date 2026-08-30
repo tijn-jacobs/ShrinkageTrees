@@ -43,8 +43,34 @@
 #' Used when \code{outcome_type} is \code{"right-censored"} or
 #' \code{"interval-censored"}.
 #' @param number_of_trees Number of trees in each forest. Default is 200.
-#' @param k Horseshoe prior scale hyperparameter. Default is 0.1. Controls 
-#' global-local shrinkage on step heights.
+#' @param k Horseshoe prior scale hyperparameter. Default is 1.5. Controls
+#' global-local shrinkage on the step heights of both forests, parameterized as
+#' \eqn{\alpha_{\mathrm{local}} = \alpha_{\mathrm{global}} =
+#' k / \sqrt{\mathrm{number\_of\_trees}}}.
+#'
+#' \strong{Choosing k.} Values between 1 and 2 worked well across a range of
+#' simulated settings, and the default of 1.5 sits in the middle. Within that
+#' range:
+#' \itemize{
+#'   \item \strong{k near 1 shrinks more aggressively} -- tighter intervals on
+#'     \eqn{\tau(x)}, and treatment-effect heterogeneity pulled harder towards
+#'     a constant. Preferable when the effect is close to homogeneous, when
+#'     censoring is heavy, or when the sample is small.
+#'   \item \strong{k near 2 is more conservative} -- wider intervals and more
+#'     freedom for \eqn{\tau(x)} to vary. Preferable when the effect is
+#'     genuinely heterogeneous and the sample supports estimating it.
+#' }
+#' If you would rather select it from the data, \code{k} is a natural target
+#' for cross-validation; see the "Choosing k" section of the package vignette.
+#'
+#' The useful range is higher here than for the single-forest models
+#' (\code{\link{HorseTrees}}, \code{\link{ShrinkageTrees}}, roughly 0.5 to 1.5)
+#' because the treatment forest enters as \eqn{b\,\tau(x)} with
+#' \eqn{b = \pm 1/2}, halving its contribution to the response. Measured on the
+#' scale of that contribution the two recommendations nearly coincide.
+#'
+#' \strong{Changed in version 2.1.0.} The default was 0.1 in earlier releases.
+#' See \code{NEWS.md}.
 #' @param power Power parameter for tree structure prior. Default is 2.0.
 #' @param base Base parameter for tree structure prior. Default is 0.95.
 #' @param p_grow Probability of proposing a grow move. Default is 0.4.
@@ -195,7 +221,7 @@
 #'   outcome_type = "right-censored",
 #'   timescale = "log",
 #'   number_of_trees = 200,
-#'   k = 0.1,
+#'   k = 1.5,
 #'   N_post = 1000,
 #'   N_burn = 1000,
 #'   store_posterior_sample = TRUE
@@ -317,7 +343,7 @@ CausalHorseForest <- function(y = NULL,
                               outcome_type = "continuous",
                               timescale = "time",
                               number_of_trees = 200,
-                              k = 0.1,
+                              k = 1.5,
                               power = 2.0,
                               base = 0.95,
                               p_grow = 0.4,

@@ -128,7 +128,7 @@ fit_horseshoe <- CausalHorseForest(
   outcome_type = "right-censored",
   timescale = "log",
   number_of_trees = 200,
-  k = 0.1,
+  k = 1.5,
   N_post = 5000,
   N_burn = 5000,
   store_posterior_sample = TRUE
@@ -202,6 +202,16 @@ within a single coherent Bayesian tree framework.
 - In R: `?ShrinkageTrees`, `?HorseTrees`, `?CausalHorseForest`, and `?CausalShrinkageForest` for detailed help of the Horseshoe Forests.
 - For survival-specific Bayesian tree functions, see: `?SurvivalBART`, `?SurvivalDART`, `?SurvivalBCF`, and `?SurvivalShrinkageBCF`.
 - Examples and parameter descriptions can be found in each function’s documentation.
+
+## 🔧 Version 2.1.0: corrected sampler and recalibrated shrinkage
+
+Version 2.1.0 fixes two defects in the horseshoe global update, one of which
+made `global_hp` inert. The previous default `k = 0.1` had been calibrated while
+that defect was present, so it is recalibrated to `k = 1` for the single-forest
+models and `k = 1.5` for the causal models — results from earlier versions will
+not reproduce, and re-running old scripts without updating `k` is worse than not
+upgrading. Useful ranges are roughly 0.5–1.5 and 1–2 respectively, with smaller
+values shrinking more aggressively; see [NEWS.md](NEWS.md) for the full account.
 
 ## 🤝 Contributing
 

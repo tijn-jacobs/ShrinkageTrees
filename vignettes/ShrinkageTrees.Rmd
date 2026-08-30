@@ -170,22 +170,104 @@ where $\text{C}^+$ denotes the half-Cauchy distribution.  Smaller values
 produce stronger shrinkage toward zero; larger values allow more
 variation.
 
+Only the **product** `local_hp * global_hp` identifies the prior. The
+leaf standard deviation is
+$\sqrt{\omega}\,\lambda_{jl}\tau_j$, and the product of two
+half-Cauchy variables depends on the two scales only through their
+product, so any split between local and global with the same product
+gives the same prior. Setting them equal therefore loses nothing, and is
+what all four functions do by default.
+
 **`HorseTrees()` and `CausalHorseForest()`** provide a convenience
-parameter `k` that sets both scales automatically:
-`local_hp = global_hp = k / sqrt(number_of_trees)`. The default
-`k = 0.1` works well in many settings and is a good starting point.
+parameter `k` that sets both scales:
+`local_hp = global_hp = k / sqrt(number_of_trees)`.
 
 **`ShrinkageTrees()` and `CausalShrinkageForest()`** expose `local_hp`
-and `global_hp` directly (no `k`).  A common rule of thumb is:
+and `global_hp` directly. Leaving them `NULL` applies the same default.
 
-- `local_hp = k / sqrt(number_of_trees)` with `k` in [0.05, 0.5].
-- `global_hp = local_hp` (symmetric) or a larger value if you want
-  less overall shrinkage.
+### Choosing k
+
+The defaults are:
+
+| function | default | useful range |
+|---|---|---|
+| `HorseTrees()`, `ShrinkageTrees()` | `k = 1.0` | roughly 0.5 to 1.5 |
+| `CausalHorseForest()`, `CausalShrinkageForest()` | `k = 1.5` | 1 to 2 |
+
+These were calibrated over a range of simulated settings and gave
+near-nominal pointwise coverage for `p` between 50 and 5000. Within each
+range:
+
+- **smaller `k` shrinks more aggressively** — tighter credible intervals,
+  more leaves pulled to zero. Better when the signal is sparse, the
+  dimension is high, the sample is small, or (for the causal models) the
+  treatment effect is close to homogeneous.
+- **larger `k` is more conservative** — wider intervals and more freedom
+  for individual leaves. Better when the function is genuinely complex
+  and the sample supports estimating it.
+
+The defaults sit in the middle of each range, and in our simulations the
+penalty for being anywhere inside it was small.
+
+The causal range sits higher because the treatment forest enters the
+model as $b\,\tau(x)$ with $b = \pm 1/2$, halving its contribution to
+the response. Measured on the scale of that contribution the two
+recommendations nearly coincide.
+
+Note that `k` scales the *product* of the two half-Cauchy scales, so the
+implied prior scale of the ensemble grows with $k^2$ — doubling `k`
+loosens the prior fourfold. Move it in modest steps.
+
+#### Selecting k by cross-validation
+
+The defaults are a starting point, not a substitute for tuning. `k`
+interacts with the signal-to-noise ratio, the sparsity of the true
+function and the censoring rate, none of which the default can know
+about, so **selecting `k` from the data is preferable whenever the
+computational budget allows**.
+
+Because `k` is a single scalar, a coarse grid search with `K`-fold
+cross-validation is usually enough. For survival outcomes the
+concordance index on held-out folds is a natural criterion:
+
+```{r cv-k, eval = FALSE}
+library(survival)
+
+k_grid <- c(0.5, 0.75, 1.0, 1.25, 1.5)
+folds  <- sample(rep(1:5, length.out = length(y)))
+
+cv_score <- function(k) {
+  scores <- vapply(1:5, function(f) {
+    te <- which(folds == f); tr <- setdiff(seq_along(y), te)
+    fit <- HorseTrees(
+      y = y[tr], status = status[tr], X_train = X[tr, ], X_test = X[te, ],
+      outcome_type = "right-censored", timescale = "log",
+      k = k, N_post = 1000, N_burn = 1000, verbose = FALSE
+    )
+    concordance(Surv(exp(y[te]), status[te]) ~ exp(fit$test_predictions))$concordance
+  }, numeric(1))
+  mean(scores)
+}
+
+scores <- vapply(k_grid, cv_score, numeric(1))
+k_best <- k_grid[which.max(scores)]
+```
+
+Two cautions. Check that the selected value is **interior** to the grid:
+a winner at either end means the grid did not bracket the optimum and
+should be widened. And prefer a criterion that can actually be optimised
+— measures of predictive *discrimination* such as the concordance index
+often improve monotonically as the prior loosens, in which case they will
+simply select the largest value on offer. Criteria that penalise
+over-dispersed posteriors, such as held-out log predictive density, or a
+direct check of interval coverage against the nominal level, are more
+informative for choosing a shrinkage scale.
 
 The **survival functions** (`SurvivalBART`, `SurvivalDART`) use `k` to
 calibrate the standard BART leaf prior:
 `local_hp = range(log(y)) / (2 * k * sqrt(number_of_trees))`.
-The default `k = 2` follows Chipman et al. (2010).
+The default `k = 2` follows Chipman et al. (2010). This is a different
+parameterisation and is unaffected by the change described above.
 
 ### The `store_posterior_sample` flag
 
@@ -396,7 +478,7 @@ ps_fit <- HorseTrees(
   y            = treatment,
   X_train      = X,
   outcome_type = "binary",
-  k            = 0.1,
+  k            = 1.0,
   N_post       = 5000,
   N_burn       = 5000,
   verbose      = FALSE
@@ -560,8 +642,8 @@ fit_hs <- ShrinkageTrees(
   X_train         = X_syn,
   outcome_type    = "continuous",
   prior_type      = "horseshoe",
-  local_hp        = 0.1 / sqrt(5),
-  global_hp       = 0.1 / sqrt(5),
+  local_hp        = 1.0 / sqrt(5),
+  global_hp       = 1.0 / sqrt(5),
   number_of_trees = 5,
   N_post          = 50,
   N_burn          = 25,
@@ -574,8 +656,8 @@ fit_fw <- ShrinkageTrees(
   X_train         = X_syn,
   outcome_type    = "continuous",
   prior_type      = "horseshoe_fw",
-  local_hp        = 0.1 / sqrt(5),
-  global_hp       = 0.1 / sqrt(5),
+  local_hp        = 1.0 / sqrt(5),
+  global_hp       = 1.0 / sqrt(5),
   number_of_trees = 5,
   N_post          = 50,
   N_burn          = 25,
@@ -665,8 +747,8 @@ fit_hd_hs <- ShrinkageTrees(
   X_train         = X_hd,
   outcome_type    = "right-censored",
   prior_type      = "horseshoe",
-  local_hp        = 0.1 / sqrt(10),
-  global_hp       = 0.1 / sqrt(10),
+  local_hp        = 1.0 / sqrt(10),
+  global_hp       = 1.0 / sqrt(10),
   number_of_trees = 10,
   N_post          = 50,
   N_burn          = 25,
@@ -885,7 +967,7 @@ irrelevant for the treatment effect).
 
 ```{r causal-shrinkage}
 set.seed(10)
-lh <- 0.1 / sqrt(5)
+lh <- 1.5 / sqrt(5)
 
 fit_csf <- CausalShrinkageForest(
   y                         = y_causal,
@@ -1130,7 +1212,7 @@ fit_dart <- ShrinkageTrees(
   X_train         = X_syn,
   outcome_type    = "continuous",
   prior_type      = "dirichlet",
-  local_hp        = 0.1 / sqrt(5),
+  local_hp        = 1.0 / sqrt(5),
   number_of_trees = 5,
   N_post          = 50,
   N_burn          = 25,
@@ -1243,8 +1325,8 @@ fit_2chain <- ShrinkageTrees(
   X_train         = X_syn,
   outcome_type    = "continuous",
   prior_type      = "horseshoe",
-  local_hp        = 0.1 / sqrt(5),
-  global_hp       = 0.1 / sqrt(5),
+  local_hp        = 1.0 / sqrt(5),
+  global_hp       = 1.0 / sqrt(5),
   number_of_trees = 5,
   N_post          = 50,
   N_burn          = 25,
@@ -1406,7 +1488,7 @@ ps_fit <- HorseTrees(
   y            = treatment,
   X_train      = X,
   outcome_type = "binary",
-  k            = 0.1,
+  k            = 1.0,
   N_post       = 5000,
   N_burn       = 5000,
   verbose      = FALSE

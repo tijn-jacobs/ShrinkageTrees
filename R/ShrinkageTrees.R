@@ -37,11 +37,25 @@
 #' `"horseshoe"`, `"horseshoe_fw"`, `"half-cauchy"`,
 #' `"standard"` and `"dirichlet"`.
 #' @param local_hp Local hyperparameter controlling shrinkage on individual
-#' step heights. Should typically be set smaller than 1 / sqrt(number_of_trees).
-#' Required for `prior_type = "standard"`.
+#' step heights. Required for `prior_type = "standard"`.
+#'
+#' For `prior_type = "horseshoe"` this may be left `NULL`, in which case it
+#' defaults to `k / sqrt(number_of_trees)` with `k = 1.0`. Values of `k`
+#' between roughly 0.5 and 1.5 worked well across a wide range of
+#' simulation settings; `k` is also a natural target for cross-validation.
+#' See the "Choosing k" section of the package vignette.
 #' @param global_hp Global hyperparameter controlling overall shrinkage.
-#' Must be specified for Horseshoe-type priors; ignored for 
-#' `prior_type = "half-cauchy"` or `"standard"`.
+#' Ignored for `prior_type = "half-cauchy"` or `"standard"`.
+#'
+#' For `prior_type = "horseshoe"` this may be left `NULL`, in which case it
+#' takes the same default as `local_hp`. Only their product identifies the
+#' prior, so setting the two equal loses nothing.
+#'
+#' \strong{Changed in version 2.1.0.} Both arguments previously had to be
+#' supplied for horseshoe priors, and the value used throughout the
+#' documentation was `0.1 / sqrt(number_of_trees)`. That value was calibrated
+#' against a defect which made `global_hp` inert (see `NEWS.md`); with the
+#' defect corrected it shrinks far too aggressively.
 #' @param power Power parameter for the tree structure prior. Default is 2.0.
 #' @param base Base parameter for the tree structure prior. Default is 0.95.
 #' @param p_grow Probability of proposing a grow move. Default is 0.4.
@@ -158,8 +172,8 @@
 #'                                 outcome_type = "continuous",
 #'                                 number_of_trees = 5,
 #'                                 prior_type = "horseshoe",
-#'                                 local_hp = 0.1 / sqrt(5),
-#'                                 global_hp = 0.1 / sqrt(5),
+#'                                 local_hp = 1.0 / sqrt(5),
+#'                                 global_hp = 1.0 / sqrt(5),
 #'                                 N_post = 10,
 #'                                 N_burn = 5,
 #'                                 store_posterior_sample = TRUE,
@@ -204,8 +218,8 @@
 #'                          X_train = X_ic,
 #'                          outcome_type = "interval-censored",
 #'                          prior_type = "horseshoe",
-#'                          local_hp = 0.1 / sqrt(5),
-#'                          global_hp = 0.1 / sqrt(5),
+#'                          local_hp = 1.0 / sqrt(5),
+#'                          global_hp = 1.0 / sqrt(5),
 #'                          number_of_trees = 5,
 #'                          N_post = 10, N_burn = 5,
 #'                          verbose = FALSE)
@@ -340,9 +354,19 @@ ShrinkageTrees <- function(y = NULL,
   }
   
   # Prior-specific checks
-  if (prior_type %in% c("horseshoe", "horseshoe_fw")) {
+  #
+  # For the horseshoe, unsupplied scales fall back to the calibrated default
+  # k / sqrt(number_of_trees) with k = HORSESHOE_K_SINGLE, so users need not
+  # supply them. Either argument may still be given on its own.
+  if (prior_type == "horseshoe") {
+    default_hp <- HORSESHOE_K_SINGLE / sqrt(number_of_trees)
+    if (is.null(local_hp))  local_hp  <- default_hp
+    if (is.null(global_hp)) global_hp <- default_hp
+  }
+
+  if (prior_type == "horseshoe_fw") {
     if (is.null(local_hp) || is.null(global_hp)) {
-      stop("For prior_type = 'horseshoe' or 'horseshoe_fw', you must provide both local_hp and global_hp.")
+      stop("For prior_type = 'horseshoe_fw', you must provide both local_hp and global_hp.")
     }
   }
   

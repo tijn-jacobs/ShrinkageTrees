@@ -107,19 +107,39 @@
 #'   or `"log"` (already log-transformed). Only used when 
 #'   `outcome_type = "right-censored"` or `"interval-censored"`.
 #' @param number_of_trees Number of trees in the ensemble. Default is 200.
-#' @param k Horseshoe scale hyperparameter (default 0.1). This parameter 
-#' controls the overall level of shrinkage by setting the scale for both 
-#' global and local shrinkage components. The local and global hyperparameters 
-#' are parameterized as 
-#' \eqn{\alpha = \frac{k}{\sqrt{\mathrm{number\_of\_trees}}}} 
-#' to ensure adaptive regularization across trees.
+#' @param k Horseshoe scale hyperparameter. Default is 1.0. Controls the
+#' overall level of shrinkage by setting the scale of both the local and the
+#' global component, parameterized as
+#' \eqn{\alpha_{\mathrm{local}} = \alpha_{\mathrm{global}} =
+#' k / \sqrt{\mathrm{number\_of\_trees}}}.
+#'
+#' \strong{Choosing k.} Values between roughly 0.5 and 1.5 worked well across a
+#' wide range of simulated settings. Within that range:
+#' \itemize{
+#'   \item \strong{smaller k shrinks more aggressively} -- tighter credible
+#'     intervals, more leaves pulled to zero. Prefer it when the signal is
+#'     sparse, the dimension is high, or the sample is small.
+#'   \item \strong{larger k is more conservative} -- wider intervals, more
+#'     freedom for individual leaves. Prefer it when the function is complex
+#'     or the signal is strong.
+#' }
+#' The default sits in the middle. If you would rather select it from the data,
+#' \code{k} is a natural target for cross-validation; see the "Choosing k"
+#' section of the package vignette.
+#'
+#' \strong{Changed in version 2.1.0.} The default was 0.1 in earlier releases.
+#' That value was calibrated against a defect in the global update which made
+#' \code{global_hp} inert (see \code{NEWS.md}); with the defect corrected it
+#' shrinks far too aggressively. Pass \code{k = 0.1} explicitly only if you
+#' need to reproduce pre-2.1.0 output, and note that this does not reproduce it
+#' exactly, since the sampler itself has been corrected.
 #' @param power Power parameter for tree structure prior. Default is 2.0.
-#' @param base Base parameter for tree structure prior. Default is 0.95.
+#' @param base Base parameter for tree structure prior. Default is 1.05.
 #' @param p_grow Probability of proposing a grow move. Default is 0.4.
 #' @param p_prune Probability of proposing a prune move. Default is 0.4.
 #' @param nu Degrees of freedom for the error distribution prior. Default is 3.
 #' @param q Quantile hyperparameter for the error variance prior. 
-#' Default is 0.90.
+#' Default is 1.00.
 #' @param sigma Optional known value for error standard deviation. If NULL, 
 #' estimated from data.
 #' @param N_post Number of posterior samples to store. Default is 1000.
@@ -190,7 +210,7 @@ HorseTrees <- function(y = NULL,
                        outcome_type = "continuous",
                        timescale = "time",
                        number_of_trees = 200,
-                       k = 0.1,
+                       k = 1.0,
                        power = 2.0,
                        base = 0.95,
                        p_grow = 0.4,

@@ -374,7 +374,7 @@ fit_single <- HorseTrees(
   outcome_type    = "right-censored",
   timescale       = "log",
   number_of_trees = 200,
-  k               = 0.1,
+  k               = 1,
   N_post          = 1000,
   N_burn          = 1000,
   verbose         = TRUE
@@ -427,7 +427,7 @@ ps_fit <- HorseTrees(
   X_train         = X_ps,
   outcome_type    = "binary",
   number_of_trees = 200,
-  k               = 0.1,
+  k               = 1,
   N_post          = 1000,
   N_burn          = 1000,
   verbose         = TRUE
@@ -447,7 +447,7 @@ fit_causal <- CausalHorseForest(
   outcome_type              = "right-censored",
   timescale                 = "log",
   number_of_trees           = 200,
-  k                         = 0.1,
+  k                         = 1.5,
   N_post                    = 1000,
   N_burn                    = 1000,
   n_chains                  = 4,

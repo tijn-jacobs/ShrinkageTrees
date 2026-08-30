@@ -61,8 +61,8 @@ for (pr in priors) {
     outcome_type = "continuous",
     number_of_trees = 50,
     prior_type = pr,
-    local_hp  = 0.1 / sqrt(50),
-    global_hp = 0.1 / sqrt(50),
+    local_hp  = 1.0 / sqrt(50),
+    global_hp = 1.0 / sqrt(50),
     N_post = 500, N_burn = 250,
     verbose = FALSE
   )
