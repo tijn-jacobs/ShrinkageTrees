@@ -1024,12 +1024,188 @@ cat("Forest-wide shrinkage (control, first 5 draws):\n")
 print(round(fit_fw2$forestwide_shrinkage_control[1:5], 4))
 ```
 
+## Posterior Projection
+
+A fitted tree ensemble is hard to interpret. The posterior over $f(x)$ does
+not say which covariates drive the fit, or how. We implement the posterior
+summarisation of Woody et al. (2021). The method projects every posterior
+draw of the fitted function onto a simpler model,
+$$
+\gamma^{(s)} = \arg\min_{\gamma \in \mathcal{G}}
+  \sum_i w_i \left[ f^{(s)}(x_i) - \gamma(x_i) \right]^2,
+\qquad s = 1, \ldots, S.
+$$
+The result is a posterior distribution over simple summaries: coefficients
+with credible intervals, plus the posterior of the summary $R^2$. The summary
+$R^2$ reports how much of the ensemble the summary captures. We do not refit
+the model. The projection reads the stored draws
+(`store_posterior_sample = TRUE`), so it takes seconds.
+
+We make two design choices. First, the function does no covariate selection.
+By default it uses every covariate, and you choose a subset with
+`covariates`. The coefficient table then describes exactly the model you
+asked for. Second, there is no `newdata` argument. We project the fitted
+object over the design it was fitted to.
+
+We illustrate on the high-dimensional survival fit from the previous section
+($n = 60$, $p = 200$, three active predictors).
+
+```{r pp-fit}
+set.seed(30)
+fit_pp <- HorseTrees(
+  y               = y_hd,
+  status          = d_hd,
+  X_train         = X_hd,
+  outcome_type    = "right-censored",
+  timescale       = "time",
+  number_of_trees = 5,
+  N_post          = 50,
+  N_burn          = 25,
+  store_posterior_sample = TRUE,
+  verbose         = FALSE
+)
+```
+
+### Linear projection
+
+The default family is a linear model. The output follows `summary(lm(...))`.
+All uncertainty is posterior: we report credible intervals, not test
+statistics or p-values.
+
+```{r pp-linear}
+pp_lin <- posterior_projection(fit_pp, family = "linear",
+                               covariates = 1:5)
+pp_lin
+```
+
+The summary R-squared is the headline number. It gives the share of variation
+in the fitted function that this five-covariate summary captures. The
+credible interval shows how consistent that share is across the posterior.
+
+```{r pp-linear-plots, eval=requireNamespace("ggplot2", quietly=TRUE)}
+plot(pp_lin, type = "coefficients")
+plot(pp_lin, type = "rho2")
+```
+
+We store the coefficient draws, so any posterior quantity is available
+directly.
+
+```{r pp-linear-draws}
+quantile(pp_lin$coefficients[, 2], c(0.025, 0.5, 0.975))
+```
+
+With $p \ge n$ the unpenalised projection onto all covariates is undefined.
+The function stops with a message rather than return a meaningless answer.
+
+```{r pp-linear-err, error=TRUE}
+posterior_projection(fit_pp, family = "linear")
+```
+
+### Penalised projections
+
+The penalised options keep the projection defined when $p \ge n$. We solve
+the penalised problem separately for every draw, at a common $\lambda$. The
+lasso is a nonlinear operator, so the projection of the posterior mean is not
+the mean of the projections. A per-draw solution gives a genuine posterior
+over sparse summaries: a covariate enters some draws and not others. The
+`Nonzero` column reports the fraction of draws in which each covariate
+enters.
+
+The penalty $\lambda$ indexes the summary family, so we fix it once for all
+draws. We choose it by `cv.glmnet` on the posterior mean, at `lambda.1se`.
+Set `lambda = "min"` or a number to override this.
+
+```{r pp-lasso, eval=requireNamespace("glmnet", quietly=TRUE)}
+pp_las <- posterior_projection(fit_pp, family = "linear",
+                               penalty = "lasso")
+pp_las
+
+# Sparsity lives in the draws, not in the posterior mean:
+table(rowSums(pp_las$coefficients[, -1, drop = FALSE] != 0))
+```
+
+```{r pp-lasso-path, eval=requireNamespace("glmnet", quietly=TRUE) && requireNamespace("ggplot2", quietly=TRUE)}
+plot(pp_las, type = "path")
+```
+
+`penalty = "ridge"` keeps all covariates. It is a regularised projection, not
+a lower-dimensional one. `penalty = "elastic_net"` sits between the two; set
+the mix with `alpha`.
+
+### Additive projection
+
+`family = "additive"` projects onto a sum of per-covariate functions. We
+build each one from a natural spline basis. This is our substitute for a
+partial dependence plot: one effect curve per covariate, with posterior
+credible bands, from the stored draws. Note that it is a projection, not a
+partial dependence integral.
+
+```{r pp-additive}
+pp_add <- posterior_projection(fit_pp, family = "additive",
+                               covariates = 1:3, df_spline = 3)
+pp_add
+```
+
+The printed table gives, for each covariate, the posterior of how far its
+effect moves between the 10th and 90th percentile of that covariate. This is
+a nonlinear analogue of a slope. We plot the curves themselves with:
+
+```{r pp-effects, eval=requireNamespace("ggplot2", quietly=TRUE)}
+plot(pp_add, type = "effects")
+```
+
+### Tree projection
+
+`family = "tree"` projects onto a shallow CART partition. The leaves are
+interpretable subgroups. Each leaf has a posterior credible interval for its
+average fitted value.
+
+```{r pp-tree, eval=requireNamespace("rpart", quietly=TRUE)}
+pp_tree <- posterior_projection(fit_pp, family = "tree", max_leaves = 4)
+pp_tree
+```
+
+```{r pp-tree-plot, eval=requireNamespace("rpart", quietly=TRUE) && requireNamespace("ggplot2", quietly=TRUE)}
+plot(pp_tree, type = "tree")
+```
+
+### Causal fits
+
+For a `CausalShrinkageForest`, `target` selects the surface. `"treatment"`
+projects the CATE surface $\tau(x)$. This answers which covariates the
+treatment effect varies along, a question the ATE and CATE SD from
+`summary()` cannot address. `"prognostic"` projects $\mu(x)$.
+
+```{r pp-causal}
+pp_tau <- posterior_projection(fit_chf, target = "treatment",
+                               family = "linear", covariates = 1:5)
+pp_tau
+```
+
+```{r pp-causal-tree, eval=requireNamespace("rpart", quietly=TRUE)}
+# Subgroups of treatment effect, with posterior intervals per leaf
+posterior_projection(fit_chf, target = "treatment",
+                     family = "tree", max_leaves = 4)
+```
+
+We handle the scale automatically. With `timescale = "time"` the stored draws
+are on the time scale, so we take logs before we project. The output labels
+the coefficients as contributions to the log acceleration factor.
+
+`posterior_projection()` is a generic. There is also a default method, which
+takes a plain `S` by `n` matrix of posterior draws together with the design
+they correspond to. Use it to project draws from another source, or from a
+part of a fitted object that the two methods above do not reach. The result
+is an object of class `PosteriorProjection`, with its own `print()` and
+`plot()` methods.
+
 ## S3 Methods
 
 All fitted objects — whether from prediction models or causal models —
 support a consistent set of S3 methods: `print()`, `summary()`,
 `predict()`, and `plot()`. This section illustrates each method using
-the models fitted above.
+the models fitted above. The package adds one further generic,
+`posterior_projection()`, covered in the previous section.
 
 ### print()
 
@@ -1586,4 +1762,8 @@ Association*, 113(522), 626–636.
 Sparapani, R., Spanbauer, C., & McCulloch, R. (2021). Nonparametric Machine
 Learning and Efficient Computation with Bayesian Additive Regression Trees:
 The BART R Package. *Journal of Statistical Software*, 97(1), 1–66.
+
+Woody, S., Carvalho, C. M., & Murray, J. S. (2021). Model Interpretation
+Through Lower-Dimensional Posterior Summarization. *Journal of Computational
+and Graphical Statistics*, 30(1), 144-161.
 

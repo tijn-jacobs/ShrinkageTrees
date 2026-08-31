@@ -54,6 +54,28 @@ its default. Only their product identifies the prior, so setting them equal
 loses nothing. `prior_type = "horseshoe_fw"` is unchanged and still requires
 both to be given explicitly.
 
+## `predict()` passed the training design in the wrong memory order
+
+`predict()` on a `ShrinkageTrees` object handed the stored training design
+matrix straight to the C++ sampler. The C++ layer reads designs as a flat
+**row-major** buffer, but R coerces a matrix to a vector **column-major**, so
+the training data was transposed inside the sampler on every call whenever
+`n != p`. The test design on the same call was flattened correctly, so the two
+disagreed. It ran and returned plausible numbers.
+
+`predict()` on a `CausalShrinkageForest` object was unaffected: it already
+flattened both designs correctly.
+
+## New: `posterior_projection()`
+
+Lower-dimensional posterior summarisation following Woody, Carvalho and Murray
+(2021). Every posterior draw of the fitted function, or of the treatment-effect
+and prognostic surfaces for causal fits, is projected onto a simpler summary
+model: a linear model (unpenalised, ridge, lasso, or elastic net), a
+spline-additive model, or a shallow CART tree. Returns a posterior over
+summaries with credible intervals, plus the posterior of the summary R-squared.
+`glmnet` and `rpart` are new suggested packages.
+
 ## Reproducing earlier output
 
 There is no setting that reproduces pre-2.1.0 results exactly, because the

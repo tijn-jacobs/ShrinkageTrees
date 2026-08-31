@@ -2,6 +2,16 @@
 # Projects every posterior draw of a fitted function onto a simpler model;
 # the user chooses the covariates, the method does no selection of its own.
 
+#' Is this fit a survival model?
+#'
+#' `timescale` governs the stored scale only for survival outcomes. It keeps
+#' its default (`"time"`) for continuous and binary fits, whose draws are never
+#' exponentiated, so it must not be read on its own.
+#'
+#' @noRd
+.pp_is_survival <- function(object)
+  isTRUE(object$outcome_type %in% c("right-censored", "interval-censored"))
+
 #' Extract posterior draws on the additive scale
 #'
 #' Returns the posterior draws of the fitted function (S x n) together with the
@@ -29,10 +39,15 @@
     }
     if (is.null(draws))
       stop("No posterior sample stored. Refit with store_posterior_sample = TRUE.")
-    scale_lab <- "log-time"
-    if (identical(object$timescale, "time")) {
+    ## timescale only governs the stored scale for survival outcomes; it keeps
+    ## its default value for continuous fits, whose draws are never exponentiated.
+    if (.pp_is_survival(object) && identical(object$timescale, "time")) {
       draws     <- log(draws)
       scale_lab <- "log-time (inverted from stored acceleration factors)"
+    } else if (.pp_is_survival(object)) {
+      scale_lab <- "log-time"
+    } else {
+      scale_lab <- "response"
     }
 
   } else if (inherits(object, "ShrinkageTrees")) {
@@ -42,11 +57,13 @@
       stop("No posterior sample stored. Refit with store_posterior_sample = TRUE.")
     if (identical(object$outcome_type, "binary")) {
       scale_lab <- "probit (latent)"
+    } else if (!.pp_is_survival(object)) {
+      scale_lab <- "response"
     } else if (identical(object$timescale, "time")) {
       draws     <- log(draws)
       scale_lab <- "log-time (inverted from stored time scale)"
     } else {
-      scale_lab <- if (is.null(object$timescale)) "response" else "log-time"
+      scale_lab <- "log-time"
     }
 
   } else {
@@ -132,6 +149,17 @@
   }
   rownames(B) <- c("(Intercept)", colnames(X))
 
+  ## glmnet can fail numerically on individual draws; a single non-finite
+  ## column would otherwise poison every downstream summary (residuals,
+  ## rho^2, sigma) via rowMeans. Drop such draws loudly, never silently.
+  ok <- colSums(!is.finite(B)) == 0L
+  if (!all(ok)) {
+    warning(sum(!ok), " of ", S, " penalised projections returned ",
+            "non-finite coefficients and were dropped from the summary.",
+            call. = FALSE)
+    B <- B[, ok, drop = FALSE]
+  }
+
   fitted  <- X %*% B[-1L, , drop = FALSE] + rep(B[1L, ], each = nrow(X))
   nonzero <- rowMeans(B[-1L, , drop = FALSE] != 0)
   keep    <- c(TRUE, nonzero > 0)      # intercept plus anything ever selected
@@ -139,7 +167,8 @@
   list(coef    = B[keep, , drop = FALSE],
        fitted  = fitted,
        nonzero = c(1, nonzero)[keep],
-       edf     = mean(colSums(B[-1L, , drop = FALSE] != 0)) + 1)
+       edf     = mean(colSums(B[-1L, , drop = FALSE] != 0)) + 1,
+       kept    = which(ok))
 }
 
 .pp_rho2 <- function(Ft, fitted, w) {
@@ -422,6 +451,11 @@ posterior_projection.default <- function(object, X,
     stop("penalty = '", penalty, "' applies only to family = 'linear'.")
 
   draws <- as.matrix(object)
+  if (!all(is.finite(draws)))
+    stop("The posterior draws contain ", sum(!is.finite(draws)),
+         " non-finite values; the projection would silently propagate them. ",
+         "Inspect the stored posterior sample on the fitted object ",
+         "(train_predictions_sample / _treat / _control).", call. = FALSE)
   X     <- as.matrix(X)
   if (is.null(colnames(X))) colnames(X) <- paste0("X", seq_len(ncol(X)))
   n <- nrow(X); S <- nrow(draws)
@@ -457,6 +491,12 @@ posterior_projection.default <- function(object, X,
     al <- switch(penalty, ridge = 0, lasso = 1, elastic_net = alpha)
     cv <- .pp_cv_lambda(rowMeans(Ft), X, w, al, lambda)
     pj <- .pp_penalised_draws(Ft, X, w, al, cv$lambda)
+
+    ## Keep Ft aligned with pj$fitted if failed solves were dropped.
+    if (length(pj$kept) < ncol(Ft)) {
+      Ft <- Ft[, pj$kept, drop = FALSE]
+      S  <- ncol(Ft)
+    }
 
     st    <- list(lambda = cv$lambda, rule = cv$rule, cv = cv$cv,
                   nonzero = pj$nonzero)
@@ -530,9 +570,15 @@ posterior_projection.default <- function(object, X,
 print.PosteriorProjection <- function(x, digits = 4, n_max = 25, ...) {
 
   cat("\nProjection residuals:\n")
-  rq <- stats::quantile(x$residuals)
-  names(rq) <- c("Min", "1Q", "Median", "3Q", "Max")
-  print(signif(rq, digits))
+  res <- x$residuals[is.finite(x$residuals)]
+  if (length(res) < length(x$residuals))
+    cat("  [", length(x$residuals) - length(res),
+        " non-finite residuals omitted]\n", sep = "")
+  if (length(res)) {
+    rq <- stats::quantile(res)
+    names(rq) <- c("Min", "1Q", "Median", "3Q", "Max")
+    print(signif(rq, digits))
+  }
 
   a  <- (1 - x$level) / 2
   cs <- x$coef_summary
@@ -580,10 +626,11 @@ print.PosteriorProjection <- function(x, digits = 4, n_max = 25, ...) {
         "not shown. See x$coef_summary.\n", sep = "")
   }
 
-  ci <- stats::quantile(x$rho2, c(a, 1 - a))
+  r2 <- x$rho2[is.finite(x$rho2)]
+  ci <- if (length(r2)) stats::quantile(r2, c(a, 1 - a)) else c(NA, NA)
   cat("\nResidual standard error: ", signif(x$sigma, digits), " on ",
       round(x$df_residual, 1), " degrees of freedom\n", sep = "")
-  cat("Summary R-squared: ", signif(mean(x$rho2), digits),
+  cat("Summary R-squared: ", signif(mean(r2), digits),
       "  (", round(100 * x$level), "% CI: ", signif(ci[1], digits), ", ",
       signif(ci[2], digits), ")\n", sep = "")
   cat("Draws: ", x$n_draws, "   Observations: ", x$n_obs,

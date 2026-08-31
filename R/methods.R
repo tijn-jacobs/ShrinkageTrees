@@ -37,6 +37,11 @@ predict.ShrinkageTrees <- function(object, newdata, level = 0.95, ...) {
 
   n_new   <- nrow(newdata)
   X_new   <- as.numeric(t(newdata))
+  # The C++ layer reads designs as a flat row-major buffer. data$X_train is
+  # kept as a matrix for the variable-importance plots, so flatten it here;
+  # passing the matrix lets R coerce it column-major and transposes the
+  # training data inside the sampler whenever n != p.
+  X_train_flat <- as.numeric(t(object$data$X_train))
   n_train <- object$data_info$n_train
   p       <- object$data_info$p_features
   pre     <- object$preprocess
@@ -49,7 +54,7 @@ predict.ShrinkageTrees <- function(object, newdata, level = 0.95, ...) {
       nSEXP                    = n_train,
       pSEXP                    = p,
       n_testSEXP               = n_new,
-      X_trainSEXP              = object$data$X_train,
+      X_trainSEXP              = X_train_flat,
       ySEXP                    = object$data$y_train,
       X_testSEXP               = X_new,
       number_of_treesSEXP      = object$mcmc$number_of_trees,
@@ -103,7 +108,7 @@ predict.ShrinkageTrees <- function(object, newdata, level = 0.95, ...) {
       nSEXP                    = n_train,
       pSEXP                    = p,
       n_testSEXP               = n_new,
-      X_trainSEXP              = object$data$X_train,
+      X_trainSEXP              = X_train_flat,
       ySEXP                    = y_std,
       status_indicatorSEXP     = status,
       is_survivalSEXP          = survival,
