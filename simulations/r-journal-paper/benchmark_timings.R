@@ -32,16 +32,17 @@ args  <- commandArgs(trailingOnly = TRUE)
 smoke <- "--smoke" %in% args
 
 # ── Settings (these are the values quoted in Section 6.5) ───────────────────
-base_seed <- 20250101L
+base_seed <- 2026L
 p_fixed   <- 100L
 n_trees   <- 200L
 n_chains  <- 4L
 
 if (smoke) {
-  n_grid <- c(100L, 250L); n_post <- 50L; n_burn <- 50L; n_rep <- 1L
+  n_grid <- c(100L, 250L, 500L, 1000L, 2000L)
+  n_post <- 100L; n_burn <- 0L; n_rep <- 1L
 } else {
   n_grid <- c(100L, 250L, 500L, 1000L, 2000L)
-  n_post <- 1000L; n_burn <- 1000L; n_rep <- 3L
+  n_post <- 100L; n_burn <- 0L; n_rep <- 100L
 }
 
 # Seed spacing is far wider than any n in the grid, so (replicate, n) pairs
@@ -58,6 +59,9 @@ if (!is.null(script_path) && nzchar(script_path)) {
   setwd(normalizePath(dirname(script_path)))
 }
 dir.create("outputs", showWarnings = FALSE)
+
+# fn_display, benchmark_summary, benchmark_figure
+source("benchmark_figure.R")
 
 # ── Data-generating process ─────────────────────────────────────────────────
 # AFT log-normal, five active covariates out of p, right-censoring at ~35%.
@@ -90,33 +94,50 @@ sim_data <- function(n, p, seed) {
 }
 
 # ── Fits ────────────────────────────────────────────────────────────────────
-# BART::abart() has no n_chains argument; its multi-chain wrapper mc.abart()
-# runs mc.cores independent chains in parallel, mirroring how ShrinkageTrees
-# dispatches its own chains via parallel::mclapply.
-st_args <- function(d) list(
+# Three different argument conventions, so three argument builders rather than
+# one shared list:
+#
+#   SurvivalBART()/SurvivalDART() take `time`/`status` and fix `outcome_type`
+#     internally, so it must not be supplied. `n_chains` is not a formal
+#     argument but reaches ShrinkageTrees() through `...`.
+#   HorseTrees() takes `y`/`status` and needs `outcome_type` explicitly.
+#   BART::mc.abart() takes `times`/`delta`.
+wrapper_args <- function(d) list(
+  time = d$time, status = d$status, X_train = d$X,
+  timescale = "time",
+  number_of_trees = n_trees, N_post = n_post, N_burn = n_burn,
+  n_chains = n_chains, store_posterior_sample = FALSE, verbose = FALSE
+)
+
+horsetrees_args <- function(d) list(
   y = d$time, status = d$status, X_train = d$X,
   outcome_type = "right-censored", timescale = "time",
   number_of_trees = n_trees, N_post = n_post, N_burn = n_burn,
   n_chains = n_chains, store_posterior_sample = FALSE, verbose = FALSE
 )
 
+# BART::mc.abart() splits `ndpost` ACROSS cores: with ndpost = 50 and
+# mc.cores = 4 it keeps ceiling(50/4) = 13 draws per chain. ShrinkageTrees
+# treats N_post as per chain. Multiplying here is what makes the comparison
+# apples to apples; without it abart does a quarter of the posterior work and
+# looks correspondingly faster. `nskip` is per chain in both.
 fits <- list(
-  SurvivalBART     = function(d, s) do.call(SurvivalBART, st_args(d)),
-  SurvivalDART     = function(d, s) do.call(SurvivalDART, st_args(d)),
-  HorseTrees       = function(d, s) do.call(HorseTrees, st_args(d)),
+  SurvivalBART     = function(d, s) do.call(SurvivalBART, wrapper_args(d)),
+  SurvivalDART     = function(d, s) do.call(SurvivalDART, wrapper_args(d)),
+  HorseTrees       = function(d, s) do.call(HorseTrees, horsetrees_args(d)),
   `BART::mc.abart` = function(d, s) BART::mc.abart(
     x.train = d$X, times = d$time, delta = d$status,
-    ntree = n_trees, ndpost = n_post, nskip = n_burn,
+    ntree = n_trees, ndpost = n_post * n_chains, nskip = n_burn,
     mc.cores = n_chains, seed = s, printevery = 1e6L)
 )
 if (!has_bart) fits[["BART::mc.abart"]] <- NULL
 
-fn_display <- c(SurvivalBART = "SurvivalBART()", SurvivalDART = "SurvivalDART()",
-                HorseTrees = "HorseTrees()", `BART::mc.abart` = "abart()")
-
 time_fit <- function(fn, d, seed) {
+  # BART prints a data/prior header regardless of printevery; swallow it so
+  # the timing log stays readable. The capture is outside the clock.
   t0  <- Sys.time()
-  res <- tryCatch(fn(d, seed), error = function(e) e)
+  res <- tryCatch(utils::capture.output(val <- fn(d, seed)),
+                  error = function(e) e)
   secs <- as.numeric(difftime(Sys.time(), t0, units = "secs"))
   list(seconds = if (inherits(res, "error")) NA_real_ else secs,
        error   = if (inherits(res, "error")) conditionMessage(res) else NA_character_)
@@ -155,27 +176,10 @@ saveRDS(raw, "outputs/benchmark_timings.rds")
 write.csv(raw, "outputs/benchmark_timings.csv", row.names = FALSE)
 
 # ── Figure ──────────────────────────────────────────────────────────────────
-agg <- aggregate(seconds ~ fn + n, data = raw[!is.na(raw$seconds), ],
-                 FUN = function(z) c(mean = mean(z), sd = sd(z)))
-agg <- do.call(data.frame, agg)
-names(agg)[3:4] <- c("mean", "sd")
-agg$sd[is.na(agg$sd)] <- 0
-agg$label <- factor(fn_display[as.character(agg$fn)],
-                    levels = unname(fn_display))
+agg <- benchmark_summary(raw)
 
 if (has_gg) {
-  p_scaling <- ggplot2::ggplot(
-    agg, ggplot2::aes(x = n, y = mean, colour = label, fill = label)) +
-    ggplot2::geom_ribbon(
-      ggplot2::aes(ymin = pmax(mean - sd, 0), ymax = mean + sd),
-      alpha = 0.15, colour = NA) +
-    ggplot2::geom_line(linewidth = 0.7) +
-    ggplot2::geom_point(size = 1.8) +
-    ggplot2::labs(x = "Sample size n", y = "Wall-clock seconds",
-                  colour = NULL, fill = NULL) +
-    ggplot2::theme_bw() +
-    ggplot2::theme(legend.position = "bottom")
-  ggplot2::ggsave("outputs/benchmark_scaling.pdf", p_scaling,
+  ggplot2::ggsave("outputs/benchmark_scaling.pdf", benchmark_figure(agg),
                   width = 6, height = 3.5)
   cat("\nWrote outputs/benchmark_scaling.pdf\n")
 } else {

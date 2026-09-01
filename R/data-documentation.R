@@ -43,6 +43,8 @@
 "pdac"
 
 
+
+
 #' Semi-synthesised TCGA Ovarian Cancer Dataset
 #'
 #' Gene expression and clinical covariates for ovarian cancer patients from
@@ -53,14 +55,14 @@
 #' known data-generating process so that the true treatment effect is
 #' available for validation (see \code{\link{ovarian_truth}}).
 #'
-#' @format A data frame with 357 rows (patients) and 1007 columns:
+#' @format A data frame with 357 rows (patients) and 1004 columns:
 #' \itemize{
 #'   \item \strong{OS_time}: Numeric. Observed survival time in days (simulated).
 #'   \item \strong{OS_event}: Integer. Event indicator (simulated).
 #'     1 = event observed, 0 = right-censored.
 #'   \item \strong{treatment}: Integer. Simulated treatment assignment.
 #'     1 = carboplatin, 0 = cisplatin. Driven primarily by
-#'     \code{year_of_diagnosis} as an instrumental variable
+#'     \code{year_of_diagnosis}, a confounder
 #'     (cisplatin era pre-~2000, carboplatin after).
 #'   \item \strong{age}: Integer. Age at initial pathologic diagnosis in years.
 #'   \item \strong{figo_stage}: Integer. FIGO stage coded as 2 = Stage II,
@@ -69,22 +71,33 @@
 #'     2 = G2, 3 = G3, 4 = G4. Rows with GX (unknown grade) were
 #'     excluded.
 #'   \item \strong{year_of_diagnosis}: Integer. Year of initial pathologic diagnosis
-#'     (approx. 1992--2013). Used as an instrumental variable for
-#'     treatment assignment in the DGP.
-#'   \item \strong{right_time, left_time}: Numeric. Interval-censoring bounds
-#'     derived from the simulated survival times, suitable for passing
-#'     to the package's interval-censored survival interface
-#'     (\code{right_time = Inf} for right-censored observations,
-#'     \code{left_time == right_time} for exact events).
-#'   \item \strong{year_of_diagnosis.1}: Integer. Duplicate of
-#'     \code{year_of_diagnosis} left in place from the data-assembly
-#'     join; retained for reproducibility and may be ignored.
+#'     (approx. 1992--2013). A confounder in the DGP: it drives treatment
+#'     assignment and also has a direct prognostic effect.
 #'   \item \strong{ENSG...}: Numeric. Log2(TPM + 1) normalised gene expression
 #'     levels for 997 Ensembl genes (columns named by versioned Ensembl
 #'     gene IDs, e.g. \code{ENSG00000270372.1}). Genes were selected as
 #'     the most variable transcripts across TCGA-OV samples, ranked by
 #'     median absolute deviation (MAD).
 #' }
+#'
+#' @details
+#' Every column except \code{OS_time}, \code{OS_event} and \code{treatment} is
+#' a baseline covariate, so the design matrix is
+#' \preformatted{
+#'   drop <- c("OS_time", "OS_event", "treatment")
+#'   X <- as.matrix(ovarian[, setdiff(names(ovarian), drop)])
+#' }
+#' Select by name rather than position. Earlier versions of this dataset
+#' carried outcome-derived \code{left_time} and \code{right_time} columns
+#' together with a duplicated \code{year_of_diagnosis}; positional selection
+#' silently admitted them to the design matrix, leaking the outcome. They have
+#' been removed. To demonstrate the interval-censored interface, build the
+#' bounds from the outcome instead:
+#' \preformatted{
+#'   left  <- ovarian$OS_time
+#'   right <- ifelse(ovarian$OS_event == 1, ovarian$OS_time, Inf)
+#' }
+#'
 #' @details
 #' RNA-seq data were downloaded from the GDC portal using the
 #' \code{TCGAbiolinks} package (STAR - Counts workflow). Expression values
@@ -139,17 +152,37 @@
 #' @format A data frame with one row per patient in \code{\link{ovarian}}
 #'   and the following columns:
 #' \describe{
-#'   \item{true_log_T}{Numeric. True (uncensored) survival time on the
-#'     log scale.}
-#'   \item{true_T}{Numeric. True (uncensored) survival time on the
-#'     original scale.}
-#'   \item{true_mu}{Numeric. True prognostic function \eqn{\mu(x)}
-#'     (expected log survival time at the reference treatment).}
-#'   \item{true_tau}{Numeric. True conditional average treatment effect
-#'     \eqn{\tau(x)} on the log-survival scale.}
-#'   \item{true_propensity}{Numeric. True propensity for the treated
-#'     group (carboplatin) used to simulate the observed assignment.}
+#'   \item{mu}{Numeric. Prognostic function \eqn{\mu(x)}: expected log
+#'     survival under the control treatment.}
+#'   \item{tau}{Numeric. Conditional average treatment effect
+#'     \eqn{\tau(x)} on the log-survival scale. This is the CATE;
+#'     \eqn{\exp(\tau)} is the acceleration factor.}
+#'   \item{f}{Numeric. The true regression function
+#'     \eqn{f(x) = \mu(x) + A\,\tau(x)}, that is
+#'     \eqn{E[\log T \mid x, A]} under the treatment actually assigned.
+#'     This is what a prediction model estimates when treatment is included
+#'     as an ordinary covariate, so it is the target for prediction error.}
+#'   \item{propensity}{Numeric. True propensity \eqn{e(x) = P(A = 1 \mid x)}
+#'     used to simulate the observed assignment.}
+#'   \item{log_time}{Numeric. True (uncensored) survival time on the log
+#'     scale, under the treatment actually assigned.}
+#'   \item{time}{Numeric. The same on the original scale, in months.}
+#'   \item{censoring_time}{Numeric. The censoring time drawn for this
+#'     patient, so it is visible why an observation was censored.}
 #' }
+#'
+#' @details
+#' The data-generating process is
+#' \deqn{\log T = \mu(x) + A\,\tau(x) + \sigma W,}
+#' with \eqn{W} standard normal. The residual scale \eqn{\sigma} is stored as
+#' the attribute \code{"sigma"}, and the indices of the covariates that enter
+#' \eqn{\mu} and \eqn{\tau} as \code{"active_prog"} and \code{"active_tau"}.
+#' Attributes are dropped by row subsetting, so read them before subsetting.
+#'
+#' \code{f} is the target for a model that uses treatment as a covariate. A
+#' model fitted without it estimates \eqn{\mu(x) + e(x)\,\tau(x)} instead, by
+#' the law of total expectation. Score prediction error against whichever
+#' matches the design matrix that was used.
 #'
 #' @seealso \code{\link{ovarian}} for the observed semi-synthesised data.
 #'
@@ -157,6 +190,19 @@
 #' data(ovarian)
 #' data(ovarian_truth)
 #' stopifnot(nrow(ovarian) == nrow(ovarian_truth))
-#' # True (population) average treatment effect on the log-survival scale:
-#' mean(ovarian_truth$true_tau)
+#'
+#' # True average treatment effect on the log-survival scale
+#' mean(ovarian_truth$tau)
+#'
+#' # log T decomposes as f plus noise
+#' stopifnot(all.equal(ovarian_truth$f,
+#'                     ovarian_truth$mu + ovarian$treatment * ovarian_truth$tau))
+#'
+#' # Target for a model fitted without treatment
+#' eta <- ovarian_truth$mu + ovarian_truth$propensity * ovarian_truth$tau
+#'
+#' # Best out-of-sample concordance the process allows: no model can beat this
+#' sigma <- attr(ovarian_truth, "sigma")
+#' rho   <- sd(eta) / sqrt(var(eta) + sigma^2)
+#' 0.5 + asin(rho) / pi
 "ovarian_truth"

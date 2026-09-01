@@ -7,13 +7,18 @@
 #
 # Usage
 #   Rscript simulate_interval_censored.R              # full run
-#   Rscript simulate_interval_censored.R --smoke      # 2 reps, tiny MCMC
 #   Rscript simulate_interval_censored.R --p 500      # one dimension
 #   Rscript simulate_interval_censored.R --cores 8
+#   Rscript simulate_interval_censored.R --out /scratch/me/ic
+#   Rscript simulate_interval_censored.R 192            # bare core count
 #
-# Output (in outputs/ next to this script)
-#   simulate_interval_censored_p<P>.rds   one file per dimension
-#   simulate_interval_censored_all.rds    the three combined
+# On a cluster the core count is taken from the scheduler
+# (SLURM_CPUS_PER_TASK and friends) and output goes to $TMPDIR unless --out is
+# given. $TMPDIR is node-local and wiped at the end of the job, so copy the
+# .rds files somewhere permanent before the job exits.
+#
+# Output (in $TMPDIR, --out, or outputs/ next to this script)
+#   simulate_interval_censored_output.rds  all dimensions combined
 #
 # Reproducibility
 #   Replicate i at dimension p uses seed base_seed + seed_block * b + i, where
@@ -38,12 +43,31 @@ opt  <- function(flag, default) {
   i <- match(flag, args)
   if (is.na(i) || i == length(args)) default else args[i + 1L]
 }
-smoke   <- "--smoke" %in% args
-n_cores <- as.integer(opt("--cores", max(1L, parallel::detectCores() - 1L)))
 p_arg   <- opt("--p", NA_character_)
 
+# detectCores() reports the machine, not the allocation, so on a cluster it
+# oversubscribes badly. Prefer what the scheduler granted.
+resolve_cores <- function() {
+  from_flag <- opt("--cores", NA_character_)
+  if (!is.na(from_flag)) return(as.integer(from_flag))
+  # Bare positional count, i.e. `Rscript simulate_interval_censored.R 192`.
+  if (length(args) >= 1L && !grepl("^--", args[1L])) {
+    v <- suppressWarnings(as.integer(args[1L]))
+    if (!is.na(v)) return(v)
+  }
+  # Deliberately NOT OMP_NUM_THREADS: job scripts set it to 1 to stop BLAS
+  # threading inside each worker, which is unrelated to how many workers to run.
+  for (v in c("SLURM_CPUS_PER_TASK", "SLURM_CPUS_ON_NODE", "NSLOTS", "PBS_NP")) {
+    val <- Sys.getenv(v)
+    if (nzchar(val) && !is.na(suppressWarnings(as.integer(val))))
+      return(as.integer(val))
+  }
+  max(1L, parallel::detectCores() - 1L)   # local: leave one core free
+}
+n_cores <- resolve_cores()
+
 # ── Settings ────────────────────────────────────────────────────────────────
-base_seed  <- 20250101L
+base_seed  <- 2026L
 seed_block <- 1000000L          # far wider than any plausible n_rep
 known_p    <- c(50L, 500L, 5000L)
 
@@ -53,19 +77,14 @@ if (any(is.na(match(p_values, known_p))))
        "Add the new dimension to known_p rather than relying on its position ",
        "in p_values, so that existing dimensions keep their seeds.")
 
-if (smoke) {
-  n_rep <- 2L;    n_obs <- 100L; n_test <- 200L
-  n_post <- 100L; n_burn <- 100L; n_trees <- 50L
-} else {
-  n_rep <- 1000L; n_obs <- 200L; n_test <- 1000L
-  n_post <- 5000L; n_burn <- 5000L; n_trees <- 200L
-}
+n_rep <- 1000L; n_obs <- 200L; n_test <- 1000L
+n_post <- 5000L; n_burn <- 5000L; n_trees <- 200L
 n_chains <- 1L
 k_horse  <- 1.0        # 2.1.0 default; the old 0.1 was calibrated pre-fix
 
 stopifnot(n_rep < seed_block)   # guarantees the seed blocks cannot overlap
 
-# Run from anywhere: outputs land in outputs/ next to this script.
+# Run from anywhere: work relative to this script.
 script_path <- (function() {
   a <- commandArgs(trailingOnly = FALSE)
   m <- grep("--file=", a, fixed = TRUE)
@@ -74,7 +93,16 @@ script_path <- (function() {
 if (!is.null(script_path) && nzchar(script_path)) {
   setwd(normalizePath(dirname(script_path)))
 }
-dir.create("outputs", showWarnings = FALSE)
+
+# --out wins; then TMPDIR, which cluster jobs set and which is node-local and
+# fast; then outputs/ beside the script. Copy results off TMPDIR before the
+# job ends, since it is wiped.
+out_dir <- opt("--out", NA_character_)
+if (is.na(out_dir)) {
+  tmp <- Sys.getenv("TMPDIR")
+  out_dir <- if (nzchar(tmp)) tmp else "outputs"
+}
+dir.create(out_dir, showWarnings = FALSE, recursive = TRUE)
 
 # ── Data-generating process ─────────────────────────────────────────────────
 # Friedman + sparse linear (spike-and-slab) on X ~ U[0,1]^p. beta is drawn
@@ -213,7 +241,8 @@ run_one_sim <- function(seed, n, n_test, p, n_post, n_burn, n_chains,
 registerDoParallel(cores = n_cores)
 cat("SIMULATION: interval-censored (Friedman + spike-and-slab)\n")
 cat("  ShrinkageTrees ", format(utils::packageVersion("ShrinkageTrees")),
-    " | cores ", n_cores, if (smoke) " | SMOKE RUN" else "", "\n", sep = "")
+    " | cores ", n_cores, "\n", sep = "")
+cat("  output -> ", normalizePath(out_dir), "\n", sep = "")
 cat("  p in {", paste(p_values, collapse = ", "), "} | ", n_rep,
     " replicates | n = ", n_obs, ", n_test = ", n_test,
     " | m = ", n_trees, ", N_post = ", n_post, ", k = ", k_horse,
@@ -238,10 +267,7 @@ for (p_val in p_values) {
     r
   }
 
-  f <- file.path("outputs", sprintf("simulate_interval_censored_p%d.rds", p_val))
-  saveRDS(res, f)
-  cat("  done in ", format(round(difftime(Sys.time(), t0), 1)),
-      " -> ", f, "\n", sep = "")
+  cat("  done in ", format(round(difftime(Sys.time(), t0), 1)), "\n", sep = "")
   all_res[[as.character(p_val)]] <- res
 }
 
@@ -249,9 +275,9 @@ combined <- do.call(rbind, all_res)
 combined$Method <- factor(combined$Method, levels = methods)
 combined$Split  <- factor(combined$Split,  levels = c("train", "test"))
 attr(combined, "session_info") <- utils::sessionInfo()
-saveRDS(combined, "outputs/simulate_interval_censored_all.rds")
+saveRDS(combined, file.path(out_dir, "simulate_interval_censored_output.rds"))
 
-cat("\nWrote outputs/simulate_interval_censored_all.rds (",
-    nrow(combined), " rows)\n", sep = "")
+cat("\nWrote ", file.path(out_dir, "simulate_interval_censored_output.rds"),
+    " (", nrow(combined), " rows)\n", sep = "")
 print(aggregate(cbind(RMSE, Coverage, Length) ~ p + Method + Split,
                 data = combined, FUN = mean))

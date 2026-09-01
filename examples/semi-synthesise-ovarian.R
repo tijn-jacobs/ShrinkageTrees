@@ -4,12 +4,17 @@
 # PURPOSE: Replace the real survival outcomes with simulated outcomes from a
 #          known DGP, while keeping the real covariates. This gives us:
 #          - Known ground truth for the treatment effect (CATE)
-#          - Heterogeneous effects with mean ≈ 0 (matching trial evidence that
-#            carboplatin and cisplatin have equivalent efficacy)
-#          - Confounding via year_of_diagnosis (instrumental variable): cisplatin
+#          - Heterogeneous effects across patients
+#          NOTE: this script reads the shipped `ovarian` for its real covariates
+#          and rebuilds the simulated parts, so it is self-referential. Genes are
+#          identified with grep("^ENSG"); an earlier version excluded a list of
+#          clinical names instead, which let right_time/left_time enter the gene
+#          block and hence the design matrix.
+#
+#          - Confounding via year_of_diagnosis: cisplatin
 #            patients enrolled earlier, carboplatin later — creating a spurious
 #            apparent treatment effect that methods must adjust for
-#          - Weibull AFT model calibrated to real TCGA-OV marginal statistics
+#          - Log-normal AFT model calibrated to real TCGA-OV marginal statistics
 #          - Right-censored outcome only (interval-censoring added later)
 #
 # CLINICAL BACKGROUND:
@@ -17,18 +22,13 @@
 #   in efficacy (HR ≈ 1.0). The TCGA-OV observational data shows a spurious
 #   time ratio of 1.42 favoring cisplatin, driven by era confounding (cisplatin
 #   used pre-2000, carboplatin after) and indication bias. This DGP mimics
-#   that structure: null true ATE, strong confounding via year_of_diagnosis.
+#   that structure: a modest true ATE with strong confounding via
+#   year_of_diagnosis.
 #
-# NOTE: This file is to be deleted once the final dataset is generated.
+# This script constructs the datasets and plots diagnostics only. It fits no
+# models; the worked analysis is in
+# simulations/r-journal-paper/ovarian_analysis.R.
 #
-# WORKFLOW:
-#   1. Load original data, inspect marginal statistics
-#   2. Generate year_of_diagnosis (instrumental variable for treatment)
-#   3. Define DGP: Weibull AFT with mu(x), heterogeneous tau(x) ≈ 0 on avg
-#   4. Generate survival times, apply right-censoring to match ~62% events
-#   5. Plot diagnostics (KM curves, CATE distribution, etc.)
-#   6. Fit CausalHorseForest, check caterpillar plot and C-index
-#   7. If satisfactory, save the dataset
 ################################################################################
 
 setwd("~/Library/CloudStorage/OneDrive-VrijeUniversiteitAmsterdam/Documents/GitHub/ShrinkageTrees")
@@ -56,7 +56,16 @@ cat(sprintf("Dropping %d rows with missing clinical covariates\n",
 ovarian <- ovarian[complete, ]
 
 clin    <- ovarian[, clinical_cols]
-X_genes <- as.matrix(ovarian[, setdiff(names(ovarian), clinical_cols)])
+
+# Identify genes POSITIVELY. Excluding a list of known clinical names is what
+# put outcome-derived columns into the design matrix: this script reads the
+# shipped `ovarian`, and once right_time/left_time/year_of_diagnosis.1 were in
+# it, setdiff() left them in the gene block. Survival times in days have a far
+# larger MAD than log2 TPM expression, so they topped the ranking and were
+# selected as "genes". grep("^ENSG") cannot pick up a non-gene column.
+gene_cols <- grep("^ENSG", names(ovarian), value = TRUE)
+X_genes   <- as.matrix(ovarian[, gene_cols])
+
 # Select top 1000 genes by median absolute deviation
 gene_mad <- apply(X_genes, 2, mad)
 top_genes <- order(gene_mad, decreasing = TRUE)[1:min(1000, ncol(X_genes))]
@@ -90,11 +99,11 @@ legend("topright", c("Cisplatin (0)", "Carboplatin (1)"),
        col = c("blue", "red"), lty = 1, lwd = 2)
 
 # =============================================================================
-# 2. Generate year_of_diagnosis (instrumental variable)
+# 2. Generate year_of_diagnosis (confounder)
 # =============================================================================
 # year_of_diagnosis drives treatment assignment (cisplatin used pre-~2000,
 # carboplatin after) and has a direct prognostic effect (time ratio 1.03/year
-# from the real Weibull AFT). It acts as an instrumental variable.
+# from the real Weibull AFT). It is therefore a confounder, not an instrument.
 #
 # We simulate it to match the TCGA-OV enrollment window (~1992-2013) with
 # treatment assignment conditional on year.
@@ -131,8 +140,8 @@ cat(sprintf("Mean year | carbo: %.1f, cis: %.1f\n",
 # =============================================================================
 # 3. Define the data generating process
 # =============================================================================
-# Weibull AFT: log(T) = mu(x) + A * tau(x) + sigma * W
-# where W ~ standard Gumbel (i.e. W = log(Exp(1)))
+# Log-normal AFT: log(T) = mu(x) + A * tau(x) + sigma * W
+# with Gaussian errors, i.e. a log-normal AFT
 #
 # Calibrated to real TCGA-OV Weibull AFT coefficients:
 #   - Intercept ≈ log(45 months) ≈ 3.81 (pooled KM median)
@@ -153,12 +162,16 @@ mu_0 <- 3.81  # intercept: log(45 months), pooled median survival
 
 # Clinical effects (calibrated to real AFT)
 mu_age   <- -0.008 * age_sc          # time ratio 0.99/year
-mu_year  <-  0.031 * year_sc_prog    # time ratio 1.03/year (IV: direct effect)
+mu_year  <-  0.031 * year_sc_prog    # time ratio 1.03/year (direct prognostic effect)
 mu_figo  <- -0.15  * figo_late       # stage III/IV worse prognosis
 mu_grade <- -0.08  * grade_hi        # high grade slightly worse
 
 # Gene effects: 10 active prognostic genes with varying effect sizes
-active_prog <- c(15, 5, 10, 20, 50, 100, 200, 500, 750, 1000)
+# The last index is the final column of the MAD ranking, whatever its length:
+# a literal 1000 goes out of bounds now that the gene block is genuinely genes
+# (997) rather than 997 genes plus three contaminants.
+active_prog <- c(15, 5, 10, 20, 50, 100, 200, 500, 750, ncol(X_genes_sc))
+stopifnot(max(active_prog) <= ncol(X_genes_sc))
 beta_prog   <- c(0.12, -0.09, 0.08, -0.07, 0.05,
                  -0.04, 0.03, -0.03, 0.02, -0.02)
 mu_genes <- X_genes_sc[, active_prog] %*% beta_prog
@@ -181,9 +194,9 @@ cat(sprintf("\nmu(x): mean = %.2f, sd = %.2f, range = [%.2f, %.2f]\n",
 #   - Gene signature: a few genes modify drug response
 #   - Age: modest interaction (younger patients tolerate cisplatin better)
 #
-# The key point: year_of_diagnosis does NOT enter tau — it's only an
-# instrument (affects treatment assignment and prognosis, not the treatment
-# effect itself). This is what makes it a proper IV.
+# The key point: year_of_diagnosis does NOT enter tau. It affects treatment
+# assignment and prognosis, but not the treatment effect itself, which is what
+# makes it a confounder rather than an effect modifier.
 
 tau_figo <- -0.10 * figo_late          # late stage: slight cis advantage
 tau_age  <- -0.003 * age_sc            # older: slight carbo advantage
@@ -200,9 +213,10 @@ cat(sprintf("Proportion with tau > 0 (benefit from carboplatin): %.2f\n",
 hist(tau, breaks = 30, main = "True CATE distribution (check: centered near 0)")
 abline(v = 0, col = "red", lwd = 2)
 
-# --- Generate survival times (Weibull AFT) ---
-# Weibull: log(T) = mu + A * tau + sigma * W, where W ~ Gumbel(0,1)
-# W = log(Exp(1)) gives the standard Gumbel distribution
+# --- Generate survival times (log-normal AFT) ---
+# Log-normal AFT: log(T) = mu + A * tau + sigma * W, with W ~ N(0, 1).
+# Deliberately the same error family the package fits: the worked example is
+# a well-specified case.
 sigma <- 0.65  # Weibull scale from real AFT (was 0.647)
 W     <- rnorm(n)  
 log_T <- mu + A * tau + sigma * W
@@ -212,7 +226,6 @@ cat(sprintf("\nTrue survival times (months): median = %.1f, mean = %.1f\n",
             median(T_true), mean(T_true)))
 cat(sprintf("Median by treatment — carbo: %.1f, cis: %.1f months\n",
             median(T_true[A == 1]), median(T_true[A == 0])))
-
 
 # =============================================================================
 # 4. Apply right-censoring to match target event rate
@@ -238,7 +251,8 @@ generate_censored <- function(T_true, treatment, target_event_rate = 0.32,
       cens_rate <- cens_rate * 0.9
     }
   }
-  list(time = Y, status = delta, cens_rate_used = cens_rate, achieved_rate = rate)
+  list(time = Y, status = delta, censoring_time = C,
+       cens_rate_used = cens_rate, achieved_rate = rate)
 }
 
 rc <- generate_censored(T_true, A, target_event_rate = 0.62)
@@ -260,7 +274,6 @@ plot(km_synth, col = c("blue", "red"), lwd = 2,
      main = "Synthesised data — KM by treatment (right-censored)")
 legend("topright", c("Cisplatin (0)", "Carboplatin (1)"),
        col = c("blue", "red"), lty = 1, lwd = 2)
-
 
 # =============================================================================
 # 5. Diagnostic plots
@@ -309,20 +322,19 @@ plot(X_genes_sc[, 3], tau, pch = 16, cex = 0.5,
      main = "True CATE vs gene 3 (main modifier)")
 abline(h = 0, col = "grey", lty = 2)
 
-# 4f. P(carboplatin) vs year — the IV relationship
+# 4f. P(carboplatin) vs year — the confounding relationship
 year_grid <- seq(min(year_of_diagnosis), max(year_of_diagnosis), by = 1)
 year_grid_sc <- (year_grid - year_center) / 5
 p_grid <- plogis(-0.5 + 1.2 * year_grid_sc)
 plot(year_grid, p_grid, type = "l", lwd = 2, col = "darkred",
      xlab = "Year of diagnosis", ylab = "P(carboplatin)",
-     main = "Treatment propensity vs year (IV)")
+     main = "Treatment propensity vs year (confounding)")
 rug(year_of_diagnosis[A == 1], col = "red", side = 3)
 rug(year_of_diagnosis[A == 0], col = "blue", side = 1)
 legend("topleft", c("Cisplatin", "Carboplatin"),
        col = c("blue", "red"), lty = 1, lwd = 2, cex = 0.7)
 
 par(mfrow = c(1, 1))
-
 
 # =============================================================================
 # 6. Assemble the semi-synthesised dataset
@@ -346,185 +358,82 @@ ovarian_synth <- data.frame(
   X_genes
 )
 
+# Ground truth, for validation. `tau` IS the CATE on the log-time scale, so no
+# separate cate column is needed. sigma and the active variable indices are
+# attributes rather than columns, being constants.
+ovarian_truth_synth <- data.frame(
+  mu             = mu,
+  tau            = tau,
+  f              = mu + A * tau,
+  propensity     = p_carbo,
+  log_time       = log_T,
+  time           = T_true,
+  censoring_time = rc$censoring_time
+)
+attr(ovarian_truth_synth, "sigma")       <- sigma
+attr(ovarian_truth_synth, "active_prog") <- active_prog
+attr(ovarian_truth_synth, "active_tau")  <- c(3L, 7L)
+
+# The non-gene columns must be exactly the seven we intend to ship. This is the
+# check that would have caught the leaked columns.
+non_gene <- setdiff(names(ovarian_synth),
+                    grep("^ENSG", names(ovarian_synth), value = TRUE))
+stopifnot(
+  identical(non_gene, c("OS_time", "OS_event", "treatment", "age",
+                        "figo_stage", "tumor_grade", "year_of_diagnosis")),
+  !any(c("left_time", "right_time", "year_of_diagnosis.1") %in% names(ovarian_synth)),
+  nrow(ovarian_truth_synth) == nrow(ovarian_synth)
+)
+
 cat(sprintf("\n=== Synthesised dataset ===\n"))
-cat(sprintf("n = %d, p = %d\n", nrow(ovarian_synth), ncol(ovarian_synth)))
+cat(sprintf("n = %d, p = %d  (7 clinical + %d genes)\n",
+            nrow(ovarian_synth), ncol(ovarian_synth), ncol(X_genes)))
+cat(sprintf("ovarian_truth: %d x %d\n",
+            nrow(ovarian_truth_synth), ncol(ovarian_truth_synth)))
 cat(sprintf("Event rate: %.2f (target: 0.62)\n", mean(ovarian_synth$OS_event)))
 cat(sprintf("Median OS_time (days): %.0f (original: %.0f)\n",
             median(ovarian_synth$OS_time), median(clin$OS_time)))
 
-
 # =============================================================================
-# 7a. Fit single HorseTrees forest + KM comparison
+# 7. Save
 # =============================================================================
+# Guarded, because this overwrites the datasets shipped with the package.
+# Run the script normally to inspect the diagnostics, then re-run with --save:
+#
+#   Rscript examples/semi-synthesise-ovarian.R --save
+#
+# Or from an interactive session:
+#
+#   save_data <- TRUE
+#   source("examples/semi-synthesise-ovarian.R")
+#
+# Afterwards: update R/data-documentation.R if the columns changed, then
+# devtools::document() and devtools::install(). Every downstream number in the
+# manuscript must be regenerated.
 
-cat("\n=== Fitting single HorseTrees forest ===\n")
+if (!exists("save_data"))
+  save_data <- "--save" %in% commandArgs(trailingOnly = TRUE)
 
-time_fit     <- ovarian_synth$OS_time / 30.44   # days to months
-log_time_fit <- log(time_fit)                    # DGP and fit both live on log scale
-status_fit   <- ovarian_synth$OS_event
-treat_fit    <- ovarian_synth$treatment
-# Drop outcome columns (1:2) and treatment (3) — treatment is passed separately
-# year_of_diagnosis is included as a covariate (column 7 in ovarian_synth)
-X_fit        <- as.matrix(ovarian_synth[, -(1:3)])
+if (save_data) {
+  if (!dir.exists("data"))
+    stop("No data/ directory here. Run this from the package root.")
 
-fit_single <- HorseTrees(
-  y               = log_time_fit,
-  status          = status_fit,
-  X_train         = X_fit,
-  outcome_type    = "right-censored",
-  timescale       = "log",
-  number_of_trees = 200,
-  k               = 1,
-  N_post          = 1000,
-  N_burn          = 1000,
-  verbose         = TRUE
-)
+  ovarian       <- ovarian_synth
+  ovarian_truth <- ovarian_truth_synth
 
-# C-index for single forest (rank-invariant, so scale doesn't matter)
-c_idx_single <- concordance(Surv(time_fit, status_fit) ~ fit_single$train_predictions)
-cat(sprintf("C-index (single forest, train): %.3f\n", c_idx_single$concordance))
+  save(ovarian,       file = "data/ovarian.rda",       compress = "xz")
+  save(ovarian_truth, file = "data/ovarian_truth.rda", compress = "xz")
 
-# KM: observed vs predicted survival — predictions are log-time, exp to time
-pred_median <- exp(fit_single$train_predictions)
-
-# Split into risk groups (tertiles of predicted survival)
-risk_group <- cut(pred_median,
-                  breaks = quantile(pred_median, c(0, 1/3, 2/3, 1)),
-                  labels = c("High risk", "Medium risk", "Low risk"),
-                  include.lowest = TRUE)
-
-km_risk <- survfit(Surv(time_fit, status_fit) ~ risk_group)
-plot(km_risk, col = c("red", "orange", "forestgreen"), lwd = 2,
-     xlab = "Time (months)", ylab = "Survival probability",
-     main = "KM by predicted risk group (HorseTrees)")
-legend("topright", levels(risk_group),
-       col = c("red", "orange", "forestgreen"), lty = 1, lwd = 2)
-
-# KM: synthesised data by treatment (compare to original)
-km_synth_treat <- survfit(Surv(time_fit, status_fit) ~ treat_fit)
-plot(km_orig, col = c("lightblue", "pink"), lwd = 1, lty = 2,
-     xlab = "Time (months)", ylab = "Survival probability",
-     main = "KM by treatment: original (dashed) vs synthesised (solid)")
-lines(km_synth_treat, col = c("blue", "red"), lwd = 2)
-legend("topright",
-       c("Orig cisplatin", "Orig carboplatin",
-         "Synth cisplatin", "Synth carboplatin"),
-       col = c("lightblue", "pink", "blue", "red"),
-       lty = c(2, 2, 1, 1), lwd = c(1, 1, 2, 2), cex = 0.7)
-
-
-# =============================================================================
-# 7b. Fit CausalHorseForest and evaluate
-# =============================================================================
-
-cat("\n=== Fitting CausalHorseForest ===\n")
-
-# Propensity scores (clinical only — year_of_diagnosis is the key driver)
-X_ps <- as.matrix(ovarian_synth[, c("age", "figo_stage", "tumor_grade",
-                                     "year_of_diagnosis")])
-ps_fit <- HorseTrees(
-  y               = treat_fit,
-  X_train         = X_ps,
-  outcome_type    = "binary",
-  number_of_trees = 200,
-  k               = 1,
-  N_post          = 1000,
-  N_burn          = 1000,
-  verbose         = TRUE
-)
-propensity <- ps_fit$train_predictions
-
-# Fit causal model
-X_control <- cbind(propensity = propensity, X_fit)
-X_treat   <- X_fit
-
-fit_causal <- CausalHorseForest(
-  y                         = log_time_fit,
-  status                    = status_fit,
-  X_train_control           = X_control,
-  X_train_treat             = X_treat,
-  treatment_indicator_train = treat_fit,
-  outcome_type              = "right-censored",
-  timescale                 = "log",
-  number_of_trees           = 200,
-  k                         = 1.5,
-  N_post                    = 1000,
-  N_burn                    = 1000,
-  n_chains                  = 4,
-  store_posterior_sample    = TRUE,
-  verbose                   = TRUE
-)
-
-cat("\n")
-summary(fit_causal)
-
-# --- C-index ---
-cat("\n=== Concordance index ===\n")
-# Use the prognostic predictions (mu) for discrimination
-c_idx <- concordance(Surv(time_fit, status_fit) ~ fit_causal$train_predictions)
-cat(sprintf("C-index (train): %.3f\n", c_idx$concordance))
-
-# --- ATE / CATE comparison (all on log scale) ---
-cate_est <- fit_causal$train_predictions_treat  # log-scale tau, directly comparable
-
-s <- summary(fit_causal)
-cat(sprintf("\nEstimated ATE (log scale): %.4f  95%% CI: [%.4f, %.4f]\n",
-            s$treatment_effect$ate,
-            s$treatment_effect$ate_lower,
-            s$treatment_effect$ate_upper))
-cat(sprintf("True ATE (log scale):      %.4f\n", mean(tau)))
-
-cat(sprintf("\nCATE correlation (estimated vs true): %.3f\n", cor(cate_est, tau)))
-cat(sprintf("CATE RMSE:                            %.4f\n",
-            sqrt(mean((cate_est - tau)^2))))
-
-# --- Plots ---
-cat("\n=== Generating diagnostic plots ===\n")
-
-# Caterpillar plot
-p_cate <- plot(fit_causal, type = "cate")
-print(p_cate + ggtitle("Estimated CATEs — semi-synthesised ovarian data"))
-
-# ATE posterior
-p_ate <- plot(fit_causal, type = "ate")
-print(p_ate + ggtitle("ATE posterior — semi-synthesised ovarian data"))
-
-# Estimated vs true CATE scatter (both on log scale)
-plot(tau, cate_est, pch = 16, cex = 0.6,
-     col = adjustcolor("steelblue", 0.6),
-     xlab = "True CATE (log scale)", ylab = "Estimated CATE (log scale)",
-     main = "Estimated vs true CATE")
-abline(0, 1, col = "red", lty = 2, lwd = 2)
-abline(h = 0, v = 0, col = "grey", lty = 3)
-
-# Trace plot
-p_trace <- plot(fit_causal, type = "trace")
-print(p_trace + ggtitle("Sigma traceplot"))
-# 
-# 
-# # =============================================================================
-# # 8. Save if satisfactory
-# # =============================================================================
-# 
-# # Uncomment the lines below once the dataset looks good.
-# # This saves in the NEW flat data frame format (not the old list format).
-# #
-# ovarian <- ovarian_synth # Make this flat, i.e. just a df not a list of dfs (HERE)
-# save(ovarian, file = "data/ovarian.rda", compress = "xz")
-# cat("\nDataset saved to data/ovarian.rda\n")
-# 
-# # Also save the ground truth for validation (not shipped with the package)
-# ovarian_truth <- data.frame(
-#   true_log_T       = log(T_true),
-#   true_T           = T_true,
-#   true_mu          = mu,
-#   true_tau         = tau,
-#   true_propensity  = p_carbo
-# )
-# save(ovarian_truth, file = "data/ovarian_truth.rda", compress = "xz")
-# cat("Ground truth saved to data/ovarian_truth.rda\n")
-# 
-# cat("\n=== Done ===\n")
+  cat("\n=== Saved ===\n")
+  cat(sprintf("  data/ovarian.rda        %d x %d\n",
+              nrow(ovarian), ncol(ovarian)))
+  cat(sprintf("  data/ovarian_truth.rda  %d x %d  (sigma = %.3f)\n",
+              nrow(ovarian_truth), ncol(ovarian_truth),
+              attr(ovarian_truth, "sigma")))
+  cat("\nNext: devtools::document(); devtools::install(); restart R.\n")
+} else {
+  cat("\nNothing saved. Re-run with --save to overwrite data/*.rda\n")
+}
 # cat("Review the plots. The key checks:\n")
 # cat("  1. True ATE should be near 0 (null causal effect per RCT evidence)\n")
 # cat("  2. CATE distribution should show spread (heterogeneity exists)\n")

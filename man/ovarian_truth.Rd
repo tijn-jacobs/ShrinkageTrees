@@ -8,16 +8,23 @@
 A data frame with one row per patient in \code{\link{ovarian}}
 and the following columns:
 \describe{
-\item{true_log_T}{Numeric. True (uncensored) survival time on the
-log scale.}
-\item{true_T}{Numeric. True (uncensored) survival time on the
-original scale.}
-\item{true_mu}{Numeric. True prognostic function \eqn{\mu(x)}
-(expected log survival time at the reference treatment).}
-\item{true_tau}{Numeric. True conditional average treatment effect
-\eqn{\tau(x)} on the log-survival scale.}
-\item{true_propensity}{Numeric. True propensity for the treated
-group (carboplatin) used to simulate the observed assignment.}
+\item{mu}{Numeric. Prognostic function \eqn{\mu(x)}: expected log
+survival under the control treatment.}
+\item{tau}{Numeric. Conditional average treatment effect
+\eqn{\tau(x)} on the log-survival scale. This is the CATE;
+\eqn{\exp(\tau)} is the acceleration factor.}
+\item{f}{Numeric. The true regression function
+\eqn{f(x) = \mu(x) + A\,\tau(x)}, that is
+\eqn{E[\log T \mid x, A]} under the treatment actually assigned.
+This is what a prediction model estimates when treatment is included
+as an ordinary covariate, so it is the target for prediction error.}
+\item{propensity}{Numeric. True propensity \eqn{e(x) = P(A = 1 \mid x)}
+used to simulate the observed assignment.}
+\item{log_time}{Numeric. True (uncensored) survival time on the log
+scale, under the treatment actually assigned.}
+\item{time}{Numeric. The same on the original scale, in months.}
+\item{censoring_time}{Numeric. The censoring time drawn for this
+patient, so it is visible why an observation was censored.}
 }
 }
 \usage{
@@ -32,12 +39,38 @@ conditional treatment effect, and propensity score are available for
 validating estimators of treatment effects under right- and
 interval-censored survival.
 }
+\details{
+The data-generating process is
+\deqn{\log T = \mu(x) + A\,\tau(x) + \sigma W,}
+with \eqn{W} standard normal. The residual scale \eqn{\sigma} is stored as
+the attribute \code{"sigma"}, and the indices of the covariates that enter
+\eqn{\mu} and \eqn{\tau} as \code{"active_prog"} and \code{"active_tau"}.
+Attributes are dropped by row subsetting, so read them before subsetting.
+
+\code{f} is the target for a model that uses treatment as a covariate. A
+model fitted without it estimates \eqn{\mu(x) + e(x)\,\tau(x)} instead, by
+the law of total expectation. Score prediction error against whichever
+matches the design matrix that was used.
+}
 \examples{
 data(ovarian)
 data(ovarian_truth)
 stopifnot(nrow(ovarian) == nrow(ovarian_truth))
-# True (population) average treatment effect on the log-survival scale:
-mean(ovarian_truth$true_tau)
+
+# True average treatment effect on the log-survival scale
+mean(ovarian_truth$tau)
+
+# log T decomposes as f plus noise
+stopifnot(all.equal(ovarian_truth$f,
+                    ovarian_truth$mu + ovarian$treatment * ovarian_truth$tau))
+
+# Target for a model fitted without treatment
+eta <- ovarian_truth$mu + ovarian_truth$propensity * ovarian_truth$tau
+
+# Best out-of-sample concordance the process allows: no model can beat this
+sigma <- attr(ovarian_truth, "sigma")
+rho   <- sd(eta) / sqrt(var(eta) + sigma^2)
+0.5 + asin(rho) / pi
 }
 \seealso{
 \code{\link{ovarian}} for the observed semi-synthesised data.

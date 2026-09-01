@@ -5,14 +5,14 @@
 \alias{ovarian}
 \title{Semi-synthesised TCGA Ovarian Cancer Dataset}
 \format{
-A data frame with 357 rows (patients) and 1007 columns:
+A data frame with 357 rows (patients) and 1004 columns:
 \itemize{
 \item \strong{OS_time}: Numeric. Observed survival time in days (simulated).
 \item \strong{OS_event}: Integer. Event indicator (simulated).
 1 = event observed, 0 = right-censored.
 \item \strong{treatment}: Integer. Simulated treatment assignment.
 1 = carboplatin, 0 = cisplatin. Driven primarily by
-\code{year_of_diagnosis} as an instrumental variable
+\code{year_of_diagnosis}, a confounder
 (cisplatin era pre-~2000, carboplatin after).
 \item \strong{age}: Integer. Age at initial pathologic diagnosis in years.
 \item \strong{figo_stage}: Integer. FIGO stage coded as 2 = Stage II,
@@ -21,16 +21,8 @@ A data frame with 357 rows (patients) and 1007 columns:
 2 = G2, 3 = G3, 4 = G4. Rows with GX (unknown grade) were
 excluded.
 \item \strong{year_of_diagnosis}: Integer. Year of initial pathologic diagnosis
-(approx. 1992--2013). Used as an instrumental variable for
-treatment assignment in the DGP.
-\item \strong{right_time, left_time}: Numeric. Interval-censoring bounds
-derived from the simulated survival times, suitable for passing
-to the package's interval-censored survival interface
-(\code{right_time = Inf} for right-censored observations,
-\code{left_time == right_time} for exact events).
-\item \strong{year_of_diagnosis.1}: Integer. Duplicate of
-\code{year_of_diagnosis} left in place from the data-assembly
-join; retained for reproducibility and may be ignored.
+(approx. 1992--2013). A confounder in the DGP: it drives treatment
+assignment and also has a direct prognostic effect.
 \item \strong{ENSG...}: Numeric. Log2(TPM + 1) normalised gene expression
 levels for 997 Ensembl genes (columns named by versioned Ensembl
 gene IDs, e.g. \code{ENSG00000270372.1}). Genes were selected as
@@ -54,6 +46,23 @@ known data-generating process so that the true treatment effect is
 available for validation (see \code{\link{ovarian_truth}}).
 }
 \details{
+Every column except \code{OS_time}, \code{OS_event} and \code{treatment} is
+a baseline covariate, so the design matrix is
+\preformatted{
+  drop <- c("OS_time", "OS_event", "treatment")
+  X <- as.matrix(ovarian[, setdiff(names(ovarian), drop)])
+}
+Select by name rather than position. Earlier versions of this dataset
+carried outcome-derived \code{left_time} and \code{right_time} columns
+together with a duplicated \code{year_of_diagnosis}; positional selection
+silently admitted them to the design matrix, leaking the outcome. They have
+been removed. To demonstrate the interval-censored interface, build the
+bounds from the outcome instead:
+\preformatted{
+  left  <- ovarian$OS_time
+  right <- ifelse(ovarian$OS_event == 1, ovarian$OS_time, Inf)
+}
+
 RNA-seq data were downloaded from the GDC portal using the
 \code{TCGAbiolinks} package (STAR - Counts workflow). Expression values
 were normalised to TPM and log2-transformed as log2(TPM + 1). Genes with

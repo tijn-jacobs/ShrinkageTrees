@@ -1,0 +1,31 @@
+\begin{table}[!h]
+\centering
+\caption{Interval-censored simulation: recovery of the regression function $f$,
+     averaged over 1,000 replicates. Nominal coverage rate is 0.95.}
+\centering
+\begin{tabular}[t]{llrrrrrr}
+\toprule
+\multicolumn{2}{c}{ } & \multicolumn{3}{c}{Train} & \multicolumn{3}{c}{Test} \\
+\cmidrule(l{3pt}r{3pt}){3-5} \cmidrule(l{3pt}r{3pt}){6-8}
+$p$ & Method & RMSE & Coverage & Length & RMSE & Coverage & Length\\
+\midrule
+ & BART & 1.15 & 0.989 & 5.97 & 1.10 & 0.998 & 6.65\\
+
+ & DART & 1.12 & 0.948 & 4.46 & 1.17 & 0.948 & 4.65\\
+
+\multirow{-3}{*}{\raggedright\arraybackslash 50} & Horseshoe Forest & 0.95 & 0.972 & 4.08 & 0.98 & 0.972 & 4.22\\
+\cmidrule{1-8}
+ & BART & 1.31 & 0.979 & 6.47 & 1.07 & 1.000 & 7.64\\
+
+ & DART & 1.26 & 0.923 & 4.55 & 1.32 & 0.922 & 4.77\\
+
+\multirow{-3}{*}{\raggedright\arraybackslash 500} & Horseshoe Forest & 1.00 & 0.964 & 4.14 & 1.03 & 0.966 & 4.30\\
+\cmidrule{1-8}
+ & BART & 1.36 & 0.970 & 6.50 & 1.06 & 1.000 & 7.84\\
+
+ & DART & 1.30 & 0.913 & 4.56 & 1.37 & 0.912 & 4.78\\
+
+\multirow{-3}{*}{\raggedright\arraybackslash 5,000} & Horseshoe Forest & 1.00 & 0.959 & 4.13 & 1.04 & 0.959 & 4.28\\
+\bottomrule
+\end{tabular}
+\end{table}

@@ -23,9 +23,9 @@ Rscript simulate_interval_censored.R --p 500      # one dimension only
 Rscript simulate_interval_censored.R --cores 8
 ```
 
-Writes `outputs/simulate_interval_censored_p<P>.rds` for each dimension and
-`outputs/simulate_interval_censored_all.rds` with the three combined. The
-manuscript reads the combined file.
+Writes a single file, `outputs/simulate_interval_censored_output.rds`, with all
+dimensions combined. On a cluster it goes to `$TMPDIR` instead unless `--out` is
+given.
 
 Replicate `i` at dimension `p` uses seed `20250101 + 1000 * index(p) + i`, set
 inside the worker and keyed to the value of `p` rather than its position in the

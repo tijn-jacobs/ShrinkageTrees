@@ -1,0 +1,9 @@
+"fn","n","p","replicate","seed","seconds","error"
+"SurvivalBART",100,100,1,20350201,NA,"'time' and 'status' are required for right-censored outcomes."
+"SurvivalDART",100,100,1,20350201,NA,"'time' and 'status' are required for right-censored outcomes."
+"HorseTrees",100,100,1,20350201,1.12566494941711,NA
+"BART::mc.abart",100,100,1,20350201,1.77445602416992,NA
+"SurvivalBART",250,100,1,20350351,NA,"'time' and 'status' are required for right-censored outcomes."
+"SurvivalDART",250,100,1,20350351,NA,"'time' and 'status' are required for right-censored outcomes."
+"HorseTrees",250,100,1,20350351,0.775455951690674,NA
+"BART::mc.abart",250,100,1,20350351,3.52689385414124,NA
