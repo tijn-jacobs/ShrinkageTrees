@@ -60,8 +60,38 @@ if (!is.null(script_path) && nzchar(script_path)) {
 }
 dir.create("outputs", showWarnings = FALSE)
 
-# fn_display, benchmark_summary, benchmark_figure
-source("benchmark_figure.R")
+fn_display <- c(SurvivalBART = "SurvivalBART()", SurvivalDART = "SurvivalDART()",
+                HorseTrees = "HorseTrees()", `BART::mc.abart` = "abart()")
+
+# raw: long-format timings, one row per fit (fn, n, seconds).
+benchmark_summary <- function(raw) {
+  ok <- raw[!is.na(raw$seconds), ]
+  agg_mean <- aggregate(seconds ~ fn + n, data = ok, FUN = mean)
+  agg_sd   <- aggregate(seconds ~ fn + n, data = ok, FUN = sd)
+  names(agg_mean)[3] <- "mean"
+  names(agg_sd)[3]   <- "sd"
+  agg <- merge(agg_mean, agg_sd, by = c("fn", "n"))
+  agg$sd[is.na(agg$sd)] <- 0
+  agg <- agg[order(agg$fn, agg$n), ]
+  agg$label <- factor(fn_display[as.character(agg$fn)],
+                      levels = unname(fn_display))
+  agg
+}
+
+benchmark_figure <- function(agg, breaks = seq(0, 15, by = 5)) {
+  ggplot2::ggplot(
+    agg, ggplot2::aes(x = n, y = mean, colour = label, fill = label)) +
+    ggplot2::geom_ribbon(
+      ggplot2::aes(ymin = pmax(mean - sd, 0), ymax = mean + sd),
+      alpha = 0.15, colour = NA) +
+    ggplot2::geom_line(linewidth = 0.7) +
+    ggplot2::geom_point(size = 1.8) +
+    ggplot2::scale_y_continuous(breaks = breaks, limits = c(0, NA)) +
+    ggplot2::labs(x = "Sample size", y = "Wall-clock seconds",
+                  colour = NULL, fill = NULL) +
+    ggplot2::theme_bw() +
+    ggplot2::theme(legend.position = "bottom")
+}
 
 # ── Data-generating process ─────────────────────────────────────────────────
 # AFT log-normal, five active covariates out of p, right-censoring at ~35%.

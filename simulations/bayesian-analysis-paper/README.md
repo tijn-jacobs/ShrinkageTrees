@@ -10,7 +10,7 @@ Shared evaluation/helper functions used across multiple simulation scripts:
 - `evaluation_functions_main.R` -- evaluation functions for the main simulation
 - `evaluation_functions_new.R` -- evaluation functions for the deeper simulation
 
-### `main sim/`
+### `Main sim/`
 Main simulation study comparing methods under linear and nonlinear treatment effect scenarios (three dimensions setting):
 - `revision_main_linear_low.R` -- linear treatment effect simulation
 - `revision_main_nonlinear_low.R` -- nonlinear treatment effect simulation

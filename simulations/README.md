@@ -9,13 +9,16 @@ processes, different comparators, and different versions of the package.
 Simulations for the software paper:
 
 > Jacobs, T. *ShrinkageTrees: An R Package for Bayesian Tree Ensembles for
-> Survival Analysis and Causal Inference.* R Journal (submitted).
+> Survival Analysis and Causal Inference.*
+> [arXiv:2606.12317](https://arxiv.org/abs/2606.12317)
 
+- `ovarian_analysis.R` -- the worked example (Sections 2 and 4.1-4.3), the
+  manuscript's analysis chunks verbatim.
 - `simulate_interval_censored.R` -- the interval-censored simulation study
   (Section 4.4): three priors, `p` in {50, 500, 5000}, 1000 replicates.
-- `benchmark_timings.R` -- the wall-clock timing benchmark (Section 6.5).
+- `benchmark_timings.R` -- the wall-clock timing benchmark (Section 5.5).
 
-Both require **ShrinkageTrees >= 2.1.0** and check the version on startup.
+All three require **ShrinkageTrees >= 2.1.0** and check the version on startup.
 Earlier releases contain two defects in the horseshoe global update and use a
 different default for `k`; see `NEWS.md`.
 

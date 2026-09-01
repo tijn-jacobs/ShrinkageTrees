@@ -30,7 +30,7 @@ Supported outcome types:
 
 All models are implemented with an efficient C++ backend via Rcpp, allowing scalable MCMC sampling in high-dimensional settings.
 
-## ⭐ Core contribution: horseshoe forests
+## ⭐ Core contribution: Horseshoe Forests
 
 Traditional BART and DART primarily regularise model complexity through the **tree structure** (e.g., depth constraints or splitting probabilities).
 
@@ -155,11 +155,17 @@ The package ships with two TCGA datasets for high-dimensional survival analysis 
 | Dataset   | Cancer            | n   | Covariates              | Treatment                |
 | --------- | ----------------- | --- | ----------------------- | ------------------------ |
 | `pdac`    | Pancreatic (PAAD) | 178 | ~3,000 genes + clinical | Radiation vs control     |
-| `ovarian` | Ovarian (OV)      | 357 | 2,000 genes + clinical  | Carboplatin vs cisplatin |
+| `ovarian` | Ovarian (OV)      | 357 | 997 genes + clinical    | Carboplatin vs cisplatin |
 
 ```r
 data("pdac")     # data frame with time, status, treatment, gene expression, ...
 data("ovarian")  # data frame with OS_time, OS_event, treatment, clinical vars, and gene expression columns
+```
+
+`ovarian` is semi-synthetic: the covariates are real TCGA-OV measurements, while treatment and survival times are simulated from a known data-generating process. The companion table `ovarian_truth` holds the quantities that generated it, so estimates can be scored against the truth:
+
+```r
+data("ovarian_truth")  # mu, tau, f, propensity, log_time, time, censoring_time
 ```
 
 ## 🩺 Pancreatic cancer analysis demo
