@@ -30,7 +30,7 @@ Supported outcome types:
 
 All models are implemented with an efficient C++ backend via Rcpp, allowing scalable MCMC sampling in high-dimensional settings.
 
-## ⭐ Core Contribution: Horseshoe Forests
+## ⭐ Core contribution: horseshoe forests
 
 Traditional BART and DART primarily regularise model complexity through the **tree structure** (e.g., depth constraints or splitting probabilities).
 
@@ -46,17 +46,17 @@ This methodology is introduced in:
 > T. Jacobs, W.N. van Wieringen, S.L. van der Pas  
 > https://arxiv.org/abs/2507.22004
 
-## 🧠 Implemented Models
+## 🧠 Implemented models
 
 ShrinkageTrees implements a modular family of Bayesian tree models:
 
-### Single-Forest Models
+### Single-forest models
 
 - **HorseTrees** — BART with Horseshoe shrinkage on leaf parameters
 - **DART** — Dirichlet prior on splitting probabilities
 - **Standard BART** — Classical Gaussian leaf prior
 
-### Causal Models (BCF-style decomposition)
+### Causal models (BCF-style decomposition)
 
 - **CausalHorseForest** — Prognostic + treatment forests with Horseshoe shrinkage
 - **CausalShrinkageForest** — General shrinkage framework
@@ -65,7 +65,7 @@ ShrinkageTrees implements a modular family of Bayesian tree models:
 
 All causal models support right-censored and interval-censored survival data and heterogeneous treatment effect (CATE) estimation.
 
-## 🌲 Tree Regularisation Strategies
+## 🌲 Tree regularisation strategies
 
 ShrinkageTrees supports multiple regularisation mechanisms:
 
@@ -148,7 +148,7 @@ ATE_horseshoe <- mean(post_ATE_horseshoe)
 
 ![Posterior ATE plot](man/figures/posterior_ate_plot.png)
 
-## 📊 Included Datasets
+## 📊 Included datasets
 
 The package ships with two TCGA datasets for high-dimensional survival analysis and causal inference:
 
@@ -162,7 +162,7 @@ data("pdac")     # data frame with time, status, treatment, gene expression, ...
 data("ovarian")  # data frame with OS_time, OS_event, treatment, clinical vars, and gene expression columns
 ```
 
-## 🩺 Pancreatic Cancer Analysis Demo
+## 🩺 Pancreatic cancer analysis demo
 
 The package includes a **demo analysis** based on the TCGA PAAD (pancreatic cancer) dataset to showcase how ShrinkageTrees can be used in practice. This demo replicates the main case study from the preprint _"Horseshoe Forests for High-Dimensional Causal Survival Analysis"_ ([arXiv:2507.22004](https://arxiv.org/abs/2507.22004)).
 
@@ -179,7 +179,7 @@ You can run it directly from R after installing the package:
 demo("pdac_analysis", package = "ShrinkageTrees")
 ```
 
-## 🔬 Why ShrinkageTrees Is Unique
+## 🔬 Why ShrinkageTrees is unique
 
 ShrinkageTrees provides:
 
