@@ -26,8 +26,9 @@ different default for `k`; see `NEWS.md`.
 
 Simulations for the methodological paper:
 
-> Jacobs, T., van Wieringen, W. N., & van der Pas, S. L. (2025). *Horseshoe
-> Forests for High-Dimensional Causal Survival Analysis.* arXiv:2507.22004.
+> Jacobs, T., van Wieringen, W. N., & van der Pas, S. L. (2026). *Horseshoe
+> Forests for High-Dimensional Causal Survival Analysis.* Bayesian Analysis,
+> advance publication, 1-30. <https://doi.org/10.1214/26-BA1603>
 
 See `bayesian-analysis-paper/README.md` for the folder layout. These scripts
 predate version 2.1.0 and were run against the package as it stood at the time

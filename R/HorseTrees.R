@@ -470,9 +470,6 @@ HorseTrees <- function(y = NULL,
                 ifelse(ic_indicator == 1, (left_time + right_time) / 2,
                        left_time))
 
-    # For right-censored obs (right_time == Inf): C++ expects finite boundary
-    right_time[!is.finite(right_time)] <- left_time[!is.finite(right_time)]
-
     # Log-transform if timescale = "time"
     if (timescale == "time") {
       y <- log(y)
@@ -480,14 +477,20 @@ HorseTrees <- function(y = NULL,
       right_time <- log(right_time)
     }
 
+    # Estimate mu and sd using censored_info with interval-censored extension.
+    # This must see the ORIGINAL bounds: right_time is still Inf for the
+    # right-censored subjects, and Surv(type = "interval2") reads a right bound
+    # equal to the left bound as an exact event.
+    cens_inf <- censored_info(y, status, left_time = left_time,
+                              right_time = right_time, ic_indicator = ic_indicator)
+
+    # For right-censored obs (right_time == Inf): C++ expects finite boundary
+    right_time[!is.finite(right_time)] <- left_time[!is.finite(right_time)]
+
     # Save before centering/standardizing (for predict())
     y_train_raw <- y
     left_time_raw <- left_time
     right_time_raw <- right_time
-
-    # Estimate mu and sd using censored_info with interval-censored extension
-    cens_inf <- censored_info(y, status, left_time = left_time,
-                              right_time = right_time, ic_indicator = ic_indicator)
 
     # Center using estimated mean
     y_mean <- cens_inf$mu

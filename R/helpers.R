@@ -48,6 +48,13 @@ censored_info <- function(y, status, left_time = NULL, right_time = NULL,
 
     if (!is.null(left_time) && !is.null(right_time)) {
       # Interval-censored path: use Surv(time, time2, type = "interval2")
+      #
+      # Under interval2 semantics an open right end must be NA (or Inf); a
+      # finite right_time equal to left_time means an EXACT event. Callers must
+      # therefore pass the true bounds here, before any collapse of Inf onto
+      # left_time for the C++ layer. Normalising non-finite bounds to NA makes
+      # that explicit and is what survreg() expects.
+      right_time[!is.finite(right_time)] <- NA_real_
       surv_obj <- survival::Surv(left_time, right_time, type = "interval2")
       fit <- survival::survreg(surv_obj ~ 1, dist = "gaussian")
 

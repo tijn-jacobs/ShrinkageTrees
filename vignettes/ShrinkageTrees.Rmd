@@ -1655,7 +1655,7 @@ keep build time low. For a real analysis:
 ## Case Study: TCGA PAAD (Full Analysis)
 
 The full analysis of the `pdac` dataset replicates the case study from
-Jacobs, van Wieringen & van der Pas (2025). Due to the high-dimensional
+Jacobs, van Wieringen & van der Pas (2026). Due to the high-dimensional
 covariate space (~3,000 genes) and the large MCMC settings needed for
 reliable inference, the code below is provided for reference but is not
 evaluated during vignette building. Pre-computed results can be reproduced
@@ -1763,9 +1763,9 @@ Hahn, P. R., Murray, J. S., & Carvalho, C. M. (2020). Bayesian Regression
 Tree Models for Causal Inference: Regularization, Confounding, and
 Heterogeneous Treatment Effects. *Bayesian Analysis*, 15(3), 965–1056.
 
-Jacobs, T., van Wieringen, W. N., & van der Pas, S. L. (2025). Horseshoe
-Forests for High-Dimensional Causal Survival Analysis. *arXiv preprint*
-arXiv:2507.22004.
+Jacobs, T., van Wieringen, W. N., & van der Pas, S. L. (2026). Horseshoe
+Forests for High-Dimensional Causal Survival Analysis. *Bayesian Analysis*,
+advance publication, 1–30.
 
 Linero, A. R. (2018). Bayesian Regression Trees for High-Dimensional
 Prediction and Variable Selection. *Journal of the American Statistical

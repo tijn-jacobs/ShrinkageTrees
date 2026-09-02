@@ -183,7 +183,7 @@ This function is a flexible generalization of \code{HorseTrees}.
 Instead of using a single Horseshoe prior, it allows specifying different
 global–local shrinkage configurations for the tree step heights. Further
 methodological details on the Horseshoe Forest framework can be found in
-Jacobs, van Wieringen & van der Pas (2025).
+Jacobs, van Wieringen & van der Pas (2026).
 
 The \code{horseshoe} prior is the fully Bayesian global-local shrinkage
 prior, where both the global and local shrinkage parameters are assigned
@@ -280,9 +280,11 @@ fit_ic <- ShrinkageTrees(left_time = left_t, right_time = right_t,
 
 }
 \references{
-Jacobs, T., van Wieringen, W. N., & van der Pas, S. L. (2025).
+Jacobs, T., van Wieringen, W. N., & van der Pas, S. L. (2026).
 \emph{Horseshoe Forests for High-Dimensional Causal Survival Analysis.}
-arXiv:2507.22004. https://doi.org/10.48550/arXiv.2507.22004
+Bayesian Analysis, advance publication, 1-30.
+https://doi.org/10.1214/26-BA1603
+
 Chipman, H. A., George, E. I., & McCulloch, R. E. (2010).
 \emph{BART: Bayesian additive regression trees.} Annals of Applied Statistics.
 

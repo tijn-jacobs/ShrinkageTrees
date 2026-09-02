@@ -217,3 +217,78 @@ test_that("CausalHorseForest works for interval-censored survival", {
   expect_no_error(smry <- summary(fit))
 })
 
+
+# ── Right-censored subjects must not be scored as exact events ───────────────
+#
+# censored_info() builds Surv(left_time, right_time, type = "interval2"), where
+# left == right means an EXACT event. The fitting functions collapse an infinite
+# right_time onto left_time so the C++ layer gets a finite boundary; if that
+# collapse reaches censored_info(), every right-censored subject is treated as
+# an event and the centring mean is biased downward.
+
+test_that("censored_info treats an open right bound as right censoring", {
+  skip_if_not_installed("survival")
+
+  set.seed(101)
+  n <- 300
+  y_true <- rnorm(n, mean = 3, sd = 1)
+  cens   <- rnorm(n, mean = 2.5, sd = 1)
+
+  observed <- pmin(y_true, cens)
+  event    <- as.integer(y_true <= cens)
+
+  left_time  <- observed
+  right_time <- ifelse(event == 1, observed, Inf)
+  status     <- event
+  ic_ind     <- rep(0L, n)          # exact events and right censoring only
+
+  open      <- censored_info(observed, status, left_time = left_time,
+                             right_time = right_time, ic_indicator = ic_ind)
+  collapsed <- censored_info(observed, status, left_time = left_time,
+                             right_time = left_time, ic_indicator = ic_ind)
+
+  # With the bound open, this reduces to ordinary right censoring, so it must
+  # agree with the right-censored path on the same data.
+  rc <- censored_info(observed, status)
+  expect_equal(open$mu, rc$mu, tolerance = 1e-6)
+  expect_equal(open$sd, rc$sd, tolerance = 1e-6)
+
+  # Collapsing marks every censored subject as an event, which biases the mean
+  # downward. This is the defect the ordering above prevents.
+  expect_lt(collapsed$mu, open$mu)
+  expect_gt(open$mu, mean(observed))
+})
+
+test_that("interval-censored fits centre on the open-bound mean", {
+  skip_if_not_installed("survival")
+
+  set.seed(102)
+  d <- generate_ic_data(n = 60, p = 3)
+
+  fit <- HorseTrees(
+    left_time       = d$left_time,
+    right_time      = d$right_time,
+    X_train         = d$X,
+    outcome_type    = "interval-censored",
+    timescale       = "time",
+    number_of_trees = 5,
+    N_post          = 10, N_burn = 5,
+    verbose         = FALSE
+  )
+
+  status <- as.integer(d$left_time == d$right_time)
+  ic_ind <- as.integer(d$left_time < d$right_time & is.finite(d$right_time))
+  y_init <- ifelse(status == 1, d$left_time,
+                   ifelse(ic_ind == 1, (d$left_time + d$right_time) / 2,
+                          d$left_time))
+
+  expected <- censored_info(log(y_init), status,
+                            left_time  = log(d$left_time),
+                            right_time = log(d$right_time),
+                            ic_indicator = ic_ind)
+
+  expect_equal(fit$preprocess$y_mean, expected$mu, tolerance = 1e-8)
+
+  # The stored boundaries handed to C++ stay finite.
+  expect_true(all(is.finite(fit$data$right_time_train)))
+})

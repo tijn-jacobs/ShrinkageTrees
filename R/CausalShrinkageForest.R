@@ -158,7 +158,7 @@
 #' priors. It is particularly useful for estimating heterogeneous treatment 
 #' effects in high-dimensional settings. Further
 #' methodological details on the Horseshoe Forest framework can be found in 
-#' Jacobs, van Wieringen & van der Pas (2025).
+#' Jacobs, van Wieringen & van der Pas (2026).
 #'
 #' The \code{horseshoe} prior is the fully Bayesian global-local shrinkage
 #' prior, where both the global and local shrinkage parameters are assigned
@@ -181,9 +181,10 @@
 #' \code{rho_dirichlet}.
 #'
 #' @references
-#' Jacobs, T., van Wieringen, W. N., & van der Pas, S. L. (2025).  
-#' *Horseshoe Forests for High-Dimensional Causal Survival Analysis.*  
-#' arXiv:2507.22004. https://doi.org/10.48550/arXiv.2507.22004
+#' Jacobs, T., van Wieringen, W. N., & van der Pas, S. L. (2026).
+#' *Horseshoe Forests for High-Dimensional Causal Survival Analysis.*
+#' Bayesian Analysis, advance publication, 1-30.
+#' https://doi.org/10.1214/26-BA1603
 #' 
 #' Chipman, H. A., George, E. I., & McCulloch, R. E. (2010). 
 #' *BART: Bayesian additive regression trees.* Annals of Applied Statistics.
@@ -892,9 +893,17 @@ CausalShrinkageForest <- function(y = NULL,
       right_time <- log(right_time)
     }
 
-    # Estimate mu and sd
+    # Estimate mu and sd. right_time was collapsed onto left_time above so the
+    # C++ layer gets a finite boundary, but Surv(type = "interval2") reads
+    # left == right as an EXACT event, which would score every right-censored
+    # subject as an event and pull the centring mean down. Reopen the bound for
+    # the estimation call: status == 0 & ic_indicator == 0 is exactly the set
+    # whose right_time was Inf.
+    right_open <- right_time
+    right_open[status == 0 & ic_indicator == 0] <- Inf
+
     cens_inf <- censored_info(y, status, left_time = left_time,
-                              right_time = right_time, ic_indicator = ic_indicator)
+                              right_time = right_open, ic_indicator = ic_indicator)
 
     y_mean <- cens_inf$mu
     y <- y - y_mean

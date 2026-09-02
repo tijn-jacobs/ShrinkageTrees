@@ -18,7 +18,7 @@ propensity_fit <- ShrinkageTrees::HorseTrees(
   y = treatment,
   X_train = covariates,
   outcome_type = "binary",
-  k = 0.1,
+  k = 1.0,
   N_post = 5000,
   N_burn = 5000
 )
@@ -77,10 +77,10 @@ fit <- CausalShrinkageForest(
   outcome_type = "right-censored",
   prior_type_control = "horseshoe",
   prior_type_treat = "horseshoe",
-  local_hp_control = 0.05 / sqrt(200),
-  local_hp_treat = 0.05 / sqrt(200),
-  global_hp_control = 0.05 / sqrt(200),
-  global_hp_treat = 0.05 / sqrt(200),
+  local_hp_control = 1.5 / sqrt(200),
+  local_hp_treat = 1.5 / sqrt(200),
+  global_hp_control = 1.5 / sqrt(200),
+  global_hp_treat = 1.5 / sqrt(200),
   store_posterior_sample = TRUE,
   timescale = "log",
   number_of_trees_treat = 200,

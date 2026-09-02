@@ -732,9 +732,17 @@ CausalHorseForest <- function(y = NULL,
       right_time <- log(right_time)
     }
 
-    # Estimate mu and sd
+    # Estimate mu and sd. right_time was collapsed onto left_time above so the
+    # C++ layer gets a finite boundary, but Surv(type = "interval2") reads
+    # left == right as an EXACT event, which would score every right-censored
+    # subject as an event and pull the centring mean down. Reopen the bound for
+    # the estimation call: status == 0 & ic_indicator == 0 is exactly the set
+    # whose right_time was Inf.
+    right_open <- right_time
+    right_open[status == 0 & ic_indicator == 0] <- Inf
+
     cens_inf <- censored_info(y, status, left_time = left_time,
-                              right_time = right_time, ic_indicator = ic_indicator)
+                              right_time = right_open, ic_indicator = ic_indicator)
 
     y_mean <- cens_inf$mu
     y <- y - y_mean

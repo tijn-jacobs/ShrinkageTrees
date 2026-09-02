@@ -56,19 +56,14 @@ both to be given explicitly.
 
 ## `ovarian` rebuilt, `ovarian_truth` added (breaking)
 
-`ovarian` carried outcome-derived `left_time` and `right_time` columns and a
-duplicated `year_of_diagnosis.1`. All three are removed; the frame is now
-357 x 1004, seven baseline columns and 997 genes. Models fitted on the old data
-leaked the outcome, and positional column selection now picks different
-covariates.
-
-The cohort is semi-synthetic — real covariates, simulated treatment and outcomes
-— and the generating process now ships as `ovarian_truth`: prognostic surface,
-true treatment effect, propensity score and uncensored event time, one row per
-patient. Its times are in months; `ovarian$OS_time` is in days.
-
-`year_of_diagnosis` was documented as an instrumental variable. It is a
-confounder; the wording was wrong, not the data.
+- Removed the outcome-derived `left_time` and `right_time` columns and a
+  duplicated `year_of_diagnosis.1`; the frame is now 357 x 1004. Old fits leaked
+  the outcome, and positional column selection now picks different covariates.
+- New `ovarian_truth`: the prognostic surface, treatment effect, propensity
+  score and uncensored event time behind the semi-synthetic cohort. Its times
+  are in months; `ovarian$OS_time` is in days.
+- `year_of_diagnosis` was documented as an instrumental variable; it is a
+  confounder. Wording only.
 
 ## `predict()` passed the training design in the wrong memory order
 
@@ -101,17 +96,26 @@ selection probabilities while being driven by the penalty.
 
 ## Bug fixes
 
-- `predict()` silently dropped the Dirichlet splitting rule: the flag recording
-  whether a fit used it was overwritten with `FALSE` before being stored, so
-  `predict()` re-ran under the standard prior. Affects every `SurvivalDART()`
-  and `SurvivalShrinkageBCF()` fit; predictions from those models will change.
-- Corrected documented defaults: `HorseTrees()` gave `base = 1.05` and
-  `q = 1.00` against actual values of `0.95` and `0.90`;
-  `CausalShrinkageForest()` listed three of seven accepted `prior_type` values;
-  `plot(type = "path")` shows the cross-validation curve, not the summary
-  R-squared.
-- `stats`, `utils` and `splines` were used but not declared; they are now in
-  `Imports`.
+- Right-censored subjects were scored as exact events when centring an
+  interval-censored outcome. The fitting functions collapse an infinite
+  `right_time` onto `left_time` because the C++ layer needs a finite boundary,
+  but that collapse happened *before* the mean and scale were estimated. Those
+  come from `survival::Surv(left_time, right_time, type = "interval2")`, under
+  which `left == right` denotes an exact event, so every right-censored subject
+  was treated as observed. The centring mean and the sigma prior were biased
+  downward, by more the heavier the censoring. All four interval-censored paths
+  were affected: `HorseTrees()`, `ShrinkageTrees()`, `CausalHorseForest()` and
+  `CausalShrinkageForest()`. `SurvivalBCF()` and `SurvivalShrinkageBCF()` were
+  not. Interval-censored fits containing right-censored observations will
+  change.
+- `predict()` silently dropped the Dirichlet splitting rule and re-ran under the
+  standard prior, affecting every `SurvivalDART()` and `SurvivalShrinkageBCF()`
+  fit. Predictions from those models will change.
+- Corrected documented defaults: `HorseTrees()` `base` (0.95, not 1.05) and `q`
+  (0.90, not 1.00); `CausalShrinkageForest()` listed three of seven
+  `prior_type` values; `plot(type = "path")` shows the cross-validation curve,
+  not the summary R-squared.
+- Declared `stats`, `utils` and `splines` in `Imports`.
 
 ## Reproducing earlier output
 

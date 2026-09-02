@@ -8,16 +8,31 @@ bibentry(
     person("W. N.", "van Wieringen"),
     person("S. L.", "van der Pas")
   ),
-  year = "2025",
-  journal = "arXiv preprint arXiv:2507.22004",
-  url = "https://arxiv.org/abs/2507.22004"
+  year = "2026",
+  journal = "Bayesian Analysis",
+  pages = "1--30",
+  note = "Advance publication",
+  doi = "10.1214/26-BA1603",
+  textVersion = paste(
+    "Jacobs, T., van Wieringen, W. N., and van der Pas, S. L. (2026).",
+    "Horseshoe Forests for High-Dimensional Causal Survival Analysis.",
+    "Bayesian Analysis, advance publication, 1-30.",
+    "doi:10.1214/26-BA1603"
+  )
 )
 
 bibentry(
-  bibtype = "Manual",
-  title = "ShrinkageTrees: Bayesian Regression Tree Ensembles for High-Dimensional Survival and Causal Inference",
+  bibtype = "Article",
+  title = "ShrinkageTrees: An R Package for Bayesian Tree Ensembles for Survival Analysis and Causal Inference",
   author = person("Tijn", "Jacobs"),
-  year = format(Sys.Date(), "%Y"),
-  note = sprintf("R package version %s", meta$Version),
-  url = "https://cran.r-project.org/package=ShrinkageTrees"
+  year = "2026",
+  journal = "arXiv preprint arXiv:2606.12317",
+  doi = "10.48550/arXiv.2606.12317",
+  textVersion = paste(
+    "Jacobs, T. (2026).",
+    "ShrinkageTrees: An R Package for Bayesian Tree Ensembles for Survival",
+    "Analysis and Causal Inference.",
+    "arXiv:2606.12317.",
+    "doi:10.48550/arXiv.2606.12317"
+  )
 )

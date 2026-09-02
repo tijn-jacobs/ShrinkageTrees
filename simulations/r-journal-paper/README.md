@@ -80,21 +80,19 @@ and `n_chains = 4`, with 100 replicates per point.
 
 ```sh
 Rscript benchmark_timings.R              # full run, about an hour
-Rscript benchmark_timings.R --smoke      # two n values, one replicate
+Rscript benchmark_timings.R --smoke      # one replicate per n
+Rscript benchmark_timings.R --replot     # redraw the figure, no re-timing
 ```
 
 Writes `outputs/benchmark_timings.rds`, `outputs/benchmark_timings.csv` and
 `outputs/benchmark_scaling.pdf`. The `.rds` carries `sessionInfo()` as an
 attribute, so a rerun elsewhere can be compared against the run behind the
-published figure. The figure can be redrawn from the stored timings without
-re-timing anything, using the two functions the script defines:
+published figure.
 
-```r
-raw <- readRDS("outputs/benchmark_timings.rds")
-ggplot2::ggsave("outputs/benchmark_scaling.pdf",
-                benchmark_figure(benchmark_summary(raw)),
-                width = 6, height = 3.5)
-```
+`--replot` reads the stored `.rds` and rewrites the PDF without fitting
+anything, which is what you want when only the figure needs another pass. It is
+the one part of the script worth running twice, so it lives behind a flag
+rather than in a separate file.
 
 `BART::mc.abart()` splits `ndpost` across cores while ShrinkageTrees treats
 `N_post` as per chain, so the script multiplies it up. Without that correction

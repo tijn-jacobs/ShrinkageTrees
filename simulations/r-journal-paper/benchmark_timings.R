@@ -7,7 +7,8 @@
 #
 # Usage
 #   Rscript benchmark_timings.R              # full run, settings as in the paper
-#   Rscript benchmark_timings.R --smoke      # tiny grid, one replicate
+#   Rscript benchmark_timings.R --smoke      # one replicate per n
+#   Rscript benchmark_timings.R --replot     # redraw the figure from the .rds
 #
 # Output (all in outputs/ next to this script)
 #   benchmark_timings.rds   raw long-format timings, one row per fit
@@ -91,6 +92,26 @@ benchmark_figure <- function(agg, breaks = seq(0, 15, by = 5)) {
                   colour = NULL, fill = NULL) +
     ggplot2::theme_bw() +
     ggplot2::theme(legend.position = "bottom")
+}
+
+# ── Redraw the figure from stored timings, without re-timing anything ───────
+# The figure is the part most likely to need another pass (axis breaks, labels)
+# long after the hour-long run is done. --replot reads the stored .rds and
+# rewrites the PDF, so no separate plotting script is needed.
+if ("--replot" %in% args) {
+  if (!has_gg) stop("--replot needs ggplot2.", call. = FALSE)
+  in_file <- "outputs/benchmark_timings.rds"
+  if (!file.exists(in_file))
+    stop("No stored timings at ", in_file, ". Run the benchmark first.",
+         call. = FALSE)
+
+  raw <- readRDS(in_file)
+  agg <- benchmark_summary(raw)
+  ggplot2::ggsave("outputs/benchmark_scaling.pdf", benchmark_figure(agg),
+                  width = 6, height = 3.5)
+  cat("Redrew outputs/benchmark_scaling.pdf from ", in_file, "\n", sep = "")
+  print(agg[, c("label", "n", "mean", "sd")])
+  quit(save = "no")
 }
 
 # ── Data-generating process ─────────────────────────────────────────────────
