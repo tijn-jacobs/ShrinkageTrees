@@ -54,6 +54,22 @@ its default. Only their product identifies the prior, so setting them equal
 loses nothing. `prior_type = "horseshoe_fw"` is unchanged and still requires
 both to be given explicitly.
 
+## `ovarian` rebuilt, `ovarian_truth` added (breaking)
+
+`ovarian` carried outcome-derived `left_time` and `right_time` columns and a
+duplicated `year_of_diagnosis.1`. All three are removed; the frame is now
+357 x 1004, seven baseline columns and 997 genes. Models fitted on the old data
+leaked the outcome, and positional column selection now picks different
+covariates.
+
+The cohort is semi-synthetic — real covariates, simulated treatment and outcomes
+— and the generating process now ships as `ovarian_truth`: prognostic surface,
+true treatment effect, propensity score and uncensored event time, one row per
+patient. Its times are in months; `ovarian$OS_time` is in days.
+
+`year_of_diagnosis` was documented as an instrumental variable. It is a
+confounder; the wording was wrong, not the data.
+
 ## `predict()` passed the training design in the wrong memory order
 
 `predict()` on a `ShrinkageTrees` object handed the stored training design
@@ -74,7 +90,28 @@ and prognostic surfaces for causal fits, is projected onto a simpler summary
 model: a linear model (unpenalised, ridge, lasso, or elastic net), a
 spline-additive model, or a shallow CART tree. Returns a posterior over
 summaries with credible intervals, plus the posterior of the summary R-squared.
+
+The penalised linear families are the exception: they project the posterior
+mean of the surface once and report point estimates, with no intervals. The
+spread of a penalised solution across draws has no coverage guarantee for the
+projection of the true surface, and the implied inclusion frequencies read as
+selection probabilities while being driven by the penalty.
+
 `glmnet` and `rpart` are new suggested packages.
+
+## Bug fixes
+
+- `predict()` silently dropped the Dirichlet splitting rule: the flag recording
+  whether a fit used it was overwritten with `FALSE` before being stored, so
+  `predict()` re-ran under the standard prior. Affects every `SurvivalDART()`
+  and `SurvivalShrinkageBCF()` fit; predictions from those models will change.
+- Corrected documented defaults: `HorseTrees()` gave `base = 1.05` and
+  `q = 1.00` against actual values of `0.95` and `0.90`;
+  `CausalShrinkageForest()` listed three of seven accepted `prior_type` values;
+  `plot(type = "path")` shows the cross-validation curve, not the summary
+  R-squared.
+- `stats`, `utils` and `splines` were used but not declared; they are now in
+  `Imports`.
 
 ## Reproducing earlier output
 

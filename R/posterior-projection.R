@@ -94,12 +94,11 @@
 
 #' Choose lambda by cross-validation on the posterior mean
 #'
-#' `lambda` indexes the summary family, so it is fixed once, for all draws,
-#' before any projection happens. `cv.glmnet` is run on \eqn{\bar f}: holding out
-#' observations asks how well a sparse linear summary generalises across the
-#' covariate space, which is a real question even though a posterior draw
-#' carries no observation noise -- with `p >= n` the lasso can fit the training
-#' points using covariates that predict nothing at held-out `x`.
+#' `cv.glmnet` is run on \eqn{\bar f}: holding out observations asks how well a
+#' sparse linear summary generalises across the covariate space, which is a real
+#' question even though a posterior draw carries no observation noise -- with
+#' `p >= n` the lasso can fit the training points using covariates that predict
+#' nothing at held-out `x`.
 #'
 #' @param lambda `NULL` or `"1se"` for `lambda.1se`, `"min"` for `lambda.min`,
 #'   or a number, which skips cross-validation.
@@ -117,58 +116,46 @@
        rule = rule, cv = cv)
 }
 
-#' Solve the penalised projection separately for every draw
+#' Solve the penalised projection once, on the Bayes estimate
 #'
-#' For each posterior draw,
-#' \eqn{\gamma^{(s)} = \arg\min \|f^{(s)} - X\gamma\|^2 + \lambda\|\gamma\|_1}.
-#' The lasso is a nonlinear operator, so the projection of the posterior mean is
-#' *not* the mean of the projections; solving per draw is what makes the result
-#' a posterior over sparse projections, with genuine selection uncertainty and
-#' coefficients that are exactly zero in some draws and not in others.
+#' \eqn{\hat\gamma = \arg\min \|\bar f - X\gamma\|^2 + \lambda P_\alpha(\gamma)},
+#' where \eqn{\bar f} is the posterior mean of the fitted surface. This is a
+#' plain fit-in-fit with no uncertainty quantification attached, and it is
+#' deliberate. Solving the penalised problem draw by draw would produce a
+#' spread of coefficients, but that spread is not a posterior for anything
+#' interpretable: the lasso estimate is a biased, non-smooth function of its
+#' input, its intervals do not cover the projection of the true surface at any
+#' stated rate, and the resulting per-covariate inclusion frequencies read as
+#' selection probabilities while being an artefact of the penalty. Reporting a
+#' single sparse summary of the Bayes estimate says exactly what it is.
 #'
-#' Costs one glmnet solve per draw. A short warm-start sequence ending at
-#' `lambda` is used rather than a single value, which glmnet handles far better.
+#' A short warm-start sequence ending at `lambda` is used rather than a single
+#' value, which glmnet handles far better. The last column of the path is taken
+#' directly: `coef(g, s = lambda)` interpolates between neighbouring lambdas,
+#' which can blend a zero with a nonzero and destroy the exact sparsity that is
+#' the point of the summary.
 #'
 #' @noRd
-.pp_penalised_draws <- function(Ft, X, w, alpha, lambda, verbose = TRUE) {
-  S    <- ncol(Ft)
+.pp_penalised_mean <- function(fbar, X, w, alpha, lambda) {
   lseq <- lambda * c(8, 4, 2, 1)
-  B    <- matrix(0, ncol(X) + 1L, S)
+  k    <- length(lseq)
 
-  if (verbose && S > 2000)
-    message("Solving ", S, " penalised projections, one per draw ...")
+  g <- glmnet::glmnet(X, fbar, alpha = alpha, lambda = lseq,
+                      weights = w, standardize = TRUE)
+  b <- c(g$a0[k], as.matrix(g$beta)[, k])
+  names(b) <- c("(Intercept)", colnames(X))
 
-  ## Take the last column of the path directly. coef(g, s = lambda)
-  ## interpolates between neighbouring lambdas, which can blend a zero with a
-  ## nonzero and destroy the exact sparsity we are here to report.
-  k <- length(lseq)
-  for (i in seq_len(S)) {
-    g <- glmnet::glmnet(X, Ft[, i], alpha = alpha, lambda = lseq,
-                        weights = w, standardize = TRUE)
-    B[, i] <- c(g$a0[k], as.matrix(g$beta)[, k])
-  }
-  rownames(B) <- c("(Intercept)", colnames(X))
+  if (!all(is.finite(b)))
+    stop("The penalised projection returned non-finite coefficients. ",
+         "Check the posterior draws and the design for constant or ",
+         "near-constant columns.", call. = FALSE)
 
-  ## glmnet can fail numerically on individual draws; a single non-finite
-  ## column would otherwise poison every downstream summary (residuals,
-  ## rho^2, sigma) via rowMeans. Drop such draws loudly, never silently.
-  ok <- colSums(!is.finite(B)) == 0L
-  if (!all(ok)) {
-    warning(sum(!ok), " of ", S, " penalised projections returned ",
-            "non-finite coefficients and were dropped from the summary.",
-            call. = FALSE)
-    B <- B[, ok, drop = FALSE]
-  }
+  keep <- c(TRUE, b[-1L] != 0)         # intercept plus whatever was selected
+  B    <- matrix(b[keep], ncol = 1L, dimnames = list(names(b)[keep], NULL))
 
-  fitted  <- X %*% B[-1L, , drop = FALSE] + rep(B[1L, ], each = nrow(X))
-  nonzero <- rowMeans(B[-1L, , drop = FALSE] != 0)
-  keep    <- c(TRUE, nonzero > 0)      # intercept plus anything ever selected
-
-  list(coef    = B[keep, , drop = FALSE],
-       fitted  = fitted,
-       nonzero = c(1, nonzero)[keep],
-       edf     = mean(colSums(B[-1L, , drop = FALSE] != 0)) + 1,
-       kept    = which(ok))
+  list(coef   = B,
+       fitted = matrix(X %*% b[-1L] + b[1L], ncol = 1L),
+       edf    = sum(b[-1L] != 0) + 1)
 }
 
 .pp_rho2 <- function(Ft, fitted, w) {
@@ -251,7 +238,8 @@
          if (family == "additive") "roughly " else "", n - 2L,
          " basis columns' worth,\n",
          "  or use penalty = \"ridge\" to project onto all ", p_used,
-         " covariates with regularisation.", call. = FALSE)
+         " covariates with regularisation, which summarises the posterior ",
+         "mean\n  and reports no intervals.", call. = FALSE)
   if (q > n / 10)
     warning("The summary uses ", q, " basis columns for ", n,
             " observations. The summary R^2 is inflated by the size of ",
@@ -292,7 +280,21 @@
   )
 }
 
-.pp_coef_summary <- function(coefs, a) {
+#' Summarise the projection coefficients
+#'
+#' With `uq = FALSE` there is a single set of coefficients, not a posterior, so
+#' the spread columns are `NA` rather than a degenerate zero.
+#'
+#' @noRd
+.pp_coef_summary <- function(coefs, a, uq = TRUE) {
+  if (!uq)
+    return(data.frame(
+      variable = colnames(coefs),
+      mean     = as.numeric(coefs[1L, ]),
+      sd       = NA_real_, lower = NA_real_, upper = NA_real_,
+      row.names = NULL, stringsAsFactors = FALSE
+    ))
+
   data.frame(
     variable = colnames(coefs),
     mean     = colMeans(coefs),
@@ -339,7 +341,7 @@
 #'                                covariates = c("x1", "x2"))
 #'
 #' \donttest{
-#' # Sparse projection; lambda cross-validated on the posterior mean
+#' # Sparse summary of the posterior mean; lambda cross-validated
 #' if (requireNamespace("glmnet", quietly = TRUE)) {
 #'   pp_las <- posterior_projection(fit, family = "linear",
 #'                                  penalty = "lasso")
@@ -390,7 +392,8 @@ posterior_projection.CausalShrinkageForest <- function(
 #' @param penalty Regularisation for the linear projection: `"none"` for
 #'   ordinary least squares, or `"ridge"`, `"lasso"`, `"elastic_net"`. The
 #'   penalised options are the ones that stay defined when the covariate set is
-#'   larger than `n`, which is the regime this package targets.
+#'   larger than `n`, which is the regime this package targets, and they
+#'   summarise the posterior mean without uncertainty quantification.
 #'   `family = "linear"` only.
 #' @param alpha Elastic-net mixing parameter, `penalty = "elastic_net"`.
 #'   `alpha = 1` is the lasso, `alpha = 0` the ridge.
@@ -402,33 +405,42 @@ posterior_projection.CausalShrinkageForest <- function(
 #' @param max_leaves Maximum number of leaves, `family = "tree"`.
 #' @param weights Optional non-negative weights over the observations,
 #'   defining the population the projection is taken over. Default uniform.
-#' @param level Credible level for all reported intervals.
+#' @param level Credible level for all reported intervals. Unused when
+#'   `penalty != "none"`, which reports no intervals.
 #' @param scale_label Provenance label carried into the printed output
 #'   (default method).
 #' @param ... Passed on to the default method.
 #' @rdname posterior_projection
 #'
 #' @details
-#' The penalised projections are solved **separately for every draw**, at a
-#' common `lambda`: for each draw,
-#' \eqn{\gamma^{(s)} = \arg\min \|f^{(s)} - X\gamma\|^2 + \lambda\|\gamma\|_1}.
-#' The lasso is a nonlinear operator, so the projection of the posterior mean is
-#' not the mean of the projections; solving per draw is what gives a genuine
-#' posterior over sparse projections, with coefficients that are exactly zero in
-#' some draws and not in others. It costs one glmnet solve per draw.
+#' With `penalty = "none"` the projection is solved separately for every
+#' posterior draw, so the result is a posterior over projections: the
+#' coefficients, the partial effects and the summary \eqn{R^2} all come with
+#' credible intervals.
 #'
-#' `lambda` indexes the summary family, so it is chosen once for all draws, by
-#' cross-validating on the posterior mean. Holding out observations asks how
-#' well a sparse linear summary generalises across the covariate space, which is
-#' a real question even though a posterior draw carries no observation noise.
+#' The penalised projections behave differently. They are solved **once**, on
+#' the posterior mean \eqn{\bar f}, and report point estimates only. The reason
+#' is that a per-draw penalised solution does not yield an interval anyone can
+#' interpret: the penalised estimator is biased and non-smooth in its input, its
+#' spread across draws has no coverage guarantee for the projection of the true
+#' surface, and the implied inclusion frequencies read as selection
+#' probabilities while being driven by the penalty. A single sparse or shrunken
+#' summary of the Bayes estimate states exactly what it is. Use
+#' `penalty = "none"` when the uncertainty in the summary is the point.
+#'
+#' `lambda` is chosen by cross-validating on \eqn{\bar f}. Holding out
+#' observations asks how well a sparse linear summary generalises across the
+#' covariate space, which is a real question even though a posterior draw
+#' carries no observation noise.
 #'
 #' With `penalty = "ridge"` nothing is set to zero, so the result is a
 #' regularised projection rather than a lower-dimensional summary.
 #'
 #' @return An object of class `"PosteriorProjection"`, a list with
-#'   `coefficients` (`S` x `q` draws of the projection coefficients),
-#'   `coef_summary`, `rho2` (an `S`-vector of summary \eqn{R^2}),
-#'   `covariates`, `structure`, and provenance fields.
+#'   `coefficients` (`S` x `q` draws of the projection coefficients, or a single
+#'   row when `penalty != "none"`), `coef_summary`, `uq` (whether uncertainty is
+#'   quantified), `rho2` (an `S`-vector of summary \eqn{R^2}, or one number when
+#'   `penalty != "none"`), `covariates`, `structure`, and provenance fields.
 #' @export
 posterior_projection.default <- function(object, X,
                               family       = c("linear", "additive", "tree"),
@@ -479,6 +491,10 @@ posterior_projection.default <- function(object, X,
   Ft <- t(draws)                                   # n x S
   a  <- (1 - level) / 2
 
+  ## Penalised projections summarise the Bayes estimate only; every other
+  ## family carries a projection per draw and so a genuine posterior.
+  uq <- penalty == "none"
+
   if (family == "tree") {
     st    <- .pp_tree_structure(rowMeans(Ft), X, w, max_leaves)
     pj    <- .pp_wls(st$B, Ft, w)
@@ -488,18 +504,15 @@ posterior_projection.default <- function(object, X,
     colnames(coefs) <- colnames(st$B)
 
   } else if (penalty != "none") {
-    al <- switch(penalty, ridge = 0, lasso = 1, elastic_net = alpha)
-    cv <- .pp_cv_lambda(rowMeans(Ft), X, w, al, lambda)
-    pj <- .pp_penalised_draws(Ft, X, w, al, cv$lambda)
+    al   <- switch(penalty, ridge = 0, lasso = 1, elastic_net = alpha)
+    fbar <- rowMeans(Ft)
+    cv   <- .pp_cv_lambda(fbar, X, w, al, lambda)
+    pj   <- .pp_penalised_mean(fbar, X, w, al, cv$lambda)
 
-    ## Keep Ft aligned with pj$fitted if failed solves were dropped.
-    if (length(pj$kept) < ncol(Ft)) {
-      Ft <- Ft[, pj$kept, drop = FALSE]
-      S  <- ncol(Ft)
-    }
-
-    st    <- list(lambda = cv$lambda, rule = cv$rule, cv = cv$cv,
-                  nonzero = pj$nonzero)
+    ## The target of a penalised projection is the Bayes estimate, so the
+    ## fit is scored against fbar rather than against each draw.
+    Ft    <- matrix(fbar, ncol = 1L)
+    st    <- list(lambda = cv$lambda, rule = cv$rule, cv = cv$cv)
     covs  <- setdiff(rownames(pj$coef), "(Intercept)")
     edf   <- pj$edf
     coefs <- t(pj$coef)
@@ -535,7 +548,8 @@ posterior_projection.default <- function(object, X,
     covariates   = covs,
     structure    = st,
     coefficients = coefs,
-    coef_summary = .pp_coef_summary(coefs, a),
+    coef_summary = .pp_coef_summary(coefs, a, uq),
+    uq           = uq,
     rho2         = .pp_rho2(Ft, pj$fitted, w),
     residuals    = resid,
     sigma        = sqrt(sum(w * resid^2) / max(df_res, 1)),
@@ -613,28 +627,39 @@ print.PosteriorProjection <- function(x, digits = 4, n_max = 25, ...) {
 
   } else if (nrow(cs) <= n_max) {
     cat("\nCoefficients (", x$scale, "):\n", sep = "")
-    cm <- cbind(cs$mean, cs$sd, cs$lower, cs$upper)
-    nms <- c("Estimate", "Post.SD", lab[1], lab[2])
-    if (!is.null(x$structure$nonzero)) {
-      cm  <- cbind(cm, x$structure$nonzero)
-      nms <- c(nms, "Nonzero")
+    if (isFALSE(x$uq)) {
+      cm <- cbind(cs$mean)
+      dimnames(cm) <- list(cs$variable, "Estimate")
+    } else {
+      cm <- cbind(cs$mean, cs$sd, cs$lower, cs$upper)
+      dimnames(cm) <- list(cs$variable,
+                           c("Estimate", "Post.SD", lab[1], lab[2]))
     }
-    dimnames(cm) <- list(cs$variable, nms)
     print(signif(cm, digits))
+  } else if (isFALSE(x$uq)) {
+    cat("\nCoefficients: ", nrow(cs), " nonzero, not shown. ",
+        "See x$coef_summary.\n", sep = "")
   } else {
     cat("\nCoefficients: ", nrow(cs), " selected in at least one draw, ",
         "not shown. See x$coef_summary.\n", sep = "")
   }
 
   r2 <- x$rho2[is.finite(x$rho2)]
-  ci <- if (length(r2)) stats::quantile(r2, c(a, 1 - a)) else c(NA, NA)
   cat("\nResidual standard error: ", signif(x$sigma, digits), " on ",
       round(x$df_residual, 1), " degrees of freedom\n", sep = "")
-  cat("Summary R-squared: ", signif(mean(r2), digits),
-      "  (", round(100 * x$level), "% CI: ", signif(ci[1], digits), ", ",
-      signif(ci[2], digits), ")\n", sep = "")
-  cat("Draws: ", x$n_draws, "   Observations: ", x$n_obs,
-      "   Covariates: ", x$p, "\n", sep = "")
+  if (isFALSE(x$uq)) {
+    cat("Summary R-squared: ", signif(mean(r2), digits), "\n", sep = "")
+    cat("Projection of the posterior mean over ", x$n_draws,
+        " draws (no uncertainty quantification)\n", sep = "")
+    cat("Observations: ", x$n_obs, "   Covariates: ", x$p, "\n", sep = "")
+  } else {
+    ci <- if (length(r2)) stats::quantile(r2, c(a, 1 - a)) else c(NA, NA)
+    cat("Summary R-squared: ", signif(mean(r2), digits),
+        "  (", round(100 * x$level), "% CI: ", signif(ci[1], digits), ", ",
+        signif(ci[2], digits), ")\n", sep = "")
+    cat("Draws: ", x$n_draws, "   Observations: ", x$n_obs,
+        "   Covariates: ", x$p, "\n", sep = "")
+  }
 
   if (x$family == "tree")
     cat("Leaves: ", x$structure$size, "   Split on: ",
@@ -684,10 +709,11 @@ print.PosteriorProjection <- function(x, digits = 4, n_max = 25, ...) {
 #' @param x A `PosteriorProjection` object.
 #' @param type `"coefficients"` is a caterpillar plot of the projection
 #'   coefficients; `"rho2"` the posterior of the summary \eqn{R^2}; `"path"`
-#'   the summary \eqn{R^2} against \eqn{\log\lambda} (`penalty = "ridge"`
-#'   only); `"effects"` the per-covariate partial effect curves with credible
-#'   bands (`family = "additive"` only); `"tree"` the CART partition, with the
-#'   posterior interval for each leaf (`family = "tree"` only).
+#'   the cross-validation curve against \eqn{\log\lambda}, marking
+#'   `lambda.min` and `lambda.1se` (any penalty whose `lambda` was
+#'   cross-validated); `"effects"` the per-covariate partial effect curves with
+#'   credible bands (`family = "additive"` only); `"tree"` the CART partition,
+#'   with the posterior interval for each leaf (`family = "tree"` only).
 #' @param n_max Maximum number of coefficients to show, `type =
 #'   "coefficients"`. The largest by absolute posterior mean are kept.
 #' @param ... Currently unused.
@@ -780,6 +806,11 @@ plot.PosteriorProjection <- function(x, type = c("coefficients", "rho2",
       ggplot2::theme(plot.title = ggplot2::element_text(face = "bold"))
 
   } else if (type == "rho2") {
+    if (isFALSE(x$uq))
+      stop("type = 'rho2' needs a projection per draw. A penalised ",
+           "projection summarises the posterior mean only, so its summary ",
+           "R-squared is a single number; it is printed by print().",
+           call. = FALSE)
     ci <- quantile(x$rho2, c((1 - x$level) / 2, 1 - (1 - x$level) / 2))
 
     ggplot2::ggplot(data.frame(rho2 = x$rho2),
@@ -805,22 +836,29 @@ plot.PosteriorProjection <- function(x, type = c("coefficients", "rho2",
       cs <- cs[order(abs(cs$mean), decreasing = TRUE)[seq_len(n_max)], ]
     cs$variable <- factor(cs$variable, levels = cs$variable[order(cs$mean)])
 
-    ggplot2::ggplot(cs, ggplot2::aes(x = .data$mean, y = .data$variable)) +
+    sub <- if (isFALSE(x$uq)) "point estimates, no uncertainty quantification"
+           else paste0(round(100 * x$level), "% credible intervals")
+    if (dropped > 0)
+      sub <- paste0(sub, "; ", dropped, " smaller coefficients not shown")
+
+    p <- ggplot2::ggplot(cs, ggplot2::aes(x = .data$mean, y = .data$variable)) +
       ggplot2::geom_vline(xintercept = 0, linetype = "dashed",
-                          colour = "grey50") +
-      ggplot2::geom_linerange(
+                          colour = "grey50")
+
+    if (!isFALSE(x$uq))
+      p <- p + ggplot2::geom_linerange(
         ggplot2::aes(xmin = .data$lower, xmax = .data$upper),
         colour = "steelblue", linewidth = 1
-      ) +
+      )
+
+    p +
       ggplot2::geom_point(size = 2, colour = "steelblue") +
       ggplot2::labs(
         x = paste0("Projection coefficient (", x$scale, ")"),
         y = NULL,
-        title = "Posterior of the projection coefficients",
-        subtitle = paste0(round(100 * x$level), "% credible intervals",
-                          if (dropped > 0)
-                            paste0("; ", dropped, " smaller coefficients ",
-                                   "not shown") else "")
+        title = if (isFALSE(x$uq)) "Projection of the posterior mean" else
+          "Posterior of the projection coefficients",
+        subtitle = sub
       ) +
       ggplot2::theme_bw()
 
@@ -834,7 +872,7 @@ plot.PosteriorProjection <- function(x, type = c("coefficients", "rho2",
       xj   <- x$X[, nm]
       grid <- seq(min(xj), max(xj), length.out = 100)
       ob   <- ad$splines[[nm]]
-      Bg   <- if (is.null(ob)) matrix(grid, ncol = 1) else predict(ob, grid)
+      Bg   <- if (is.null(ob)) matrix(grid, ncol = 1) else stats::predict(ob, grid)
       cf   <- x$coefficients[, ad$index[[nm]], drop = FALSE]   # S x q
       curves <- Bg %*% t(cf)                                   # grid x S
       curves <- sweep(curves, 2, colMeans(curves))    # centre each draw

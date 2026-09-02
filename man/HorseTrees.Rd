@@ -96,7 +96,7 @@ exactly, since the sampler itself has been corrected.}
 
 \item{power}{Power parameter for tree structure prior. Default is 2.0.}
 
-\item{base}{Base parameter for tree structure prior. Default is 1.05.}
+\item{base}{Base parameter for tree structure prior. Default is 0.95.}
 
 \item{p_grow}{Probability of proposing a grow move. Default is 0.4.}
 
@@ -105,7 +105,7 @@ exactly, since the sampler itself has been corrected.}
 \item{nu}{Degrees of freedom for the error distribution prior. Default is 3.}
 
 \item{q}{Quantile hyperparameter for the error variance prior.
-Default is 1.00.}
+Default is 0.90.}
 
 \item{sigma}{Optional known value for error standard deviation. If NULL,
 estimated from data.}

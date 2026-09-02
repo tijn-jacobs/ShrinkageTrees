@@ -6,6 +6,7 @@ NewShrinkageTrees <- function(
   timescale,
   prior_type_user,
   prior_type_cpp,
+  dirichlet = FALSE,
   n_train,
   p_features,
   n_test,
@@ -48,7 +49,8 @@ NewShrinkageTrees <- function(
     timescale = timescale,
     prior = list(
       prior_type_user = prior_type_user,
-      prior_type_cpp = prior_type_cpp
+      prior_type_cpp = prior_type_cpp,
+      dirichlet = dirichlet
     ),
     data_info = list(
       n_train = n_train,

@@ -44,7 +44,8 @@ This methodology is introduced in:
 
 > _Horseshoe Forests for High-Dimensional Causal Survival Analysis_  
 > T. Jacobs, W.N. van Wieringen, S.L. van der Pas  
-> https://arxiv.org/abs/2507.22004
+> _Bayesian Analysis_, Advance Publication, 1–30 (2026). Open access.  
+> https://doi.org/10.1214/26-BA1603
 
 ## 🧠 Implemented models
 
@@ -170,7 +171,7 @@ data("ovarian_truth")  # mu, tau, f, propensity, log_time, time, censoring_time
 
 ## 🩺 Pancreatic cancer analysis demo
 
-The package includes a **demo analysis** based on the TCGA PAAD (pancreatic cancer) dataset to showcase how ShrinkageTrees can be used in practice. This demo replicates the main case study from the preprint _"Horseshoe Forests for High-Dimensional Causal Survival Analysis"_ ([arXiv:2507.22004](https://arxiv.org/abs/2507.22004)).
+The package includes a **demo analysis** based on the TCGA PAAD (pancreatic cancer) dataset to showcase how ShrinkageTrees can be used in practice. This demo replicates the main case study from _"Horseshoe Forests for High-Dimensional Causal Survival Analysis"_ (_Bayesian Analysis_, [doi:10.1214/26-BA1603](https://doi.org/10.1214/26-BA1603)).
 
 The demo:
 

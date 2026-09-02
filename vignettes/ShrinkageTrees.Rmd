@@ -411,17 +411,24 @@ The survival functions inherit `treatment_coding` support. For example,
 
 ## Included Datasets
 
-The package ships with two TCGA datasets for high-dimensional survival
+The package ships with three datasets for high-dimensional survival
 analysis and causal inference:
 
 - **`pdac`** — TCGA pancreatic ductal adenocarcinoma (PAAD) cohort
-  (n = 178). A data frame with overall survival times, a binary treatment
-  indicator (radiation therapy vs. control), clinical covariates, and
+  (n = 130). A data frame with overall survival times, a binary treatment
+  indicator (radiation therapy vs. control), 14 clinical covariates, and
   expression values of ~3,000 genes selected by median absolute deviation.
-- **`ovarian`** — TCGA ovarian cancer (OV) cohort (n = 357). A list with
-  `X` (357 x 2,000 gene expression matrix, log2-normalised TPM) and
-  `clinical` (data frame with OS time/event, age, FIGO stage, tumor grade,
-  and treatment: carboplatin vs cisplatin). See `?ovarian` for details.
+- **`ovarian`** — a semi-synthetic cohort (n = 357) built on covariates from
+  the TCGA ovarian cancer (OV) study. A single data frame of 1,004 columns:
+  `OS_time`, `OS_event`, `treatment`, four clinical covariates, and 997 gene
+  expression columns named by versioned Ensembl identifiers. Treatment
+  assignment and outcomes are simulated from a known data-generating process.
+  See `?ovarian` for details.
+- **`ovarian_truth`** — the quantities behind that process, one row per
+  patient: the prognostic surface, the true treatment effect, the propensity
+  score, and the uncensored event time. This is what makes `ovarian` usable
+  for validation: estimates can be compared against the truth rather than
+  against the observed outcome. See `?ovarian_truth`.
 
 ### The PDAC Dataset
 
@@ -437,7 +444,7 @@ data("pdac")
 # Dimensions and column overview
 cat("Patients:", nrow(pdac), "\n")
 cat("Columns :", ncol(pdac), "\n")
-cat("Clinical columns:", paste(names(pdac)[1:13], collapse = ", "), "\n")
+cat("Clinical columns:", paste(names(pdac)[1:14], collapse = ", "), "\n")
 cat("Survival: time (months), censoring rate =",
     round(1 - mean(pdac$status), 2), "\n")
 cat("Treatment: radiation =", sum(pdac$treatment),
@@ -1041,6 +1048,10 @@ $R^2$ reports how much of the ensemble the summary captures. We do not refit
 the model. The projection reads the stored draws
 (`store_posterior_sample = TRUE`), so it takes seconds.
 
+The penalised families are the exception. We project the posterior mean of
+$f$ alone there, and we report no intervals, for the reasons given in the
+section on penalised projections below.
+
 We make two design choices. First, the function does no covariate selection.
 By default it uses every covariate, and you choose a subset with
 `covariates`. The coefficient table then describes exactly the model you
@@ -1104,15 +1115,16 @@ posterior_projection(fit_pp, family = "linear")
 ### Penalised projections
 
 The penalised options keep the projection defined when $p \ge n$. We solve
-the penalised problem separately for every draw, at a common $\lambda$. The
-lasso is a nonlinear operator, so the projection of the posterior mean is not
-the mean of the projections. A per-draw solution gives a genuine posterior
-over sparse summaries: a covariate enters some draws and not others. The
-`Nonzero` column reports the fraction of draws in which each covariate
-enters.
+the penalised problem once, on the posterior mean of the fitted surface, and
+we report point estimates only. This is a deliberate restriction. A penalised
+estimator is biased and non-smooth in its input, so the spread of penalised
+solutions across draws has no coverage guarantee for the projection of the
+true surface, and the fraction of draws selecting a covariate reads as a
+selection probability while being an artefact of the penalty. We prefer a
+single sparse summary that states what it is. Use `penalty = "none"` when the
+uncertainty in the summary is the point.
 
-The penalty $\lambda$ indexes the summary family, so we fix it once for all
-draws. We choose it by `cv.glmnet` on the posterior mean, at `lambda.1se`.
+We choose $\lambda$ by `cv.glmnet` on the posterior mean, at `lambda.1se`.
 Set `lambda = "min"` or a number to override this.
 
 ```{r pp-lasso, eval=requireNamespace("glmnet", quietly=TRUE)}
@@ -1120,8 +1132,8 @@ pp_las <- posterior_projection(fit_pp, family = "linear",
                                penalty = "lasso")
 pp_las
 
-# Sparsity lives in the draws, not in the posterior mean:
-table(rowSums(pp_las$coefficients[, -1, drop = FALSE] != 0))
+# One set of coefficients, most of them exactly zero:
+sum(pp_las$coefficients[1, -1] != 0)
 ```
 
 ```{r pp-lasso-path, eval=requireNamespace("glmnet", quietly=TRUE) && requireNamespace("ggplot2", quietly=TRUE)}

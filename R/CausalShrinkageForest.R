@@ -39,8 +39,13 @@
 #' \code{"interval-censored"}.
 #' @param number_of_trees_control Number of trees in the control forest. Default is 200.
 #' @param number_of_trees_treat Number of trees in the treatment forest. Default is 200.
-#' @param prior_type_control Type of prior on control forest step heights. One of 
-#' \code{"horseshoe"}, \code{"horseshoe_fw"}, or \code{"half-cauchy"}.
+#' @param prior_type_control Type of prior on control forest step heights. One of
+#' \code{"horseshoe"} (global-local, global scale per tree),
+#' \code{"horseshoe_fw"} (global scale shared forest-wide),
+#' \code{"half-cauchy"} (local shrinkage only),
+#' \code{"standard"} (the classical BART normal prior),
+#' \code{"dirichlet"} (standard prior with a Dirichlet splitting rule),
+#' \code{"standard-halfcauchy"}, or \code{"dirichlet-halfcauchy"}.
 #' Default is \code{"horseshoe"}.
 #' @param prior_type_treat Type of prior on treatment forest step heights. Same options as 
 #' \code{prior_type_control}.
@@ -1175,8 +1180,6 @@ CausalShrinkageForest <- function(y = NULL,
 
   prior_type_control_cpp <- prior_type_control
   prior_type_treat_cpp <- prior_type_treat
-  dirichlet_bool_control <- FALSE
-  dirichlet_bool_treat <- FALSE
 
   obj <- NewCausalShrinkageForest(
     fit = fit,

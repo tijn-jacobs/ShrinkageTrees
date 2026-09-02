@@ -56,7 +56,8 @@ is performed: choosing this subset is the user's job.}
 \item{penalty}{Regularisation for the linear projection: \code{"none"} for
 ordinary least squares, or \code{"ridge"}, \code{"lasso"}, \code{"elastic_net"}. The
 penalised options are the ones that stay defined when the covariate set is
-larger than \code{n}, which is the regime this package targets.
+larger than \code{n}, which is the regime this package targets, and they
+summarise the posterior mean without uncertainty quantification.
 \code{family = "linear"} only.}
 
 \item{alpha}{Elastic-net mixing parameter, \code{penalty = "elastic_net"}.
@@ -74,16 +75,18 @@ larger than \code{n}, which is the regime this package targets.
 \item{weights}{Optional non-negative weights over the observations,
 defining the population the projection is taken over. Default uniform.}
 
-\item{level}{Credible level for all reported intervals.}
+\item{level}{Credible level for all reported intervals. Unused when
+\code{penalty != "none"}, which reports no intervals.}
 
 \item{scale_label}{Provenance label carried into the printed output
 (default method).}
 }
 \value{
 An object of class \code{"PosteriorProjection"}, a list with
-\code{coefficients} (\code{S} x \code{q} draws of the projection coefficients),
-\code{coef_summary}, \code{rho2} (an \code{S}-vector of summary \eqn{R^2}),
-\code{covariates}, \code{structure}, and provenance fields.
+\code{coefficients} (\code{S} x \code{q} draws of the projection coefficients, or a single
+row when \code{penalty != "none"}), \code{coef_summary}, \code{uq} (whether uncertainty is
+quantified), \code{rho2} (an \code{S}-vector of summary \eqn{R^2}, or one number when
+\code{penalty != "none"}), \code{covariates}, \code{structure}, and provenance fields.
 }
 \description{
 Projects every posterior draw of the fitted function onto a simpler model,
@@ -96,18 +99,25 @@ The projection is taken over the design the model was fitted to; there is no
 projection uses every covariate, and a subset can be supplied through
 \code{covariates}. Choosing that subset is the user's job.
 
-The penalised projections are solved \strong{separately for every draw}, at a
-common \code{lambda}: for each draw,
-\eqn{\gamma^{(s)} = \arg\min \|f^{(s)} - X\gamma\|^2 + \lambda\|\gamma\|_1}.
-The lasso is a nonlinear operator, so the projection of the posterior mean is
-not the mean of the projections; solving per draw is what gives a genuine
-posterior over sparse projections, with coefficients that are exactly zero in
-some draws and not in others. It costs one glmnet solve per draw.
+With \code{penalty = "none"} the projection is solved separately for every
+posterior draw, so the result is a posterior over projections: the
+coefficients, the partial effects and the summary \eqn{R^2} all come with
+credible intervals.
 
-\code{lambda} indexes the summary family, so it is chosen once for all draws, by
-cross-validating on the posterior mean. Holding out observations asks how
-well a sparse linear summary generalises across the covariate space, which is
-a real question even though a posterior draw carries no observation noise.
+The penalised projections behave differently. They are solved \strong{once}, on
+the posterior mean \eqn{\bar f}, and report point estimates only. The reason
+is that a per-draw penalised solution does not yield an interval anyone can
+interpret: the penalised estimator is biased and non-smooth in its input, its
+spread across draws has no coverage guarantee for the projection of the true
+surface, and the implied inclusion frequencies read as selection
+probabilities while being driven by the penalty. A single sparse or shrunken
+summary of the Bayes estimate states exactly what it is. Use
+\code{penalty = "none"} when the uncertainty in the summary is the point.
+
+\code{lambda} is chosen by cross-validating on \eqn{\bar f}. Holding out
+observations asks how well a sparse linear summary generalises across the
+covariate space, which is a real question even though a posterior draw
+carries no observation noise.
 
 With \code{penalty = "ridge"} nothing is set to zero, so the result is a
 regularised projection rather than a lower-dimensional summary.
@@ -132,7 +142,7 @@ pp_add <- posterior_projection(fit, family = "additive",
                                covariates = c("x1", "x2"))
 
 \donttest{
-# Sparse projection; lambda cross-validated on the posterior mean
+# Sparse summary of the posterior mean; lambda cross-validated
 if (requireNamespace("glmnet", quietly = TRUE)) {
   pp_las <- posterior_projection(fit, family = "linear",
                                  penalty = "lasso")

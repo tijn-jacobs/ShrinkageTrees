@@ -101,7 +101,12 @@ Used when \code{outcome_type} is \code{"right-censored"} or
 \item{number_of_trees_treat}{Number of trees in the treatment forest. Default is 200.}
 
 \item{prior_type_control}{Type of prior on control forest step heights. One of
-\code{"horseshoe"}, \code{"horseshoe_fw"}, or \code{"half-cauchy"}.
+\code{"horseshoe"} (global-local, global scale per tree),
+\code{"horseshoe_fw"} (global scale shared forest-wide),
+\code{"half-cauchy"} (local shrinkage only),
+\code{"standard"} (the classical BART normal prior),
+\code{"dirichlet"} (standard prior with a Dirichlet splitting rule),
+\code{"standard-halfcauchy"}, or \code{"dirichlet-halfcauchy"}.
 Default is \code{"horseshoe"}.}
 
 \item{prior_type_treat}{Type of prior on treatment forest step heights. Same options as

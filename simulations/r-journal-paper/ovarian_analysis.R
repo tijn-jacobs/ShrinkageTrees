@@ -195,7 +195,7 @@ proj_tau <- posterior_projection(fit_causal, target = "treatment",
 proj_tau                            # coefficient table, summary R^2
 plot(proj_tau, type = "effects")    # per-covariate curves, credible bands
 
-# Sparse linear summary of the full surface
+# Sparse summary of the posterior mean CATE surface
 posterior_projection(fit_causal, target = "treatment",
                      family = "linear", penalty = "lasso")
 

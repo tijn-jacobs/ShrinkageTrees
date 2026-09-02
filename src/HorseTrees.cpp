@@ -87,8 +87,6 @@ Rcpp::List HorseTrees_cpp(
   bool is_survival = Rcpp::as<bool>(is_survivalSEXP);
   Rcpp::NumericVector status_indicator_vector(status_indicatorSEXP);
   double* status_indicator = &status_indicator_vector[0];
-  std::vector<double> y_observed_vector(y_vector.begin(), y_vector.end());  // Create an independent copy of y
-  double* y_observed = y_observed_vector.data(); // Get pointer to use like an array
 
   // Objects for interval censoring
   Rcpp::NumericVector observed_left_time_vector(observed_left_timeSEXP);

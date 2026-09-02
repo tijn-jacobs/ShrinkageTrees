@@ -16,10 +16,11 @@
 
 \item{type}{\code{"coefficients"} is a caterpillar plot of the projection
 coefficients; \code{"rho2"} the posterior of the summary \eqn{R^2}; \code{"path"}
-the summary \eqn{R^2} against \eqn{\log\lambda} (\code{penalty = "ridge"}
-only); \code{"effects"} the per-covariate partial effect curves with credible
-bands (\code{family = "additive"} only); \code{"tree"} the CART partition, with the
-posterior interval for each leaf (\code{family = "tree"} only).}
+the cross-validation curve against \eqn{\log\lambda}, marking
+\code{lambda.min} and \code{lambda.1se} (any penalty whose \code{lambda} was
+cross-validated); \code{"effects"} the per-covariate partial effect curves with
+credible bands (\code{family = "additive"} only); \code{"tree"} the CART partition,
+with the posterior interval for each leaf (\code{family = "tree"} only).}
 
 \item{n_max}{Maximum number of coefficients to show, \code{type = "coefficients"}. The largest by absolute posterior mean are kept.}
 

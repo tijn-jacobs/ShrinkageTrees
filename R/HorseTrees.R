@@ -134,12 +134,12 @@
 #' need to reproduce pre-2.1.0 output, and note that this does not reproduce it
 #' exactly, since the sampler itself has been corrected.
 #' @param power Power parameter for tree structure prior. Default is 2.0.
-#' @param base Base parameter for tree structure prior. Default is 1.05.
+#' @param base Base parameter for tree structure prior. Default is 0.95.
 #' @param p_grow Probability of proposing a grow move. Default is 0.4.
 #' @param p_prune Probability of proposing a prune move. Default is 0.4.
 #' @param nu Degrees of freedom for the error distribution prior. Default is 3.
 #' @param q Quantile hyperparameter for the error variance prior. 
-#' Default is 1.00.
+#' Default is 0.90.
 #' @param sigma Optional known value for error standard deviation. If NULL, 
 #' estimated from data.
 #' @param N_post Number of posterior samples to store. Default is 1000.
@@ -700,6 +700,7 @@ HorseTrees <- function(y = NULL,
     timescale        = timescale,
     prior_type_user  = "horseshoe",
     prior_type_cpp   = "horseshoe",
+    dirichlet        = FALSE,
     n_train          = n_train,
     p_features       = p_features,
     n_test           = n_test,
