@@ -506,11 +506,11 @@ print.summary.ShrinkageTrees <- function(x, n_vi = 10, ...) {
 
   if (!is.null(x$variable_importance)) {
     p_vi <- length(x$variable_importance)
-    if (p_vi <= n_vi) {
-      cat("\nVariable importance (posterior inclusion probability):\n")
-      vi <- head(x$variable_importance, n_vi)
-      cat(" ", paste(names(vi), round(vi, 3), sep = ": ", collapse = "   "), "\n")
-    }
+    cat("\nVariable importance (posterior inclusion probability)")
+    if (p_vi > n_vi) cat(", top ", n_vi, " of ", p_vi, sep = "")
+    cat(":\n")
+    vi <- head(x$variable_importance, n_vi)
+    cat(" ", paste(names(vi), round(vi, 3), sep = ": ", collapse = "   "), "\n")
   }
 
   if (!is.null(x$chains)) {
@@ -703,11 +703,11 @@ print.summary.CausalShrinkageForest <- function(x, n_vi = 10, ...) {
   }
   show_vi <- function(vi, forest_label, access_field) {
     if (is.null(vi)) return(invisible(NULL))
-    if (length(vi) <= n_vi) {
-      cat("\nVariable importance - ", forest_label,
-          " (posterior inclusion probability):\n", sep = "")
-      cat(" ", fmt_vi(vi), "\n")
-    }
+    cat("\nVariable importance - ", forest_label,
+        " (posterior inclusion probability)", sep = "")
+    if (length(vi) > n_vi) cat(", top ", n_vi, " of ", length(vi), sep = "")
+    cat(":\n")
+    cat(" ", fmt_vi(vi), "\n")
   }
   show_vi(x$variable_importance_control, "control forest",
           "variable_importance_control")

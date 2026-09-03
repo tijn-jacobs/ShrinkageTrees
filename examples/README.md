@@ -20,6 +20,20 @@ The scripts are available from the [GitHub repository](https://github.com/tijn-j
 | `test-plots.R` | Visual verification of all plot types, saves to PDF |
 | `test-coda-diagnostics.R` | `as.mcmc.list()` S3 method, Gelman-Rubin, ESS, Geweke diagnostics |
 | `test-ovarian.R` | Full worked example on the TCGA ovarian dataset: survival prediction + causal inference |
+| `test-bayesian-bootstrap-ate.R` | Bayesian-bootstrap PATE against the plug-in MATE |
+| `semi-synthesise-ovarian.R` | Rebuilds the shipped `ovarian` and `ovarian_truth` datasets, with diagnostics |
+
+`semi-synthesise-ovarian.R` is not a test. It is the generating script for the
+two shipped datasets: it reads the installed `ovarian` for its real covariates,
+resimulates treatment, the confounder and the outcomes from a known process,
+plots the diagnostics, and writes `data/*.rda` only when called with `--save`.
+It fits no models; the analysis of this data is
+`simulations/r-journal-paper/ovarian_analysis.R`.
+
+```r
+Rscript examples/semi-synthesise-ovarian.R           # diagnostics only
+Rscript examples/semi-synthesise-ovarian.R --save    # overwrite data/*.rda
+```
 
 ## Usage
 
