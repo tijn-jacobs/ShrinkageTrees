@@ -12,7 +12,6 @@ Its central methodological innovation is the **Horseshoe regularisation mechanis
 
 - Horseshoe priors
 - Forest-wide Horseshoe shrinkage
-- Empirical Bayes Horseshoe calibration
 - Half-Cauchy priors
 - Dirichlet splitting priors (DART)
 
@@ -232,4 +231,3 @@ This package is licensed under the [MIT License](https://cran.r-project.org/web/
 ## 🇪🇺 Acknowledgments
 
 This project has received funding from the European Research Council (ERC) under the European Union’s Horizon Europe program under Grant agreement No. 101074802. Views and opinions expressed are however those of the author(s) only and do not necessarily reflect those of the European Union or the European Research Council Executive Agency. Neither the European Union nor the granting authority can be held responsible for them
-
