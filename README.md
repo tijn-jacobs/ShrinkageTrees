@@ -2,8 +2,6 @@
 
  <img src="sticker/ShrinkageTrees_hex.png" align="right" width="150"/>
 
-## Overview
-
 **ShrinkageTrees** provides a unified framework for survival analysis using Bayesian regression tree ensembles, with a particular focus on **causal inference and high-dimensional data**.
 
 The package implements Horseshoe Trees, Causal Horseshoe Forests, and their more general counterparts — Shrinkage Trees and Causal Shrinkage Forests — alongside well-known Bayesian tree models such as BART, DART, and BCF. All models are adapted to right-censored and interval-censored data via accelerated failure time (AFT) formulations.
