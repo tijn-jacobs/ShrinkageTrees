@@ -19,33 +19,43 @@ double GetBirthProbability(StanTree& tree, CutpointMatrix& cutpoints,
                            PriorInfo& prior_info,
                            std::vector<StanTree*>& splittable_leaves);
 
-// Compute observation counts and residual sums for the left and right
-// partitions induced by splitting target_leaf on (split_var, cut_val).
+// Compute observation counts, weight sums and weighted residual sums for the
+// left and right partitions induced by splitting target_leaf on
+// (split_var, cut_val).  Weights default to 1 when data_info.weights is null.
 void GetSufficientStatistics(StanTree& tree, StanTree* target_leaf,
                              size_t split_var, size_t cut_val,
                              CutpointMatrix& cutpoints, DataInfo& data_info,
-                             size_t& left_count, double& left_sum,
-                             size_t& right_count, double& right_sum);
+                             size_t& left_count,
+                             double& left_weight_sum,
+                             double& left_weighted_residual_sum,
+                             size_t& right_count,
+                             double& right_weight_sum,
+                             double& right_weighted_residual_sum);
 
-// Compute observation counts and residual sums for an existing left/right
-// leaf pair (used during a death proposal).
+// Compute observation counts, weight sums and weighted residual sums for an
+// existing left/right leaf pair (used during a death proposal).
 void GetSufficientStatistics(StanTree& tree, StanTree* left_leaf,
                              StanTree* right_leaf,
                              CutpointMatrix& cutpoints, DataInfo& data_info,
-                             size_t& left_count, double& left_sum,
-                             size_t& right_count, double& right_sum);
+                             size_t& left_count,
+                             double& left_weight_sum,
+                             double& left_weighted_residual_sum,
+                             size_t& right_count,
+                             double& right_weight_sum,
+                             double& right_weighted_residual_sum);
 
 // Compute sufficient statistics for every leaf in the tree in a single pass
-// over the data.  Populates leaves, observation_counts, and residual_sums.
+// over the data.  Populates leaves, weight_sums, and weighted_residual_sums.
 void GetAllLeafStatistics(StanTree& tree, CutpointMatrix& cutpoints,
                           DataInfo& data_info,
                           std::vector<StanTree*>& leaves,
-                          std::vector<size_t>& observation_counts,
-                          std::vector<double>& residual_sums);
+                          std::vector<double>& weight_sums,
+                          std::vector<double>& weighted_residual_sums);
 
-// Log-likelihood of n residuals with sum sum_residuals under a Gaussian
-// model with noise std dev sigma and leaf prior std dev eta.
-double LogLikelihood(size_t n, double sum_residuals, double sigma, double eta);
+// Weighted leaf-marginal log-likelihood given Sum w_i and Sum w_i r_i under a
+// Gaussian model with noise std dev sigma and leaf prior std dev eta.
+double LogLikelihood(double weight_sum, double weighted_residual_sum,
+                     double sigma, double eta);
 
 // Probability that a node at the given depth grows; 0 if no valid split
 // variable is available.
@@ -78,8 +88,8 @@ void DeathProposal(StanTree& tree, CutpointMatrix& cutpoints,
                    double& log_proposal_ratio, Random& random);
 
 // Draw a single leaf mean from its Gaussian posterior.
-double DrawLeafMean(size_t n, double sum_residuals, double eta,
-                    double sigma, Random& random);
+double DrawLeafMean(double weight_sum, double weighted_residual_sum,
+                    double eta, double sigma, Random& random);
 
 // Draw the vector of splitting probabilities from a Dirichlet posterior
 // (Linero, 2018).  Updates log_split_probabilities in-place.

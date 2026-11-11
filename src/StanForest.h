@@ -38,6 +38,10 @@ public:
   void SetData(size_t p, size_t n, double* x, double* y, int* nc);
 
   void SetPriorInfo(PriorInfo& info)  { this->prior_info = info; }
+  // Per-observation weights (e.g. b_i^2 in BCF); nullptr clears them.  The
+  // pointer is stored, not copied: the caller keeps the array alive.
+  void SetWeights(double* w) { data_info.weights = w; }
+
   void SetPriorParameters(double base, double power, double eta) {
     prior_info.base  = base;
     prior_info.power = power;

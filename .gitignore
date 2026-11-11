@@ -13,3 +13,6 @@
 /doc/
 /Meta/
 /revisions/
+src/*.o
+src/*.so
+src/*.dll

@@ -57,8 +57,9 @@ struct ForestEngine {
   void SetWeights(double* w) {
     if (type == ForestEngineType::forest_type) {
       forest->SetWeights(w);
+    } else {
+      stan_forest->SetWeights(w);
     }
-    // StanForest does not currently support per-observation weights
   }
 
   void StartDirichlet() {

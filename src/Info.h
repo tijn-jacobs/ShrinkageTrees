@@ -8,11 +8,12 @@
 // *(X + p * i + j).  residuals holds the current working residuals.
 class DataInfo {
 public:
-  DataInfo() : p(0), n(0), X(nullptr), residuals(nullptr) {}
+  DataInfo() : p(0), n(0), X(nullptr), residuals(nullptr), weights(nullptr) {}
   size_t p;          // Number of predictors
   size_t n;          // Number of observations
   double* X;         // Feature matrix (n x p, column-major)
   double* residuals; // Working residuals (length n)
+  double* weights;   // Optional per-observation weights (length n, or nullptr)
 };
 
 // Prior and MCMC tuning parameters used by the birth-death sampler.

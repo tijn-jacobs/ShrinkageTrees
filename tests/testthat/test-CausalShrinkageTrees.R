@@ -613,3 +613,47 @@ test_that("CausalShrinkageForest n_chains > 1 pools chains correctly", {
   expect_length(fit$chains$acceptance_ratios_treat,   2)
 })
 
+
+# Regression test for the StanForest engine ignoring the BCF treatment
+# weights b_i^2 (fixed in 2.1.1). Before the fix, "binary" coding shrank the
+# effect towards zero and "centered" coding overfit, collapsing sigma.
+for (coding in c("binary", "centered")) {
+  test_that(paste0("CausalShrinkageForest recovers a constant effect (standard prior, ",
+                   coding, " coding)"), {
+    skip_on_cran()
+
+    set.seed(2024)
+    n <- 200
+    p <- 3
+    tau <- 1
+    sigma_true <- 1
+    X <- matrix(runif(n * p), ncol = p)
+    treatment <- rbinom(n, 1, 0.5)
+    y <- X[, 1] + treatment * tau + rnorm(n, sd = sigma_true)
+
+    fit <- CausalShrinkageForest(
+      y = y,
+      X_train_control = X,
+      X_train_treat = X,
+      treatment_indicator_train = treatment,
+      outcome_type = "continuous",
+      number_of_trees_control = 50,
+      number_of_trees_treat = 50,
+      prior_type_control = "standard",
+      prior_type_treat = "standard",
+      local_hp_control = 2 / sqrt(50),
+      local_hp_treat = 1 / sqrt(50),
+      treatment_coding = coding,
+      N_post = 300,
+      N_burn = 300,
+      verbose = FALSE
+    )
+
+    # Mean CATE should be close to the true constant effect
+    expect_lt(abs(mean(fit$train_predictions_treat) - tau), 0.3)
+
+    # fit$sigma is on the standardized scale (y / sigma_hat)
+    sigma_post <- mean(fit$sigma) * fit$preprocess$sigma_hat
+    expect_lt(abs(sigma_post / sigma_true - 1), 0.3)
+  })
+}

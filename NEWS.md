@@ -1,6 +1,14 @@
+# ShrinkageTrees 2.1.1
+
+- `CausalShrinkageForest()` ignored the treatment weights `b_i^2` for
+  `prior_type_treat = "standard"`, `"dirichlet"`, `"standard-halfcauchy"` and
+  `"dirichlet-halfcauchy"`. With `"binary"` coding the effect was shrunk
+  towards zero; with `"centered"` coding `sigma` collapsed and coverage was
+  poor. Horseshoe and half-Cauchy priors were not affected.
+
 # ShrinkageTrees 2.1.0
 
-## Two corrections to the horseshoe global update (breaking)
+## Two corrections to the horseshoe global update
 
 Two independent defects in `Horseshoe::GlobalUpdate()` have been fixed. Both
 affected every fit using `prior_type = "horseshoe"` (including `HorseTrees()`
@@ -21,23 +29,22 @@ under this release.
    substantial where `omega = 1/2` (the causal forests), where it grew with the
    number of covariates.
 
-## Recalibrated default shrinkage (breaking)
+## Recalibrated default shrinkage
 
 The old default of `k = 0.1` was chosen while defect (1) was present, so it was
 tuned for a model in which the global scale was pinned at 1. With the defect
 corrected, that value shrinks far too aggressively: in our simulations it drove
 pointwise coverage of the conditional treatment effect from roughly 0.95 down to
-about 0.4. Re-running existing scripts against this release *without* updating
+about 0.4. Re-running existing scripts against this release _without_ updating
 `k` is therefore worse than not upgrading at all.
 
 The defaults are now calibrated for the corrected sampler:
 
-| function | old | new |
-|---|---|---|
-| `HorseTrees()` | `k = 0.1` | `k = 1.0` |
-| `CausalHorseForest()` | `k = 0.1` | `k = 1.5` |
-| `ShrinkageTrees()` | `local_hp`, `global_hp` required | default to `1.0 / sqrt(number_of_trees)` |
-| `CausalShrinkageForest()` | four scales required | default to `1.5 / sqrt(number_of_trees_*)` |
+| function              | old                              | new                                      |
+| --------------------- | -------------------------------- | ---------------------------------------- |
+| `HorseTrees()`        | `k = 0.1`                        | `k = 1.0`                                |
+| `CausalHorseForest()` | `k = 0.1`                        | `k = 1.5`                                |
+| `ShrinkageTrees()`    | `local_hp`, `global_hp` required | default to `1.0 / sqrt(number_of_trees)` |
 
 Values of `k` between roughly 0.5 and 1.5 (single-forest models) or 1 and 2
 (causal models) worked well across a range of simulated settings, with smaller
@@ -99,7 +106,7 @@ selection probabilities while being driven by the penalty.
 - Right-censored subjects were scored as exact events when centring an
   interval-censored outcome. The fitting functions collapse an infinite
   `right_time` onto `left_time` because the C++ layer needs a finite boundary,
-  but that collapse happened *before* the mean and scale were estimated. Those
+  but that collapse happened _before_ the mean and scale were estimated. Those
   come from `survival::Surv(left_time, right_time, type = "interval2")`, under
   which `left == right` denotes an exact event, so every right-censored subject
   was treated as observed. The centring mean and the sigma prior were biased
@@ -133,7 +140,7 @@ was inert.
 Bayesian-bootstrap posterior for the average treatment effect: at each
 MCMC iteration the per-observation CATEs are reweighted with
 Dirichlet(1, ..., 1) weights before being summed, giving a draw from the
-posterior of the *population* ATE (PATE). Credible intervals are
+posterior of the _population_ ATE (PATE). Credible intervals are
 correspondingly wider than before because they now propagate uncertainty
 in the covariate distribution, not only in `tau(x)`.
 
@@ -147,7 +154,7 @@ in the covariate distribution, not only in `tau(x)`.
   summaries (means, CIs, and full posterior draws) from either a fitted
   `CausalShrinkageForest` or a `CausalShrinkageForestPrediction`.
 
-This is a *breaking change for printed/plotted numerics*: existing
+This is a _breaking change for printed/plotted numerics_: existing
 scripts will report wider CIs than before. Use
 `bayesian_bootstrap = FALSE` to reproduce previous output.
 
