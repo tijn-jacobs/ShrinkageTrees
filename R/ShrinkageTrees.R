@@ -394,8 +394,11 @@ ShrinkageTrees <- function(y = NULL,
       stop("The length of outcome vector y must match the number of rows in X_train.")
   }
 
-  # Check if dimensions match with test data
-  if (!is.null(X_test)) {
+  # Check if dimensions match with test data. Without test data the sampler
+  # still predicts one row (the column means of X_train), so record whether
+  # the user gave X_test before it is replaced.
+  test_provided <- !is.null(X_test)
+  if (test_provided) {
     n_test <- nrow(X_test)
     if (ncol(X_test) != p_features) {
       stop("The number of covariates in X_test must match X_train.")
@@ -644,7 +647,7 @@ ShrinkageTrees <- function(y = NULL,
     n_train          = n_train,
     p_features       = p_features,
     n_test           = n_test,
-    test_provided    = !is.null(X_test),
+    test_provided    = test_provided,
     number_of_trees  = number_of_trees,
     N_post           = N_post,
     N_burn           = N_burn,

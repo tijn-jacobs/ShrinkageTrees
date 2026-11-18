@@ -29,7 +29,8 @@ A \code{ShrinkageTreesPrediction} object with elements:
 \item{predictions_sample}{(Survival only) \code{N_post} x \code{n}
 matrix of posterior predictive draws on the original scale.}
 \item{sigma}{(Survival only) Posterior draws of sigma on the log-time
-scale (length \code{N_post}).}
+scale (length \code{N_post}). A fixed \code{sigma} is repeated
+once per draw.}
 }
 }
 \description{

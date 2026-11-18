@@ -269,3 +269,61 @@ test_that("predict.CausalShrinkageForest errors on dimension mismatch", {
                "same number of rows")
 })
 
+
+
+# ── Survival fits with a fixed sigma ──────────────────────────────────────────
+# A fixed sigma is stored once, on the log-time scale. predict() and the
+# survival curves of the fitted object must repeat it once per posterior draw.
+
+test_that("survival fits with a fixed sigma give one sigma per draw", {
+  set.seed(1)
+  n <- 40; p <- 3
+  X      <- matrix(runif(n * p), ncol = p)
+  X_test <- matrix(runif(5 * p), ncol = p)
+  time   <- exp(0.5 * X[, 1] + rnorm(n, sd = 0.4))
+  status <- rbinom(n, 1, 0.7)
+  sigma  <- 0.4
+
+  fit <- HorseTrees(
+    y = time, status = status, X_train = X,
+    outcome_type = "right-censored", sigma = sigma,
+    number_of_trees = 5, N_post = 15, N_burn = 5,
+    store_posterior_sample = TRUE, verbose = FALSE
+  )
+  expect_true(fit$preprocess$sigma_known)
+
+  # predict(): previously an empty vector
+  pred <- predict(fit, newdata = X_test)
+  expect_length(pred$sigma, 15)
+  expect_equal(pred$sigma, rep(sigma, 15))
+
+  # Survival curves of the fitted object: previously used sigma^2 and a
+  # single draw. Compare one curve with the AFT formula computed by hand.
+  t_grid <- c(0.5, 1, 2, 4)
+  sc <- ShrinkageTrees:::.survival_curves(fit, obs = 1, t_grid = t_grid,
+                                          level = 0.95)
+  mu <- log(fit$train_predictions_sample[, 1])
+  expected <- colMeans(1 - pnorm((outer(rep(1, 15), log(t_grid)) - mu) / sigma))
+  expect_equal(sc$surv_mean, expected)
+})
+
+test_that("survival plots work for a fit with a fixed sigma", {
+  skip_if_not_installed("ggplot2")
+  set.seed(2)
+  n <- 30; p <- 3
+  X      <- matrix(runif(n * p), ncol = p)
+  X_test <- matrix(runif(5 * p), ncol = p)
+  time   <- exp(0.5 * X[, 1] + rnorm(n, sd = 0.4))
+  status <- rbinom(n, 1, 0.7)
+
+  fit <- HorseTrees(
+    y = time, status = status, X_train = X,
+    outcome_type = "right-censored", sigma = 0.4,
+    number_of_trees = 5, N_post = 10, N_burn = 5,
+    store_posterior_sample = TRUE, verbose = FALSE
+  )
+
+  expect_s3_class(expect_no_error(plot(fit, type = "survival")), "gg")
+  pred <- predict(fit, newdata = X_test)
+  expect_s3_class(expect_no_error(plot(pred, type = "survival")), "gg")
+})

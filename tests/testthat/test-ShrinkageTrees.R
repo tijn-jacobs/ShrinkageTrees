@@ -373,3 +373,33 @@ test_that("ShrinkageTrees n_chains > 1 pools chains correctly", {
   expect_equal(fit$mcmc$n_chains, 2)
   expect_length(fit$chains$acceptance_ratios, 2)
 })
+
+
+# ── summary() reports test predictions only when X_test was given ─────────────
+
+test_that("summary reports test predictions only when X_test was given", {
+  set.seed(1)
+  n <- 30; p <- 3
+  X      <- matrix(runif(n * p), ncol = p)
+  X_test <- matrix(runif(5 * p), ncol = p)
+  y      <- X[, 1] + rnorm(n)
+
+  fit_no_test <- HorseTrees(y = y, X_train = X, number_of_trees = 5,
+                            N_post = 10, N_burn = 5, verbose = FALSE)
+  expect_false(fit_no_test$data_info$test_provided)
+  expect_null(summary(fit_no_test)$predictions$test)
+  expect_false(any(grepl("Test:", capture.output(print(summary(fit_no_test))))))
+
+  fit_test <- ShrinkageTrees(y = y, X_train = X, X_test = X_test,
+                             prior_type = "horseshoe", number_of_trees = 5,
+                             N_post = 10, N_burn = 5, verbose = FALSE)
+  expect_true(fit_test$data_info$test_provided)
+  expect_false(is.null(summary(fit_test)$predictions$test))
+  expect_true(any(grepl("Test:", capture.output(print(summary(fit_test))))))
+
+  # Multi-chain fits keep the flag of the per-chain fits
+  fit_chains <- HorseTrees(y = y, X_train = X, number_of_trees = 5,
+                           N_post = 10, N_burn = 5, n_chains = 2,
+                           verbose = FALSE)
+  expect_false(fit_chains$data_info$test_provided)
+})

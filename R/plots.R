@@ -111,10 +111,23 @@
 
   alpha     <- (1 - level) / 2
   sigma_hat <- x$preprocess$sigma_hat
-  sigma_log <- x$sigma * sigma_hat   # posterior sigma on log-time scale
-  N_post    <- length(sigma_log)
   has_samples <- isTRUE(x$mcmc$store_posterior_sample) &&
                  !is.null(x$train_predictions_sample)
+
+  # Posterior sigma on the log-time scale, one value per draw. A sampled
+  # sigma is stored on the standardized scale; a fixed sigma was given on the
+  # log-time scale and is stored once, so repeat it.
+  if (isTRUE(x$preprocess$sigma_known)) {
+    n_draws <- if (has_samples) {
+      nrow(x$train_predictions_sample)
+    } else {
+      x$mcmc$N_post * (if (is.null(x$mcmc$n_chains)) 1 else x$mcmc$n_chains)
+    }
+    sigma_log <- rep(sigma_hat, n_draws)
+  } else {
+    sigma_log <- x$sigma * sigma_hat
+  }
+  N_post <- length(sigma_log)
 
   # Reconstruct log-scale mu: y_train stores log-times for both timescale values
   if (has_samples) {

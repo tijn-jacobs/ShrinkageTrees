@@ -21,7 +21,8 @@
 #'     \item{predictions_sample}{(Survival only) \code{N_post} x \code{n}
 #'       matrix of posterior predictive draws on the original scale.}
 #'     \item{sigma}{(Survival only) Posterior draws of sigma on the log-time
-#'       scale (length \code{N_post}).}
+#'       scale (length \code{N_post}). A fixed \code{sigma} is repeated
+#'       once per draw.}
 #'   }
 #' @seealso \code{\link{HorseTrees}}, \code{\link{ShrinkageTrees}},
 #'   \code{\link{print.ShrinkageTreesPrediction}},
@@ -163,9 +164,14 @@ predict.ShrinkageTrees <- function(object, newdata, level = 0.95, ...) {
     # Store posterior samples for survival curve plotting
     if (survival) {
       out$predictions_sample <- sample_pred   # N_post x n_new
-      # sigma is jointly sampled with the trees (sigma_known = FALSE for
-      # survival); remove burn-in to match predictions_sample rows.
-      out$sigma <- fit$sigma[-seq_len(object$mcmc$N_burn)] * pre$sigma_hat
+      # One sigma per row of predictions_sample, on the log-time scale. A
+      # sampled sigma is on the standardized scale and includes burn-in; a
+      # fixed sigma was given on the log-time scale and is stored once.
+      out$sigma <- if (isTRUE(pre$sigma_known)) {
+        rep(pre$sigma_hat, nrow(sample_pred))
+      } else {
+        fit$sigma[-seq_len(object$mcmc$N_burn)] * pre$sigma_hat
+      }
     }
 
     class(out) <- "ShrinkageTreesPrediction"

@@ -232,9 +232,9 @@ censored_info <- function(y, status, left_time = NULL, right_time = NULL) {
 
   # ── Variable importance ───────────────────────────────────────────────────
   out$split_probs_control        <- pool_matrix("split_probs_control")
-  out$store_split_counts_control <- pool_matrix("store_split_counts_control")
+  out$split_counts_control       <- pool_matrix("split_counts_control")
   out$split_probs_treat          <- pool_matrix("split_probs_treat")
-  out$store_split_counts_treat   <- pool_matrix("store_split_counts_treat")
+  out$split_counts_treat         <- pool_matrix("split_counts_treat")
 
   # ── Chain-level diagnostics ───────────────────────────────────────────────
   out$chains <- list(

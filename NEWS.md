@@ -14,6 +14,17 @@
   sampler, so it fitted the same model as `"half-cauchy"` with the same
   `local_hp`. Passing it now gives an error that points to `"half-cauchy"`.
   The `forestwide_shrinkage*` outputs are gone.
+- Multi-chain `CausalShrinkageForest()` and `CausalHorseForest()` fits kept
+  the split counts of the first chain only, so `summary()` based variable
+  importance on one chain. They are now pooled over all chains.
+- Survival fits with a fixed `sigma`: `predict()` returned an empty `sigma`,
+  which broke `plot(pred, type = "survival")`, and `plot(fit, type =
+  "survival")` used `sigma^2` from a single draw. Both now use the fixed
+  `sigma` for every posterior draw.
+- `summary()` of a `ShrinkageTrees()` or `HorseTrees()` fit without `X_test`
+  reported test predictions. These came from a placeholder row (the column
+  means of `X_train`) used internally. They are now left out, as for
+  `CausalShrinkageForest()`.
 - Internal clean-up with no change in results. `HorseTrees()` and
   `CausalHorseForest()` now call `ShrinkageTrees()` and
   `CausalShrinkageForest()`. Fits from the survival wrappers no longer carry

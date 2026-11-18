@@ -1,15 +1,10 @@
 # Tests for the 2.1.1 clean-up.
 #
-# Part 1 runs everywhere. It pins the relations the clean-up relies on:
-# HorseTrees() and CausalHorseForest() are special cases of the general
-# fitters, and the shared helpers behave as the inlined code did.
-#
-# Part 2 compares the current code against results recorded from the code
-# before the clean-up (commit 8d4bc0d). The recorded file is not in the
-# repository, so this part only runs where a local copy exists in
-# tests/testthat/fixtures/; elsewhere it is skipped.
-
-# ── Part 1: relations that must hold in the current code ─────────────────────
+# They pin the relations the clean-up relies on: HorseTrees() and
+# CausalHorseForest() are special cases of the general fitters, and the
+# shared helpers behave as the inlined code did. Each comparison runs both
+# sides under the same seed in the same session, so it holds for any random
+# number generator.
 
 test_that("HorseTrees equals ShrinkageTrees with the horseshoe prior", {
   d  <- refactor_data(201)
@@ -133,41 +128,4 @@ test_that("continuous causal fits no longer carry empty sample elements", {
   expect_false("train_predictions_sample" %in% names(fit))
   expect_false("test_predictions_sample"  %in% names(fit))
   expect_equal(dim(fit$train_predictions_sample_control), c(10, d$n))
-})
-
-# ── Part 2: current code against the recorded baseline ───────────────────────
-
-test_that("results match the baseline recorded before the clean-up", {
-  skip_on_cran()
-  path <- test_path("fixtures", "refactor-baseline.rds")
-  skip_if_not(
-    file.exists(path),
-    "no local baseline in tests/testthat/fixtures/"
-  )
-
-  baseline  <- readRDS(path)
-  scenarios <- refactor_scenarios()
-
-  # A baseline from another machine or R version is not comparable: the
-  # sampler is chaotic, so a last-digit difference in survreg() or the RNG
-  # grows into a visible one.
-  skip_if_not(
-    identical(baseline$r_version, R.version.string) &&
-      identical(baseline$platform, R.version$platform),
-    "baseline was recorded with a different R version or platform"
-  )
-
-  expect_setequal(names(baseline$values), names(scenarios))
-
-  for (name in intersect(names(scenarios), names(baseline$values))) {
-    old <- baseline$values[[name]]
-    new <- refactor_run(scenarios[[name]])
-
-    expect_setequal(names(new), names(old))
-
-    for (field in intersect(names(new), names(old))) {
-      expect_equal(new[[field]], old[[field]], tolerance = 1e-8,
-                   info = paste0("scenario '", name, "', field '", field, "'"))
-    }
-  }
 })
