@@ -1,10 +1,10 @@
 # Scenarios for comparing the refactored code against the code before it.
 #
-# Used in two places:
-#   * tests/manual/record-refactor-baseline.R runs every scenario with the OLD
-#     package and saves the results.
-#   * tests/testthat/test-refactor-equivalence.R runs them with the CURRENT
-#     package and compares.
+# A baseline was recorded by running every scenario with the OLD package
+# (commit 8d4bc0d) and saving the results to
+# tests/testthat/fixtures/refactor-baseline.rds. That file is kept locally and
+# not committed. tests/testthat/test-refactor-equivalence.R runs the scenarios
+# with the CURRENT package and compares.
 #
 # Rules for a scenario:
 #   * It sets its own seed, builds its own data and returns a fitted object.

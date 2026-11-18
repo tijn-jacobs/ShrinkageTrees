@@ -5,8 +5,9 @@
 # fitters, and the shared helpers behave as the inlined code did.
 #
 # Part 2 compares the current code against results recorded from the code
-# before the clean-up. It is skipped until a baseline has been recorded with
-# tests/manual/record-refactor-baseline.R.
+# before the clean-up (commit 8d4bc0d). The recorded file is not in the
+# repository, so this part only runs where a local copy exists in
+# tests/testthat/fixtures/; elsewhere it is skipped.
 
 # ── Part 1: relations that must hold in the current code ─────────────────────
 
@@ -141,7 +142,7 @@ test_that("results match the baseline recorded before the clean-up", {
   path <- test_path("fixtures", "refactor-baseline.rds")
   skip_if_not(
     file.exists(path),
-    "no baseline recorded; see tests/manual/record-refactor-baseline.R"
+    "no local baseline in tests/testthat/fixtures/"
   )
 
   baseline  <- readRDS(path)
