@@ -13,10 +13,6 @@
 // Checks if a bottom node has variables that can be split on.
 bool Splittable(Tree& leaf_node, Cutpoints& cutpoints);
 
-// Collects all leaf nodes that can be split on.
-void CollectSplittableLeaves(Tree& tree, std::vector<Tree*>& leaf_vector, 
-                            Cutpoints& cutpoints);
-
 // Finds variables that a node can split on and stores their indices in split_var.
 void GetSplittableVariables(Tree& leaf, Cutpoints& cutpoints, 
                             std::vector<size_t>& split_var);

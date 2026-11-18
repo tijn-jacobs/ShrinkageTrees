@@ -240,12 +240,11 @@ test_that("censored_info treats an open right bound as right censoring", {
   left_time  <- observed
   right_time <- ifelse(event == 1, observed, Inf)
   status     <- event
-  ic_ind     <- rep(0L, n)          # exact events and right censoring only
 
   open      <- censored_info(observed, status, left_time = left_time,
-                             right_time = right_time, ic_indicator = ic_ind)
+                             right_time = right_time)
   collapsed <- censored_info(observed, status, left_time = left_time,
-                             right_time = left_time, ic_indicator = ic_ind)
+                             right_time = left_time)
 
   # With the bound open, this reduces to ordinary right censoring, so it must
   # agree with the right-censored path on the same data.
@@ -284,8 +283,7 @@ test_that("interval-censored fits centre on the open-bound mean", {
 
   expected <- censored_info(log(y_init), status,
                             left_time  = log(d$left_time),
-                            right_time = log(d$right_time),
-                            ic_indicator = ic_ind)
+                            right_time = log(d$right_time))
 
   expect_equal(fit$preprocess$y_mean, expected$mu, tolerance = 1e-8)
 

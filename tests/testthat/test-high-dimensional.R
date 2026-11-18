@@ -176,10 +176,10 @@ test_that("predict() works after high-dimensional ShrinkageTrees fit", {
 
 
 # ---------------------------------------------------------------------------
-# ShrinkageTrees (horseshoe_fw) — survival, p >> n
+# ShrinkageTrees (half-cauchy) — survival, p >> n
 # ---------------------------------------------------------------------------
 
-test_that("ShrinkageTrees horseshoe_fw handles p >> n survival without error", {
+test_that("ShrinkageTrees half-cauchy handles p >> n survival without error", {
   d  <- .hd_data
   lh <- 0.1 / sqrt(10)
   set.seed(5)
@@ -188,9 +188,8 @@ test_that("ShrinkageTrees horseshoe_fw handles p >> n survival without error", {
     status          = d$status,
     X_train         = d$X,
     outcome_type    = "right-censored",
-    prior_type      = "horseshoe_fw",
+    prior_type      = "half-cauchy",
     local_hp        = lh,
-    global_hp       = lh,
     number_of_trees = 10,
     N_post          = 10,
     N_burn          = 5,
@@ -200,7 +199,4 @@ test_that("ShrinkageTrees horseshoe_fw handles p >> n survival without error", {
   expect_length(fit$train_predictions, d$n)
   expect_true(all(is.finite(fit$train_predictions)))
   expect_true(all(fit$sigma > 0))
-  expect_true(is.numeric(fit$forestwide_shrinkage))
-  expect_true(all(fit$forestwide_shrinkage >= 0))
 })
-

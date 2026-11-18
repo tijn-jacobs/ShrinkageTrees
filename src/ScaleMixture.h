@@ -54,8 +54,6 @@
 //    sparsity-inducing properties. It involves both local and global 
 //    components, where the local parameters (lambda and nu) adapt based on 
 //    the residuals, while the global parameter (tau) affects all nodes.
-// 4. Horseshoe_fw: Similar to the HalfCauchy, but with global shrinkage
-//    parameter defined for all trees in the forest. 
 //
 // Local vs. Global Parameters:
 // In hierarchical models such as those implemented with these priors, there 
@@ -87,8 +85,7 @@ double log_inverse_gamma_pdf(double x, double a, double b);
 enum class PriorType {
   FixedVariance,
   HalfCauchy,
-  Horseshoe,
-  Horseshoe_fw
+  Horseshoe
 };
 
 // Base class for EtaPrior
@@ -357,57 +354,6 @@ public:
   bool GetGlobal() override;
 };
 
-// Derived class for Horseshoe Forest Wide prior
-// Uses the auxiliary variables representation 
-class Horseshoe_fw : public EtaPrior {
-  
-  // Indicates if global parameter updates are required (true for Horseshoe)
-  bool global = false;
-
-  // Local and global scaling parameters for the Horseshoe prior
-  double alpha_local;
-  
-public:
-  // Constructor to initialize alpha_local 
-  Horseshoe_fw(double _alpha_local = 1.0);
-  
-  // Propose new parameters based on the Horseshoe prior
-  void Propose(Parameters& parameters, 
-               const Parameters& global_parameters,
-               const double& residual, 
-               const double& number_of_observations,
-               const double& sigma, 
-               const double& omega,
-               Random& random) override;
-  
-  // Update global parameters (tau) based on the Horseshoe prior
-  void GlobalUpdate(Parameters& global_parameters,
-                    const std::vector<Parameters*>& leaf_parameters,
-                    const double &sigma, 
-                    const double& omega,
-                    Random& random) override;
-  
-  // Log-density of the proposed parameters
-  double LogProposeDensity(const Parameters& parameters,
-                           const Parameters& global_parameters,
-                           const double& residual,
-                           const double& number_of_observations,
-                           const double& sigma,
-                           const double& omega) override;
-  
-  // Log-prior for the Horseshoe prior
-  double LogPrior(const Parameters& parameters,
-                  const Parameters& global_parameters,
-                  const double& sigma,
-                  const double& omega) override;
-  
-  // Returns the variance associated with the Horseshoe prior
-  double GetVariance(const Parameters& parameters,
-                     const Parameters& global_parameters) override;
-  
-  // Returns true, as Horseshoe requires global updates
-  bool GetGlobal() override;
-};
 
 
 #endif // GUARD_ScaleMixture_h

@@ -18,27 +18,6 @@ StanForest::~StanForest()
   if (tree_fit_temp) delete[] tree_fit_temp;
 }
 
-// Change the number of trees and recompute the current forest fit.
-void StanForest::SetNumTrees(size_t new_num_trees)
-{
-  trees.resize(new_num_trees);
-  num_trees = trees.size();
-  if (all_fit && (cutpoints.size() == p)) Predict(p, n, x, all_fit);
-}
-
-// Deep-copy new_cutpoints into the internal cutpoints.
-void StanForest::SetCutpointMatrix(CutpointMatrix& new_cutpoints)
-{
-  size_t num_predictors = new_cutpoints.size();
-  cutpoints.resize(num_predictors);
-  for (size_t i = 0; i < num_predictors; i++) {
-    size_t num_cuts = new_cutpoints[i].size();
-    cutpoints[i].resize(num_cuts);
-    for (size_t j = 0; j < num_cuts; j++)
-      cutpoints[i][j] = new_cutpoints[i][j];
-  }
-}
-
 // Set the feature matrix and working-response, build cutpoints, and allocate
 // working arrays.  nc == uniform cut count per variable (scalar overload).
 void StanForest::SetData(size_t p, size_t n, double* x, double* y,
@@ -155,10 +134,6 @@ void StanForest::UpdateGlobalScaleParameters(string prior_type,
 {
   if (prior_type == "standard-halfcauchy") {
     this->UpdateHalfCauchyScale(global_parameter, storage_eta, random);
-  } else if (prior_type == "standard-halfnormal") {
-    return;
-  } else {
-    return;
   }
 }
 

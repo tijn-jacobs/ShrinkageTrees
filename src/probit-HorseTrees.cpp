@@ -83,15 +83,12 @@ Rcpp::List probitHorseTrees_cpp(SEXP nSEXP,
   PriorType prior;
   if (prior_type == "horseshoe") {
     prior = PriorType::Horseshoe;
-  } else if (prior_type == "fixed" || prior_type == "standard") {
+  } else if (prior_type == "standard") {
     prior = PriorType::FixedVariance;
   } else if (prior_type == "halfcauchy") {
     prior = PriorType::HalfCauchy;
-  } else if (prior_type == "horseshoe_fw") {
-    Rcpp::Rcout << "This prior has not been properly implemented for binary regression." << std::endl;
-    Rcpp::stop("Invalid prior type provided.");
   } else {
-    Rcpp::stop("Invalid prior type provided. Choose one of: 'horseshoe', 'half-cauchy', 'standard'.");
+    Rcpp::stop("Invalid prior type provided. Choose one of: 'horseshoe', 'halfcauchy', 'standard'.");
   }
   
   // Initialize the scale mixture prior on the step heights in the leaves

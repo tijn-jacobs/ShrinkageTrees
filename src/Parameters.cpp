@@ -48,11 +48,6 @@ void Parameters::SetGlobalParameters(size_t index, double new_parameter) {
   global_parameters[index] = new_parameter;
 }
 
-// Returns all node-specific parameters (pointer to array)
-const double* Parameters::GetAllParameters() const {
-  return parameters;
-}
-
 // Retrieves a node-specific parameter at a given index
 double Parameters::GetParameters(size_t index) const {
   return parameters[index];
@@ -61,9 +56,4 @@ double Parameters::GetParameters(size_t index) const {
 // Retrieves a global parameter at a given index
 double Parameters::GetGlobalParameters(size_t index) const {
   return global_parameters[index];
-}
-
-// Retrieves the total number of node-specific parameters
-size_t Parameters::GetNumberOfParameters() const {
-  return number_of_parameters;
 }

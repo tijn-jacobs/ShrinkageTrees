@@ -35,7 +35,6 @@ Rcpp::List HorseTrees_cpp(
   SEXP param2SEXP,
   SEXP prior_typeSEXP,
   SEXP reversibleSEXP,
-  SEXP store_parametersSEXP,
   SEXP store_posterior_sampleSEXP,
   SEXP verboseSEXP
 ) {
@@ -79,7 +78,6 @@ Rcpp::List HorseTrees_cpp(
   double param1 = Rcpp::as<double>(param1SEXP);   
   double param2 = Rcpp::as<double>(param2SEXP);
   string prior_type = Rcpp::as<string>(prior_typeSEXP);
-  bool store_parameters =  Rcpp::as<bool>(store_parametersSEXP);
 
   bool print_progress = Rcpp::as<bool>(verboseSEXP);
 
@@ -124,8 +122,6 @@ Rcpp::List HorseTrees_cpp(
   }
   store_split_counts     = Rcpp::NumericMatrix(N_post, p);
 
-  std::vector<size_t> cumulative_inclusion_count(p, 0);
-  
   // Initialize the C-based random number generator
   RandomGenerator random;
 
@@ -134,16 +130,14 @@ Rcpp::List HorseTrees_cpp(
   
   if (prior_type == "horseshoe") {
     prior = PriorType::Horseshoe;
-  } else if (prior_type == "fixed" || prior_type == "standard") {
+  } else if (prior_type == "standard") {
     prior = PriorType::FixedVariance;
   } else if (prior_type == "halfcauchy") {
     prior = PriorType::HalfCauchy;
-  } else if (prior_type == "horseshoe_fw") {
-    prior = PriorType::Horseshoe_fw;
   } else if (prior_type == "dirichlet") {
     prior = PriorType::FixedVariance; // <- This should be an empty prior!!!
   } else {
-    Rcpp::stop("Invalid prior type provided. Choose one of: 'horseshoe', 'fixed', 'halfcauchy', 'horseshoe_fw', 'standard', 'dirichlet.");
+    Rcpp::stop("Invalid prior type provided. Choose one of: 'horseshoe', 'halfcauchy', 'standard', 'dirichlet'.");
   }
   
   // Initialize the scale mixture prior on the step heights in the leaves
@@ -179,35 +173,6 @@ Rcpp::List HorseTrees_cpp(
   double sum_accept = 0;
   double acceptance_ratio;
 
-  int max_stored_leaves = 1;
-  if(store_parameters)  max_stored_leaves = 20;
-  // std::vector<Tree>* all_trees = forest.GetTreesPointer();
-
-  Rcpp::NumericMatrix store_global_parameters;
-  Rcpp::NumericMatrix store_local_parameters;
-  Rcpp::IntegerMatrix store_local_indices;
-
-  if (store_parameters) {
-    store_global_parameters = Rcpp::NumericMatrix(N_post, number_of_trees);
-    store_local_parameters = Rcpp::NumericMatrix(N_post, max_stored_leaves * number_of_trees);
-    store_local_indices = Rcpp::IntegerMatrix(N_post, max_stored_leaves * number_of_trees);
-    
-    // Initialize with -2 for debugging (optional)
-    store_global_parameters.fill(-2);
-    store_local_parameters.fill(-2);
-    store_local_indices.fill(-2);
-  }
-
-  // Forest wide Horseshoe shrinkage parameter and aux.
-  double forestwide_shrinkage = 1.0;
-  double forestwide_auxiliary = 1.0;
-  Rcpp::NumericVector store_forestwide_shrinkage;
-  
-  if (prior_type == "horseshoe_fw") {
-    store_forestwide_shrinkage = Rcpp::NumericVector(N_post);
-    store_forestwide_shrinkage.fill(0);
-  }  
-
   time_t time_stamp;
   int time1 = time(&time_stamp);
   
@@ -241,22 +206,6 @@ Rcpp::List HorseTrees_cpp(
       accepted
     );
     
-  /*
-    // Update fores wide shrinkage parameter (outer Gibbs step)
-    if (prior_type == "horseshoe_fw") {
-      UpdateForestwideShrinkage(
-        all_trees,
-        forestwide_shrinkage,
-        forestwide_auxiliary,
-        param2,
-        store_forestwide_shrinkage,
-        i,
-        N_burn,
-        random
-      );
-    }
-  */
-
     // Update sigma (outer Gibbs step)
     UpdateSigma(
       sigma_known,
@@ -286,49 +235,6 @@ Rcpp::List HorseTrees_cpp(
       random
     );
 
-    /*
-    // Save the (averages for now) of the leaf node parameters
-    if (store_parameters && i >= N_burn) {
-      size_t tree_counter = 0;
-
-      for (Tree& tree : *all_trees) {
-        // Collect all leaf nodes
-        std::vector<Tree*> leaf_vector;
-        tree.CollectLeaves(leaf_vector);
-
-        // Iterate through the collected leaf nodes
-        for (size_t leaf_index = 0; leaf_index < leaf_vector.size(); ++leaf_index) {
-          Tree* leaf = leaf_vector[leaf_index];
-              
-          int split_var_int = - 1;
-
-          // Get the single parameter for the current leaf
-          double parameter = leaf->GetParameters(1);  // Assuming GetParameters() returns a single double
-          if (leaf->GetParent()) {
-            split_var_int = static_cast<int>(leaf->GetParent()->GetSplitVar());
-          } 
-
-          // Compute the column index for this leaf
-          size_t col_index = tree_counter * max_stored_leaves + leaf_index;
-
-          // Ensure col_index does not exceed matrix bounds
-          if (col_index < static_cast<size_t>(store_local_parameters.ncol())) {
-              store_local_parameters(i - N_burn, col_index) = parameter;
-              store_local_indices(i - N_burn, col_index) = split_var_int;
-          } else {
-              Rcpp::stop("Index out of bounds while storing leaf parameters.");
-          }
-        }
-
-        // Retrieve the global parameters from the root node and store it
-        store_global_parameters(i - N_burn, tree_counter) = tree.GetGlobalParameters(0);
-
-        // Keep track of the trees
-        tree_counter++;
-      }
-    }
-    */
-
     if (i >= N_burn) {
       // Store posterior mean of training predictions
       for (size_t k = 0; k < n; k++) {
@@ -340,11 +246,6 @@ Rcpp::List HorseTrees_cpp(
         for (size_t k = 0; k < n; k++) {
           train_predictions_sample(i - N_burn, k) = forest.GetPrediction(k);
         }
-      }
-
-      // Accumulate variable inclusion counts
-      for (size_t var = 0; var < p; ++var) {
-        cumulative_inclusion_count[var] += forest.GetVariableInclusionCount()[var];
       }
 
       // Predict test set
@@ -417,14 +318,6 @@ Rcpp::List HorseTrees_cpp(
   if (store_posterior_sample) {
     results["test_predictions_sample"] = test_predictions_sample;
     results["train_predictions_sample"] = train_predictions_sample;
-  } 
-  if (store_parameters) {
-    results["global_shrinkage_parameters"] = store_global_parameters;
-    results["local_shrinkage_parameters"] = store_local_parameters;
-    results["local_splitting_variables"] = store_local_indices;
-  }
-  if (prior_type == "horseshoe_fw") {
-    results["forestwide_shrinkage"] = store_forestwide_shrinkage;
   } 
   if (dirichlet_bool) {
     results["alpha_dirichlet"] = store_alpha_dirichlet;

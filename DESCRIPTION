@@ -2,7 +2,7 @@ Package: ShrinkageTrees
 Type: Package
 Title: Bayesian Tree Ensembles for Survival Analysis and Causal Inference
 Version: 2.1.1
-Date: 2026-11-11
+Date: 2026-11-18
 Authors@R: 
     c(person("Tijn", "Jacobs",
              role = c("aut", "cre"),

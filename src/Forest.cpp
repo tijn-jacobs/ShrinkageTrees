@@ -30,11 +30,6 @@ double* Forest::GetPredictions( ) const {
   return predictions;
 }
 
-// Getter for the pointer to the trees vector
-std::vector<Tree>* Forest::GetTreesPointer() {
-    return &trees;
-}
-
 // Initialize data and related structures within the Forest class.
 // Sets dimensions, pointers to input data, allocates memory for working
 // variables (predictions, residuals, temporary_fit), initializes cutpoints, 

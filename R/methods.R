@@ -137,7 +137,6 @@ predict.ShrinkageTrees <- function(object, newdata, level = 0.95, ...) {
       param2SEXP               = args$param2,
       prior_typeSEXP           = object$prior$prior_type_cpp,
       reversibleSEXP           = args$reversible,
-      store_parametersSEXP     = FALSE,
       store_posterior_sampleSEXP = TRUE,
       verboseSEXP              = FALSE
     )

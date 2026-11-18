@@ -218,9 +218,6 @@ public:
   // Recursively find the cut value for a given split variable.
   size_t FindSameCut(size_t split_var) const;
 
-  // Returns the number of observations that fall into this node.
-  size_t NodeSize(Data& data, Cutpoints& cutpoints);
-
   // Funcions to manage leaf_index_
   inline void   ResetLeafIndex()         { leaf_index_ = std::numeric_limits<size_t>::max(); }
   inline void   SetLeafIndex(size_t idx) { leaf_index_ = idx; }

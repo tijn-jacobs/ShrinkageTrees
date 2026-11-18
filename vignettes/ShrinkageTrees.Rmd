@@ -148,9 +148,7 @@ are:
   shrinkage parameter. This provides per-leaf adaptivity without the
   additional pooling across the ensemble.
 
-A forest-wide variant of the horseshoe (`prior_type = "horseshoe_fw"`)
-shares a single global $\tau$ across all trees in the forest rather than
-one per tree. These priors can be selected in `ShrinkageTrees()` and
+These priors can be selected in `ShrinkageTrees()` and
 `CausalShrinkageForest()` via the `prior_type` argument, and can be
 combined with DART's Dirichlet splitting prior for simultaneous
 structural and parametric regularisation.
@@ -634,10 +632,9 @@ cat("SurvivalBART (IC) class:", class(fit_sbart_ic), "\n")
 While `HorseTrees()` fixes the prior to the horseshoe, the more general
 `ShrinkageTrees()` function exposes the `prior_type` argument, allowing
 the user to select among all implemented regularisation strategies.
-Available options are `"horseshoe"`, `"horseshoe_fw"` (forest-wide),
-`"half-cauchy"`, `"standard"`
+Available options are `"horseshoe"`, `"half-cauchy"`, `"standard"`
 (classical BART), and `"dirichlet"` (DART). Below we compare the
-per-tree horseshoe and the forest-wide horseshoe on a continuous outcome.
+horseshoe and the half-Cauchy prior on a continuous outcome.
 
 ```{r shrinkage-continuous}
 set.seed(3)
@@ -657,14 +654,13 @@ fit_hs <- ShrinkageTrees(
   verbose         = FALSE
 )
 
-# Forest-wide horseshoe (horseshoe_fw)
-fit_fw <- ShrinkageTrees(
+# Half-Cauchy prior (local shrinkage only)
+fit_hc <- ShrinkageTrees(
   y               = y_cont,
   X_train         = X_syn,
   outcome_type    = "continuous",
-  prior_type      = "horseshoe_fw",
+  prior_type      = "half-cauchy",
   local_hp        = 1.0 / sqrt(5),
-  global_hp       = 1.0 / sqrt(5),
   number_of_trees = 5,
   N_post          = 50,
   N_burn          = 25,
@@ -673,8 +669,8 @@ fit_fw <- ShrinkageTrees(
 
 cat("Horseshoe   — train RMSE:",
     round(sqrt(mean((fit_hs$train_predictions - y_cont)^2)), 3), "\n")
-cat("Horseshoe FW— train RMSE:",
-    round(sqrt(mean((fit_fw$train_predictions - y_cont)^2)), 3), "\n")
+cat("Half-Cauchy — train RMSE:",
+    round(sqrt(mean((fit_hc$train_predictions - y_cont)^2)), 3), "\n")
 ```
 
 ### SurvivalBART and SurvivalDART
@@ -1001,34 +997,6 @@ cat("Acceptance ratio (control):",
     round(fit_csf$acceptance_ratio_control, 3), "\n")
 cat("Acceptance ratio (treat)  :",
     round(fit_csf$acceptance_ratio_treat, 3), "\n")
-```
-
-The `horseshoe_fw` prior adds a forest-wide shrinkage parameter that is
-tracked in the fitted object.
-
-```{r causal-shrinkage-fw}
-set.seed(11)
-fit_fw2 <- CausalShrinkageForest(
-  y                         = y_causal,
-  X_train_control           = X_syn,
-  X_train_treat             = X_syn,
-  treatment_indicator_train = W_syn,
-  outcome_type              = "continuous",
-  prior_type_control        = "horseshoe_fw",
-  prior_type_treat          = "horseshoe_fw",
-  local_hp_control          = lh,
-  global_hp_control         = lh,
-  local_hp_treat            = lh,
-  global_hp_treat           = lh,
-  number_of_trees_control   = 5,
-  number_of_trees_treat     = 5,
-  N_post                    = 50,
-  N_burn                    = 25,
-  verbose                   = FALSE
-)
-
-cat("Forest-wide shrinkage (control, first 5 draws):\n")
-print(round(fit_fw2$forestwide_shrinkage_control[1:5], 4))
 ```
 
 ## Posterior Projection

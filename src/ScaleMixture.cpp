@@ -276,96 +276,6 @@ void Horseshoe::GlobalUpdate(Parameters& global_parameters,
 
 
 
-//                            //
-//   Horseshoe Forest Wide    //
-//                            //
-
-
-Horseshoe_fw::Horseshoe_fw(double _alpha_local)
-  : alpha_local(_alpha_local) {}
-
-// Propose new values for lambda and nu in the Horseshoe Forest Wide prior
-void Horseshoe_fw::Propose(Parameters& parameters, 
-                        const Parameters& global_parameters, 
-                        const double& residual, 
-                        const double& number_of_observations, 
-                        const double& sigma,
-                        const double& omega, 
-                        Random& random) {
-  
-  // Draw the auxiliary variable nu from an inverse gamma distribution
-  double scale_nu = 1 / (alpha_local * alpha_local) + 1 / parameters.GetParameters(1);
-  double nu = 1 / random.gamma(1.0, scale_nu); 
-  parameters.SetParameters(2, nu);  // Set nu in the parameters
-  
-  // Draw lambda given nu from an inverse gamma distribution
-  double tau = global_parameters.GetGlobalParameters(0);
-  double h = parameters.GetParameters(0);
-  double scale_lambda = 1.0 / nu + (h * h) / (2.0 * tau * omega);
-  double lambda = 1 / random.gamma(1.0, scale_lambda);
-  parameters.SetParameters(1, lambda);  // Set lambda in the parameters
-}
-
-// Compute the log of the proposal density for the Horseshoe Forest Wide prior
-double Horseshoe_fw::LogProposeDensity(const Parameters& parameters, 
-                                    const Parameters& global_parameters, 
-                                    const double& residual, 
-                                    const double& number_of_observations, 
-                                    const double& sigma,
-                                    const double& omega) {
-  
-  // Compute the scale for nu and retrieve current nu
-  double scale_nu = 1 / (alpha_local * alpha_local) + 1 / parameters.GetParameters(1);
-  double nu = parameters.GetParameters(2);
-  
-  // Compute the scale for lambda and retrieve current lambda
-  double tau = global_parameters.GetGlobalParameters(0);
-  double h = parameters.GetParameters(0);  
-  double scale_lambda = 1.0 / nu + (h * h) / (2.0 * tau * omega);
-  double lambda = parameters.GetParameters(1);
-  
-  // Return the sum of the log of the inverse gamma densities
-  return log_inverse_gamma_pdf(nu, 1.0, scale_nu) +
-    log_inverse_gamma_pdf(lambda, 1.0, scale_lambda);
-}
-
-// Compute the log of the prior density for the Horseshoe Forest Wide prior
-double Horseshoe_fw::LogPrior(const Parameters& parameters, 
-                           const Parameters& global_parameters,
-                           const double& sigma,
-                           const double& omega) {
-  
-  // Return the sum of the log densities for lambda and nu
-  return log_inverse_gamma_pdf(parameters.GetParameters(1), 0.5, 
-                               1 / parameters.GetParameters(2)) +
-                                 log_inverse_gamma_pdf(parameters.GetParameters(2), 0.5, 
-                                                       1 / std::pow(alpha_local, 2));
-}
-
-
-// Get the variance based on the Horseshoe Forest Wide prior
-double Horseshoe_fw::GetVariance(const Parameters& parameters, 
-                              const Parameters& global_parameters) {
-  return global_parameters.GetGlobalParameters(0) * parameters.GetParameters(1);
-}
-
-// Return whether global parameters are used in this prior
-bool Horseshoe_fw::GetGlobal() {
-  return global;
-}
-
-// Perform global update for the Horseshoe Forest Wide prior based on leaf parameters
-void Horseshoe_fw::GlobalUpdate(Parameters& global_parameters, 
-                             const std::vector<Parameters*>& leaf_parameters, 
-                             const double& sigma, 
-                             const double& omega, 
-                             Random& random) {
-  
-  // No global update for the Horseshoe Forest Wide prior.
-  // This is performed forest wide via an outer Gibbs step.
-}
-
-
 //                 //
 // General objects //
 //                 //
@@ -380,8 +290,6 @@ EtaPrior* CreateEtaPrior(PriorType type, double param1, double param2) {
     return new HalfCauchy(param1, param2);
   case PriorType::Horseshoe:
     return new Horseshoe(param1, param2);
-  case PriorType::Horseshoe_fw:
-    return new Horseshoe_fw(param1);
   default:
     Rcpp::stop("Unsupported prior type");
   }

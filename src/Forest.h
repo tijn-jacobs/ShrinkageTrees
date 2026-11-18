@@ -120,7 +120,6 @@ public:
   std::vector<double>& GetVariableInclusionProb();
   double GetPrediction(size_t i) const;
   double* GetPredictions() const;
-  std::vector<Tree>* GetTreesPointer();
   size_t GetM() const { return m; }; 
   // const vector<double>& GetVariableInclusionProb() const { return variable_inclusion_prob; }
   // const vector<size_t>& GetVariableInclusionCount() const { return variable_inclusion_count; }

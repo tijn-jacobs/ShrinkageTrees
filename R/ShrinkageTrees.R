@@ -34,8 +34,7 @@
 #' \code{"interval-censored"}.
 #' @param number_of_trees Number of trees in the ensemble. Default is 200.
 #' @param prior_type Type of prior on the step heights. Options include
-#' `"horseshoe"`, `"horseshoe_fw"`, `"half-cauchy"`,
-#' `"standard"` and `"dirichlet"`.
+#' `"horseshoe"`, `"half-cauchy"`, `"standard"` and `"dirichlet"`.
 #' @param local_hp Local hyperparameter controlling shrinkage on individual
 #' step heights. Required for `prior_type = "standard"`.
 #'
@@ -125,10 +124,6 @@
 #' half-Cauchy distributions with scale hyperparameters \code{global_hp} and
 #' \code{local_hp}, respectively. The global shrinkage parameter is defined
 #' separately for each tree, allowing adaptive regularization per tree.
-#'
-#' The \code{horseshoe_fw} prior (forest-wide horseshoe) is similar to
-#' \code{horseshoe}, except that the global shrinkage parameter is shared
-#' across all trees in the forest simultaneously. 
 #'
 #' The \code{half-cauchy} prior considers only local shrinkage and does not
 #' include a global shrinkage component. It places a half-Cauchy prior on each
@@ -274,57 +269,15 @@ ShrinkageTrees <- function(y = NULL,
 
   # ── Multi-chain dispatch ──────────────────────────────────────────────────
   if (n_chains > 1) {
-    mc <- match.call()
+    # All evaluated arguments, passed on to the per-chain calls
+    chain_args <- mget(names(formals(ShrinkageTrees)), envir = environment())
+    chains     <- .run_chains(ShrinkageTrees, chain_args, n_chains, verbose)
 
-    # Collect all evaluated arguments for the per-chain calls
-    chain_args <- list(
-      y                      = y,
-      status                 = status,
-      X_train                = X_train,
-      X_test                 = X_test,
-      left_time              = left_time,
-      right_time             = right_time,
-      outcome_type           = outcome_type,
-      timescale              = timescale,
-      number_of_trees        = number_of_trees,
-      prior_type             = prior_type,
-      local_hp               = local_hp,
-      global_hp              = global_hp,
-      a_dirichlet            = a_dirichlet,
-      b_dirichlet            = b_dirichlet,
-      rho_dirichlet          = rho_dirichlet,
-      power                  = power,
-      base                   = base,
-      p_grow                 = p_grow,
-      p_prune                = p_prune,
-      nu                     = nu,
-      q                      = q,
-      sigma                  = sigma,
-      N_post                 = N_post,
-      N_burn                 = N_burn,
-      delayed_proposal       = delayed_proposal,
-      store_posterior_sample = store_posterior_sample,
-      n_chains               = 1,
-      verbose                = FALSE
-    )
-
-    n_cores <- .resolve_cores(n_chains)
-    if (verbose)
-      message("Running ", n_chains, " chains (", n_cores, " cores) ...")
-
-    chains <- parallel::mclapply(
-      seq_len(n_chains),
-      function(i) do.call(ShrinkageTrees, chain_args),
-      mc.cores = n_cores
-    )
-
-    combined       <- .combine_chains(chains)
-    combined$call  <- mc
+    combined      <- .combine_chains(chains)
+    combined$call <- match.call()
     return(combined)
   }
 
-
-  
   # Check outcome_type value
   allowed_types <- c("continuous", "binary", "right-censored", "interval-censored")
   if (!outcome_type %in% allowed_types) {
@@ -348,13 +301,15 @@ ShrinkageTrees <- function(y = NULL,
     if (timescale == "time" && any(left_time <= 0))
       stop("left_time contains non-positive values, but timescale = 'time' requires strictly positive times.")
   }
-  
+
   # Check prior_type value
-  allowed_prior <- c("horseshoe", "horseshoe_fw", "half-cauchy", "standard", "dirichlet")
+  if (prior_type == "horseshoe_fw") stop(.horseshoe_fw_removed("prior_type"))
+
+  allowed_prior <- c("horseshoe", "half-cauchy", "standard", "dirichlet")
   if (!prior_type %in% allowed_prior) {
-    stop("Invalid prior_type. Choose 'horseshoe', 'horseshoe_fw', 'half-cauchy', 'standard' or 'dirichlet.")
+    stop("Invalid prior_type. Choose 'horseshoe', 'half-cauchy', 'standard' or 'dirichlet'.")
   }
-  
+
   # Prior-specific checks
   #
   # For the horseshoe, unsupplied scales fall back to the calibrated default
@@ -366,12 +321,6 @@ ShrinkageTrees <- function(y = NULL,
     if (is.null(global_hp)) global_hp <- default_hp
   }
 
-  if (prior_type == "horseshoe_fw") {
-    if (is.null(local_hp) || is.null(global_hp)) {
-      stop("For prior_type = 'horseshoe_fw', you must provide both local_hp and global_hp.")
-    }
-  }
-  
   if (prior_type == "half-cauchy") {
     if (is.null(local_hp)) {
       stop("For prior_type = 'half-cauchy', you must provide local_hp.")
@@ -382,7 +331,7 @@ ShrinkageTrees <- function(y = NULL,
     global_hp <- 1
     prior_type <- "halfcauchy"
   }
-  
+
   # Default reversible flag
   reversible_flag <- TRUE
 
@@ -444,7 +393,7 @@ ShrinkageTrees <- function(y = NULL,
     if (length(y) != n_train)
       stop("The length of outcome vector y must match the number of rows in X_train.")
   }
-  
+
   # Check if dimensions match with test data
   if (!is.null(X_test)) {
     n_test <- nrow(X_test)
@@ -456,7 +405,7 @@ ShrinkageTrees <- function(y = NULL,
     n_test <- 1
     X_test <- as.numeric(colMeans(X_train))
   }
-  
+
   # Force data types to be numeric and plain arrays
   N_post <- as.integer(N_post)[1]
   N_burn <- as.integer(N_burn)[1]
@@ -466,230 +415,21 @@ ShrinkageTrees <- function(y = NULL,
   p_prune <- as.numeric(p_prune)[1]
   X_train_mat <- X_train                 # preserve matrix for predict() / vi plots
   X_train <- as.numeric(t(X_train))
-  
+
   # Default rho to number of features
   if (is.null(rho_dirichlet)) {
     rho_dirichlet <- p_features
   }
-  if (prior_type == "dirichlet") { 
-    dirichlet <- TRUE 
-  } else { 
-    dirichlet <- FALSE 
-  }
+  dirichlet <- prior_type == "dirichlet"
+  survival  <- outcome_type %in% c("right-censored", "interval-censored")
 
-  if (outcome_type == "right-censored") {
+  # Only set for interval-censored outcomes
+  left_time_raw  <- NULL
+  right_time_raw <- NULL
+  ic_indicator   <- NULL
 
-    # Convert y to numeric for C++ compatibility
-    y <- as.numeric(y)
+  if (outcome_type == "binary") {
 
-    # Log-transform survival times if timescale = "time"
-    if (timescale == "time") {
-      y <- log(y)
-    }
-
-    # Save y before centering/standardizing (for predict())
-    y_train_raw <- y
-
-    # Obtain estimated mean and standard deviation using censored_info()
-    cens_inf <- censored_info(y, status)
-    
-    # Center the data using estimated mean
-    y_mean <- cens_inf$mu
-    y <- y - y_mean
-    
-    # Determine sigma (timescale parameter) and whether it is known
-    if (is.null(sigma)) {
-      sigma_hat <- cens_inf$sd
-      if (prior_type == "standard" || prior_type == "dirichlet") sigma_hat <- 1
-      sigma_known <- FALSE
-    } else {
-      sigma_hat <- sigma
-      sigma_known <- TRUE
-    }
-    
-    # Standardize the centered data
-    y <- y / sigma_hat
-    
-    # Set survival flag
-    survival <- TRUE
-    
-    # Compute lambda parameter for error distribution prior
-    qchi <- qchisq(1.0 - q, nu)
-    lambda <- (sigma_hat^2 * qchi) / nu
-
-    # Fit a HorseTrees model
-    fit <- HorseTrees_cpp(
-      nSEXP = n_train,
-      pSEXP = p_features,
-      n_testSEXP = n_test,
-      X_trainSEXP = X_train,
-      ySEXP = y,
-      status_indicatorSEXP = status,
-      is_survivalSEXP = survival,
-      observed_left_timeSEXP = numeric(n_train),
-      observed_right_timeSEXP = y + 0,
-      interval_censoring_indicatorSEXP = numeric(n_train),
-      X_testSEXP = X_test,
-      number_of_treesSEXP = number_of_trees,
-      N_postSEXP = N_post,
-      N_burnSEXP = N_burn,
-      delayed_proposalSEXP = delayed_proposal,
-      powerSEXP = power,
-      baseSEXP = base,
-      p_growSEXP = p_grow,
-      p_pruneSEXP = p_prune,
-      nuSEXP = nu,
-      lambdaSEXP = lambda,
-      dirichlet_boolSEXP = dirichlet,
-      a_dirichletSEXP = a_dirichlet,
-      b_dirichletSEXP = b_dirichlet,
-      rho_dirichletSEXP = rho_dirichlet,
-      sigmaSEXP = sigma_hat,
-      sigma_knownSEXP = sigma_known,
-      omegaSEXP = 1,
-      param1SEXP = local_hp,
-      param2SEXP = global_hp,
-      prior_typeSEXP = prior_type,
-      reversibleSEXP = reversible_flag,
-      store_parametersSEXP = FALSE,
-      store_posterior_sampleSEXP = store_posterior_sample,
-      verboseSEXP = verbose
-    )
-    
-    if (timescale == "time") {
-      fit$train_predictions <- exp(fit$train_predictions * sigma_hat + y_mean)
-      fit$test_predictions <- exp(fit$test_predictions * sigma_hat + y_mean)
-      if (store_posterior_sample) {
-        fit$train_predictions_sample <- exp(fit$train_predictions_sample * sigma_hat + y_mean)
-        fit$test_predictions_sample <- exp(fit$test_predictions_sample * sigma_hat + y_mean)
-      }
-    } else { # If timescale is "log"
-      fit$train_predictions <- fit$train_predictions * sigma_hat + y_mean
-      fit$test_predictions <- fit$test_predictions * sigma_hat + y_mean
-      if (store_posterior_sample) { 
-        fit$train_predictions_sample <- fit$train_predictions_sample * sigma_hat + y_mean
-        fit$test_predictions_sample <- fit$test_predictions_sample * sigma_hat + y_mean
-      }
-    }
-    
-  # If interval-censored
-  } else if (outcome_type == "interval-censored") {
-
-    left_time <- as.numeric(left_time)
-    right_time <- as.numeric(right_time)
-
-    # Derive status: 1 if exact (left == right), 0 otherwise
-    status <- as.integer(left_time == right_time)
-
-    # Derive interval-censoring indicator: 1 if left < right and right is finite
-    ic_indicator <- as.integer(left_time < right_time & is.finite(right_time))
-
-    # Derive initial y values for MCMC
-    y <- ifelse(status == 1, left_time,
-                ifelse(ic_indicator == 1, (left_time + right_time) / 2,
-                       left_time))
-
-    # Log-transform if timescale = "time"
-    if (timescale == "time") {
-      y <- log(y)
-      left_time <- log(left_time)
-      right_time <- log(right_time)
-    }
-
-    # Estimate mu and sd. This must see the ORIGINAL bounds: right_time is
-    # still Inf for the right-censored subjects, and Surv(type = "interval2")
-    # reads a right bound equal to the left bound as an exact event.
-    cens_inf <- censored_info(y, status, left_time = left_time,
-                              right_time = right_time, ic_indicator = ic_indicator)
-
-    # For right-censored obs (right_time == Inf): C++ expects finite boundary
-    right_time[!is.finite(right_time)] <- left_time[!is.finite(right_time)]
-
-    # Save before centering/standardizing (for predict())
-    y_train_raw <- y
-    left_time_raw <- left_time
-    right_time_raw <- right_time
-
-    y_mean <- cens_inf$mu
-    y <- y - y_mean
-    left_time <- left_time - y_mean
-    right_time <- right_time - y_mean
-
-    if (is.null(sigma)) {
-      sigma_hat <- cens_inf$sd
-      if (prior_type == "standard" || prior_type == "dirichlet") sigma_hat <- 1
-      sigma_known <- FALSE
-    } else {
-      sigma_hat <- sigma
-      sigma_known <- TRUE
-    }
-
-    y <- y / sigma_hat
-    left_time <- left_time / sigma_hat
-    right_time <- right_time / sigma_hat
-
-    survival <- TRUE
-
-    qchi <- qchisq(1.0 - q, nu)
-    lambda <- (sigma_hat^2 * qchi) / nu
-
-    fit <- HorseTrees_cpp(
-      nSEXP = n_train,
-      pSEXP = p_features,
-      n_testSEXP = n_test,
-      X_trainSEXP = X_train,
-      ySEXP = y,
-      status_indicatorSEXP = status,
-      is_survivalSEXP = survival,
-      observed_left_timeSEXP = left_time,
-      observed_right_timeSEXP = right_time,
-      interval_censoring_indicatorSEXP = ic_indicator,
-      X_testSEXP = X_test,
-      number_of_treesSEXP = number_of_trees,
-      N_postSEXP = N_post,
-      N_burnSEXP = N_burn,
-      delayed_proposalSEXP = delayed_proposal,
-      powerSEXP = power,
-      baseSEXP = base,
-      p_growSEXP = p_grow,
-      p_pruneSEXP = p_prune,
-      nuSEXP = nu,
-      lambdaSEXP = lambda,
-      dirichlet_boolSEXP = dirichlet,
-      a_dirichletSEXP = a_dirichlet,
-      b_dirichletSEXP = b_dirichlet,
-      rho_dirichletSEXP = rho_dirichlet,
-      sigmaSEXP = sigma_hat,
-      sigma_knownSEXP = sigma_known,
-      omegaSEXP = 1,
-      param1SEXP = local_hp,
-      param2SEXP = global_hp,
-      prior_typeSEXP = prior_type,
-      reversibleSEXP = reversible_flag,
-      store_parametersSEXP = FALSE,
-      store_posterior_sampleSEXP = store_posterior_sample,
-      verboseSEXP = verbose
-    )
-
-    # Back-transform predictions (identical to right-censored)
-    if (timescale == "time") {
-      fit$train_predictions <- exp(fit$train_predictions * sigma_hat + y_mean)
-      fit$test_predictions <- exp(fit$test_predictions * sigma_hat + y_mean)
-      if (store_posterior_sample) {
-        fit$train_predictions_sample <- exp(fit$train_predictions_sample * sigma_hat + y_mean)
-        fit$test_predictions_sample <- exp(fit$test_predictions_sample * sigma_hat + y_mean)
-      }
-    } else {
-      fit$train_predictions <- fit$train_predictions * sigma_hat + y_mean
-      fit$test_predictions <- fit$test_predictions * sigma_hat + y_mean
-      if (store_posterior_sample) {
-        fit$train_predictions_sample <- fit$train_predictions_sample * sigma_hat + y_mean
-        fit$test_predictions_sample <- fit$test_predictions_sample * sigma_hat + y_mean
-      }
-    }
-
-    # If binary
-  } else if (outcome_type == "binary") {
     y <- as.numeric(y)
     y_train_raw      <- y
     latent_threshold <- qnorm(mean(y))
@@ -697,7 +437,7 @@ ShrinkageTrees <- function(y = NULL,
     sigma_known      <- TRUE
     y_mean           <- 0
     lambda           <- 0   # unused for probit
-    
+
     fit <- probitHorseTrees_cpp(
       nSEXP = n_train,
       pSEXP = p_features,
@@ -722,7 +462,7 @@ ShrinkageTrees <- function(y = NULL,
       store_posterior_sampleSEXP = store_posterior_sample,
       verboseSEXP = verbose
     )
-    
+
     # Add the pnorm transform
     fit$train_probabilities <- pnorm(fit$train_predictions)
     fit$test_probabilities<- pnorm(fit$test_predictions)
@@ -730,39 +470,111 @@ ShrinkageTrees <- function(y = NULL,
       fit$train_probabilities_sample <- pnorm(fit$train_predictions_sample)
       fit$test_probabilities_sample <- pnorm(fit$test_predictions_sample)
     }
-    
-    # Otherwise, continuous
+
   } else {
 
-    # Force outcome to plain numeric vector
-    y <- as.numeric(y)
+    # ── Outcome-specific preparation ────────────────────────────────────────
+    # Each branch sets: y and y_train_raw (on the modelling scale), status,
+    # the centring mean y_mean, and the data-based scale estimate sigma_data.
+    if (outcome_type == "right-censored") {
 
-    # Save y before centering/standardizing (for predict())
-    y_train_raw <- y
+      # Convert y to numeric for C++ compatibility
+      y <- as.numeric(y)
 
-    # Create dummy status vector (not used for continuous)
-    status <- rep(1, n_train)
-    survival <- FALSE
-    
-    # Determine prior guess of sigma 
+      # Log-transform survival times if timescale = "time"
+      if (timescale == "time") {
+        y <- log(y)
+      }
+
+      # Save y before centering/standardizing (for predict())
+      y_train_raw <- y
+
+      # Obtain estimated mean and standard deviation using censored_info()
+      cens_inf   <- censored_info(y, status)
+      y_mean     <- cens_inf$mu
+      sigma_data <- cens_inf$sd
+
+    } else if (outcome_type == "interval-censored") {
+
+      left_time <- as.numeric(left_time)
+      right_time <- as.numeric(right_time)
+
+      # Derive status, interval-censoring indicator and initial y for MCMC
+      ic           <- .interval_censoring(left_time, right_time)
+      status       <- ic$status
+      ic_indicator <- ic$ic_indicator
+      y            <- ic$y
+
+      # Log-transform if timescale = "time"
+      if (timescale == "time") {
+        y <- log(y)
+        left_time <- log(left_time)
+        right_time <- log(right_time)
+      }
+
+      # Estimate mu and sd. This must see the ORIGINAL bounds: right_time is
+      # still Inf for the right-censored subjects, and Surv(type = "interval2")
+      # reads a right bound equal to the left bound as an exact event.
+      cens_inf <- censored_info(y, status, left_time = left_time,
+                                right_time = right_time)
+
+      # For right-censored obs (right_time == Inf): C++ expects finite boundary
+      right_time[!is.finite(right_time)] <- left_time[!is.finite(right_time)]
+
+      # Save before centering/standardizing (for predict())
+      y_train_raw <- y
+      left_time_raw <- left_time
+      right_time_raw <- right_time
+
+      y_mean     <- cens_inf$mu
+      sigma_data <- cens_inf$sd
+
+    } else {
+
+      # Force outcome to plain numeric vector
+      y <- as.numeric(y)
+
+      # Save y before centering/standardizing (for predict())
+      y_train_raw <- y
+
+      # Create dummy status vector (not used for continuous)
+      status <- rep(1, n_train)
+
+      y_mean     <- mean(y)
+      sigma_data <- sd(y)
+    }
+
+    # ── Shared from here on ─────────────────────────────────────────────────
+    # Determine sigma (scale parameter) and whether it is known
     if (is.null(sigma)) {
-      sigma_hat <- sd(y)      # Estimate sigma from data
+      sigma_hat <- sigma_data
       if (prior_type == "standard" || prior_type == "dirichlet") sigma_hat <- 1
       sigma_known <- FALSE
     } else {
-      sigma_hat <- sigma      # Use provided sigma
+      sigma_hat <- sigma
       sigma_known <- TRUE
     }
-    
-    # Compute hyperparameters of error variance prior
+
+    # Compute lambda parameter for error distribution prior
     qchi <- qchisq(1.0 - q, nu)
     lambda <- (sigma_hat^2 * qchi) / nu
-    
-    # Compute mean and standardize  the outcome
-    y_mean <- mean(y)
-    y <- y - y_mean
-    y <- y / sigma_hat  # Standardize y
-    
+
+    # Center and standardize the outcome
+    y <- (y - y_mean) / sigma_hat
+
+    # Censoring bounds on the standardized scale. Without interval censoring
+    # the right bound is a copy of y: the sampler overwrites y in place when
+    # it augments censored observations.
+    if (outcome_type == "interval-censored") {
+      left_time_cpp    <- (left_time - y_mean) / sigma_hat
+      right_time_cpp   <- (right_time - y_mean) / sigma_hat
+      ic_indicator_cpp <- ic_indicator
+    } else {
+      left_time_cpp    <- numeric(n_train)
+      right_time_cpp   <- y + 0
+      ic_indicator_cpp <- numeric(n_train)
+    }
+
     fit <- HorseTrees_cpp(
       nSEXP = n_train,
       pSEXP = p_features,
@@ -771,9 +583,9 @@ ShrinkageTrees <- function(y = NULL,
       ySEXP = y,
       status_indicatorSEXP = status,
       is_survivalSEXP = survival,
-      observed_left_timeSEXP = numeric(n_train),
-      observed_right_timeSEXP = y + 0,
-      interval_censoring_indicatorSEXP = numeric(n_train),
+      observed_left_timeSEXP = left_time_cpp,
+      observed_right_timeSEXP = right_time_cpp,
+      interval_censoring_indicatorSEXP = ic_indicator_cpp,
       X_testSEXP = X_test,
       number_of_treesSEXP = number_of_trees,
       N_postSEXP = N_post,
@@ -796,34 +608,38 @@ ShrinkageTrees <- function(y = NULL,
       param2SEXP = global_hp,
       prior_typeSEXP = prior_type,
       reversibleSEXP = reversible_flag,
-      store_parametersSEXP = FALSE,
       store_posterior_sampleSEXP = store_posterior_sample,
       verboseSEXP = verbose
     )
-    
-    fit$train_predictions <- fit$train_predictions * sigma_hat + y_mean
-    fit$test_predictions <- fit$test_predictions * sigma_hat + y_mean
+
+    # Back-transform predictions to the original scale. Survival predictions
+    # are exponentiated when timescale = "time".
+    if (survival && timescale == "time") {
+      back_transform <- function(x) exp(x * sigma_hat + y_mean)
+    } else {
+      back_transform <- function(x) x * sigma_hat + y_mean
+    }
+
+    fit$train_predictions <- back_transform(fit$train_predictions)
+    fit$test_predictions  <- back_transform(fit$test_predictions)
     if (store_posterior_sample) {
-      fit$train_predictions_sample <- fit$train_predictions_sample * sigma_hat + y_mean
-      fit$test_predictions_sample <- fit$test_predictions_sample * sigma_hat + y_mean
+      fit$train_predictions_sample <- back_transform(fit$train_predictions_sample)
+      fit$test_predictions_sample  <- back_transform(fit$test_predictions_sample)
     }
   }
-  
+
   # remove burn-in of sigma
   if (!sigma_known) {
     fit$sigma <- fit$sigma[-seq_len(N_burn)]
-  } 
-
-  prior_type_user <- prior_type
-  prior_type_cpp <- prior_type  # after your conversions
+  }
 
   obj <- NewShrinkageTrees(
     fit              = fit,
     call             = match.call(),
     outcome_type     = outcome_type,
     timescale        = timescale,
-    prior_type_user  = prior_type_user,
-    prior_type_cpp   = prior_type_cpp,
+    prior_type_user  = prior_type,
+    prior_type_cpp   = prior_type,
     dirichlet        = dirichlet,
     n_train          = n_train,
     p_features       = p_features,
@@ -838,10 +654,10 @@ ShrinkageTrees <- function(y = NULL,
     y_mean           = y_mean,
     y_train          = y_train_raw,
     X_train          = X_train_mat,
-    status_train     = if (outcome_type %in% c("right-censored", "interval-censored")) status else NULL,
-    left_time_train  = if (outcome_type == "interval-censored") left_time_raw else NULL,
-    right_time_train = if (outcome_type == "interval-censored") right_time_raw else NULL,
-    ic_indicator_train = if (outcome_type == "interval-censored") ic_indicator else NULL,
+    status_train     = if (survival) status else NULL,
+    left_time_train  = left_time_raw,
+    right_time_train = right_time_raw,
+    ic_indicator_train = ic_indicator,
     power            = power,
     base             = base,
     p_grow           = p_grow,
@@ -861,4 +677,3 @@ ShrinkageTrees <- function(y = NULL,
 
   return(obj)
 }
-

@@ -562,26 +562,3 @@ void Tree::PrintFullTree(int depth, Cutpoints& cutpoints, Data& data) {
   }
 }
 
-// Method to calculate the size of the node (how many data points fall into it)
-size_t Tree::NodeSize(Data& data, Cutpoints& cutpoints) {
-  size_t count = 0;
-
-  // Traverse through all observations in the dataset
-  for (size_t i = 0; i < data.GetN(); ++i) {
-    double* x = data.GetDataRow(i); // Get the i-th observation
-
-    // Use FindLeaf to determine which leaf the observation falls into
-    Tree* leaf = FindLeaf(x, cutpoints);
-
-    // Debug output to show which observation falls into which leaf node
-    Rcpp::Rcout << "i: " << i << ", loc: " << leaf << ", x: " << x << endl;
-
-    // Check if this node is the leaf node
-    if (leaf->NodeID() == this->NodeID()) {
-      ++count;  // Increment count if observation falls into this leaf
-    }
-  }
-
-  return count;  // Return the total number of observations in this node
-}
-

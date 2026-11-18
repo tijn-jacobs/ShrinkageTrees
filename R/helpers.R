@@ -21,6 +21,32 @@
 }
 
 
+#' Derive status, censoring indicator and starting values from interval bounds
+#'
+#' Shared by the fitting functions and the survival wrappers, so that the
+#' encoding of interval-censored data is defined in one place.
+#'
+#' @param left_time,right_time Numeric vectors of interval bounds. An exact
+#'   event has `left_time == right_time`; a right-censored observation has
+#'   `right_time = Inf`.
+#'
+#' @return A list with elements:
+#'   \item{status}{1 for an exact event, 0 otherwise.}
+#'   \item{ic_indicator}{1 for a finite interval with `left < right`, 0
+#'     otherwise.}
+#'   \item{y}{Starting value for the latent event time: the event time, the
+#'     interval midpoint, or the censoring time.}
+#' @noRd
+.interval_censoring <- function(left_time, right_time) {
+  status <- as.integer(left_time == right_time)
+  ic_indicator <- as.integer(left_time < right_time & is.finite(right_time))
+  y <- ifelse(status == 1, left_time,
+              ifelse(ic_indicator == 1, (left_time + right_time) / 2,
+                     left_time))
+  list(status = status, ic_indicator = ic_indicator, y = y)
+}
+
+
 #' Compute mean estimate for censored data
 #'
 #' Estimates the mean and standard deviation for right-censored or
@@ -31,18 +57,13 @@
 #' @param status Numeric vector; event indicator (1 = event, 0 = censored).
 #' @param left_time Optional numeric vector of left boundaries (for interval censoring).
 #' @param right_time Optional numeric vector of right boundaries (for interval censoring).
-#' @param ic_indicator Optional numeric vector; 1 = interval-censored, 0 = right-censored/exact.
 #'
 #' @return A list with elements:
 #'   \item{mu}{Estimated mean of survival times.}
 #'   \item{sd}{Estimated standard deviation of survival times.}
-#'   \item{min}{Estimated minimum of survival times.}
-#'   \item{max}{Estimated maximum of survival times.}
 #'
-#' @importFrom stats dnorm pnorm
 #' @noRd
-censored_info <- function(y, status, left_time = NULL, right_time = NULL,
-                          ic_indicator = NULL) {
+censored_info <- function(y, status, left_time = NULL, right_time = NULL) {
 
   if (requireNamespace("survival", quietly = TRUE)) {
 
@@ -56,65 +77,62 @@ censored_info <- function(y, status, left_time = NULL, right_time = NULL,
       # that explicit and is what survreg() expects.
       right_time[!is.finite(right_time)] <- NA_real_
       surv_obj <- survival::Surv(left_time, right_time, type = "interval2")
-      fit <- survival::survreg(surv_obj ~ 1, dist = "gaussian")
-
-      mu <- as.numeric(fit$coefficients[1])
-      sd <- as.numeric(fit$scale)
-
-      # Impute censored values for min/max estimation
-      imputed_y <- y
-
-      # Right-censored observations: impute with Mills ratio
-      if (!is.null(ic_indicator)) {
-        rc_idx <- which(status == 0 & ic_indicator == 0)
-        if (length(rc_idx) > 0) {
-          a <- (y[rc_idx] - mu) / sd
-          lambda_val <- dnorm(a) / (1 - pnorm(a))
-          imputed_y[rc_idx] <- mu + sd * lambda_val
-        }
-      }
-
-      min_val <- min(imputed_y, na.rm = TRUE)
-      max_val <- max(imputed_y, na.rm = TRUE)
-
     } else {
-      # Right-censored path (existing)
-      fit <- survival::survreg(survival::Surv(y, status) ~ 1, dist = "gaussian")
-
-      mu <- as.numeric(fit$coefficients[1])
-      sd <- as.numeric(fit$scale)
-
-      # ---- IMPUTE censored values ----
-      cens_idx <- which(status == 0)
-      imputed_y <- y
-
-      if (length(cens_idx) > 0) {
-        a <- (y[cens_idx] - mu) / sd
-        lambda <- dnorm(a) / (1 - pnorm(a))     # Mills ratio
-        imputed_y[cens_idx] <- mu + sd * lambda # Replace censored with E[Y | Y > c]
-      }
-
-      # min/max after imputation
-      min_val <- min(imputed_y, na.rm = TRUE)
-      max_val <- max(imputed_y, na.rm = TRUE)
+      # Right-censored path
+      surv_obj <- survival::Surv(y, status)
     }
+
+    fit <- survival::survreg(surv_obj ~ 1, dist = "gaussian")
+    mu <- as.numeric(fit$coefficients[1])
+    sd <- as.numeric(fit$scale)
 
   } else {
 
     # Fallback: use only uncensored observations
-    min_val <- min(y, na.rm = TRUE)
-    max_val <- max(y, na.rm = TRUE)
-
     mu <- mean(y[status == 1], na.rm = TRUE)
     sd <- sd(y[status == 1], na.rm = TRUE)
   }
 
-  return(list(
-    mu = mu,
-    sd = sd,
-    min = min_val,
-    max = max_val
-  ))
+  list(mu = mu, sd = sd)
+}
+
+
+#' Run several independent chains of a fitting function
+#'
+#' @param fun The fitting function to call once per chain.
+#' @param args Named list of evaluated arguments for `fun`. `n_chains` and
+#'   `verbose` are overridden so each call runs a single silent chain.
+#' @param n_chains Number of chains.
+#' @param verbose Whether to print a one-line progress message.
+#'
+#' @return A list of fitted objects, one per chain.
+#' @noRd
+.run_chains <- function(fun, args, n_chains, verbose) {
+  args$n_chains <- 1
+  args$verbose  <- FALSE
+
+  n_cores <- .resolve_cores(n_chains)
+  if (verbose)
+    message("Running ", n_chains, " chains (", n_cores, " cores) ...")
+
+  parallel::mclapply(
+    seq_len(n_chains),
+    function(i) do.call(fun, args),
+    mc.cores = n_cores
+  )
+}
+
+# Row-bind (matrices) or concatenate (vectors) one field across chains.
+# Both return NULL when no chain has the field.
+.pool_matrix <- function(chains, field) {
+  mats <- lapply(chains, `[[`, field)
+  if (all(vapply(mats, is.null, logical(1)))) return(NULL)
+  do.call(rbind, mats)
+}
+.pool_vector <- function(chains, field) {
+  vecs <- lapply(chains, `[[`, field)
+  if (all(vapply(vecs, is.null, logical(1)))) return(NULL)
+  unlist(vecs)
 }
 
 # Internal helper: pool a list of ShrinkageTrees objects (one per chain) into
@@ -123,16 +141,8 @@ censored_info <- function(y, status, left_time = NULL, right_time = NULL,
   n_chains <- length(chains)
   out      <- chains[[1]]   # use first chain as structural template
 
-  pool_matrix <- function(field) {
-    mats <- lapply(chains, `[[`, field)
-    if (all(vapply(mats, is.null, logical(1)))) return(NULL)
-    do.call(rbind, mats)
-  }
-  pool_vector <- function(field) {
-    vecs <- lapply(chains, `[[`, field)
-    if (all(vapply(vecs, is.null, logical(1)))) return(NULL)
-    unlist(vecs)
-  }
+  pool_matrix <- function(field) .pool_matrix(chains, field)
+  pool_vector <- function(field) .pool_vector(chains, field)
 
   # ── Posterior sample matrices (rows = MCMC iterations) ───────────────────
   out$train_predictions_sample <- pool_matrix("train_predictions_sample")
@@ -187,16 +197,8 @@ censored_info <- function(y, status, left_time = NULL, right_time = NULL,
   n_chains <- length(chains)
   out      <- chains[[1]]
 
-  pool_matrix <- function(field) {
-    mats <- lapply(chains, `[[`, field)
-    if (all(vapply(mats, is.null, logical(1)))) return(NULL)
-    do.call(rbind, mats)
-  }
-  pool_vector <- function(field) {
-    vecs <- lapply(chains, `[[`, field)
-    if (all(vapply(vecs, is.null, logical(1)))) return(NULL)
-    unlist(vecs)
-  }
+  pool_matrix <- function(field) .pool_matrix(chains, field)
+  pool_vector <- function(field) .pool_vector(chains, field)
   avg <- function(field) Reduce("+", lapply(chains, `[[`, field)) / n_chains
 
   # ── Posterior sample matrices ─────────────────────────────────────────────
@@ -264,6 +266,19 @@ censored_info <- function(y, status, left_time = NULL, right_time = NULL,
   W <- matrix(rexp(S * n), nrow = S, ncol = n)
   W <- W / rowSums(W)
   rowSums(W * tau_samples)
+}
+
+
+# Error message for the removed forest-wide horseshoe prior ------------------
+#
+# The forest-wide update was never run by the sampler, so "horseshoe_fw" fitted
+# the same model as "half-cauchy" with the same local scale. The option was
+# removed in 2.1.1; this message points users to the equivalent call.
+.horseshoe_fw_removed <- function(arg) {
+  local_arg <- sub("prior_type", "local_hp", arg, fixed = TRUE)
+  paste0(arg, " = 'horseshoe_fw' is no longer supported. ",
+         "Use ", arg, " = 'half-cauchy' with the same ", local_arg,
+         "; it fits the same model.")
 }
 
 

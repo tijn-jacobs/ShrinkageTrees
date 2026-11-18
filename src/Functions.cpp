@@ -35,30 +35,6 @@ bool Splittable(Tree& leaf_node, Cutpoints& cutpoints) {
 }
 
 
-// Function retrieves the addresses (i.e., pointers to) of leaf nodes that can 
-// be split on. It collects all leaf nodes, checks if they are splittable, and 
-// removes those that can't be split.
-void CollectSplittableLeaves(Tree& tree, std::vector<Tree*>& leaf_vector, 
-                            Cutpoints& cutpoints) {
-  
-  // Collect all leaf nodes.
-  tree.CollectLeaves(leaf_vector);
-
-  // Iterate over the collected leaf nodes
-  for (size_t i = 0; i < leaf_vector.size(); i++) {
-    
-    // If the leaf node can't be split, remove it from the vector
-    if (!Splittable(*leaf_vector[i], cutpoints)) {
-      
-      // Erase the node if it can't be split
-      leaf_vector.erase(leaf_vector.begin() + i);
-
-      // Adjust index to account for the removed element
-      --i;
-    }
-  }
-}
-
 
 // Function searches for the variables that the given node can split on and 
 // stores their indices in split_var. The function checks each variable to see if 

@@ -4,7 +4,20 @@
   `prior_type_treat = "standard"`, `"dirichlet"`, `"standard-halfcauchy"` and
   `"dirichlet-halfcauchy"`. With `"binary"` coding the effect was shrunk
   towards zero; with `"centered"` coding `sigma` collapsed and coverage was
-  poor. Horseshoe and half-Cauchy priors were not affected.
+  poor. `SurvivalBCF()` and `SurvivalShrinkageBCF()` use these priors and were
+  also affected. Horseshoe and half-Cauchy priors were not affected.
+- `CausalShrinkageForest()` with `prior_type_treat = "standard-halfcauchy"` no
+  longer requires `local_hp_treat`; it defaults to 2.0, as for the control
+  forest.
+- Removed `prior_type = "horseshoe_fw"` from `ShrinkageTrees()` and
+  `CausalShrinkageForest()`. Its forest-wide update was never run by the
+  sampler, so it fitted the same model as `"half-cauchy"` with the same
+  `local_hp`. Passing it now gives an error that points to `"half-cauchy"`.
+  The `forestwide_shrinkage*` outputs are gone.
+- Internal clean-up with no change in results. `HorseTrees()` and
+  `CausalHorseForest()` now call `ShrinkageTrees()` and
+  `CausalShrinkageForest()`. Fits from the survival wrappers no longer carry
+  the unused `wrapper` field.
 
 # ShrinkageTrees 2.1.0
 
@@ -44,7 +57,6 @@ The defaults are now calibrated for the corrected sampler:
 | --------------------- | -------------------------------- | ---------------------------------------- |
 | `HorseTrees()`        | `k = 0.1`                        | `k = 1.0`                                |
 | `CausalHorseForest()` | `k = 0.1`                        | `k = 1.5`                                |
-| `ShrinkageTrees()`    | `local_hp`, `global_hp` required | default to `1.0 / sqrt(number_of_trees)` |
 
 Values of `k` between roughly 0.5 and 1.5 (single-forest models) or 1 and 2
 (causal models) worked well across a range of simulated settings, with smaller

@@ -3,28 +3,6 @@
 
 #include "Forest.h"
 
-// First UpdateForestwideShrinkage variant
-void UpdateForestwideShrinkage(
-  std::vector<Tree>* trees,
-  double& forestwide_shrinkage,
-  double& forestwide_auxiliary,
-  double alpha_fw,
-  Rcpp::NumericVector& store_shrinkage,
-  size_t i,
-  size_t N_burn,
-  Random& random
-);
-
-// Second UpdateForestwideShrinkage variant
-void UpdateForestwideShrinkage(
-  string prior_type,
-  std::vector<Tree>* all_trees,
-  Random& random,
-  double& forestwide_auxiliary,
-  double& forestwide_shrinkage,
-  double alpha_fw
-);
-
 // UpdateSigma
 void UpdateSigma(
   bool sigma_known,
@@ -39,19 +17,7 @@ void UpdateSigma(
   Random& random
 );
 
-// AugmentCensoredObservations
-void AugmentCensoredObservations(
-  bool is_survival,
-  double* event_time, 
-  const double* observed_time,
-  const double* status_indicator,
-  const double* predicted_time,
-  const double& sigma,
-  const size_t& n, 
-  Random& random
-);
-
-// Second AugmentCensoredObservations with interval censoring
+// AugmentCensoredObservations (right censoring and interval censoring)
 void AugmentCensoredObservations(
   bool is_survival,
   double* event_time,

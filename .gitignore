@@ -16,3 +16,6 @@
 src/*.o
 src/*.so
 src/*.dll
+
+# Local baseline for test-refactor-equivalence.R (machine-specific)
+tests/testthat/fixtures/

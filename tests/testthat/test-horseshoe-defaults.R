@@ -47,19 +47,33 @@ test_that("supplying one scale leaves the other at its default", {
   expect_equal(fit$args$param2, ShrinkageTrees:::HORSESHOE_K_SINGLE / sqrt(5))
 })
 
-test_that("horseshoe_fw still requires both scales", {
+test_that("horseshoe_fw is rejected and points to half-cauchy", {
   set.seed(3)
   n <- 40; p <- 5
   X <- matrix(runif(n * p), n, p)
   y <- as.numeric(2 * X[, 1] + rnorm(n, 0, 0.5))
+  trt <- rbinom(n, 1, 0.5)
 
   expect_error(
     ShrinkageTrees(
       y = y, X_train = X, outcome_type = "continuous",
       number_of_trees = 5, prior_type = "horseshoe_fw",
+      local_hp = 0.1, global_hp = 0.1,
       N_post = 20, N_burn = 20, verbose = FALSE
     ),
-    "horseshoe_fw"
+    "no longer supported.*half-cauchy"
+  )
+
+  expect_error(
+    CausalShrinkageForest(
+      y = y, X_train_control = X, X_train_treat = X,
+      treatment_indicator_train = trt, outcome_type = "continuous",
+      number_of_trees_control = 5, number_of_trees_treat = 5,
+      prior_type_treat = "horseshoe_fw",
+      local_hp_treat = 0.1, global_hp_treat = 0.1,
+      N_post = 20, N_burn = 20, verbose = FALSE
+    ),
+    "prior_type_treat = 'horseshoe_fw' is no longer supported"
   )
 })
 

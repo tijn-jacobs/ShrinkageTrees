@@ -31,7 +31,6 @@ public:
   // Getters and Setters
 
   size_t GetNumTrees() { return num_trees; }
-  void   SetNumTrees(size_t new_num_trees);
 
   // Set the feature matrix, working-response vector, and cutpoints.
   void SetData(size_t p, size_t n, double* x, double* y, size_t nc = 100);
@@ -73,7 +72,6 @@ public:
 
   StanTree&       GetTree(size_t i)         { return trees[i]; }
   CutpointMatrix& GetCutpointMatrix()       { return cutpoints; }
-  void            SetCutpointMatrix(CutpointMatrix& new_cutpoints);
 
   std::vector<size_t>& GetVariableSplitCounts() { return variable_split_counts; }
   std::vector<double>& GetSplitProbabilities()  { return split_probabilities; }

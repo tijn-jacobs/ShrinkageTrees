@@ -41,7 +41,6 @@
 #' @param number_of_trees_treat Number of trees in the treatment forest. Default is 200.
 #' @param prior_type_control Type of prior on control forest step heights. One of
 #' \code{"horseshoe"} (global-local, global scale per tree),
-#' \code{"horseshoe_fw"} (global scale shared forest-wide),
 #' \code{"half-cauchy"} (local shrinkage only),
 #' \code{"standard"} (the classical BART normal prior),
 #' \code{"dirichlet"} (standard prior with a Dirichlet splitting rule),
@@ -165,10 +164,6 @@
 #' half-Cauchy distributions with scale hyperparameters \code{global_hp} and
 #' \code{local_hp}, respectively. The global shrinkage parameter is defined
 #' separately for each tree, allowing adaptive regularization per tree.
-#'
-#' The \code{horseshoe_fw} prior (forest-wide horseshoe) is similar to
-#' \code{horseshoe}, except that the global shrinkage parameter is shared
-#' across all trees in the forest simultaneously. 
 #'
 #' The \code{half-cauchy} prior considers only local shrinkage and does not
 #' include a global shrinkage component. It places a half-Cauchy prior on each
@@ -340,81 +335,33 @@ CausalShrinkageForest <- function(y = NULL,
 
   # ── Multi-chain dispatch ──────────────────────────────────────────────────
   if (n_chains > 1) {
-    mc <- match.call()
-
-    chain_args <- list(
-      y                         = y,
-      status                    = status,
-      X_train_control           = X_train_control,
-      X_train_treat             = X_train_treat,
-      treatment_indicator_train = treatment_indicator_train,
-      X_test_control            = X_test_control,
-      X_test_treat              = X_test_treat,
-      treatment_indicator_test  = treatment_indicator_test,
-      left_time                 = left_time,
-      right_time                = right_time,
-      outcome_type              = outcome_type,
-      timescale                 = timescale,
-      number_of_trees_control   = number_of_trees_control,
-      number_of_trees_treat     = number_of_trees_treat,
-      prior_type_control        = prior_type_control,
-      prior_type_treat          = prior_type_treat,
-      local_hp_control          = local_hp_control,
-      local_hp_treat            = local_hp_treat,
-      global_hp_control         = global_hp_control,
-      global_hp_treat           = global_hp_treat,
-      a_dirichlet_control       = a_dirichlet_control,
-      a_dirichlet_treat         = a_dirichlet_treat,
-      b_dirichlet_control       = b_dirichlet_control,
-      b_dirichlet_treat         = b_dirichlet_treat,
-      rho_dirichlet_control     = rho_dirichlet_control,
-      rho_dirichlet_treat       = rho_dirichlet_treat,
-      power_control             = power_control,
-      power_treat               = power_treat,
-      base_control              = base_control,
-      base_treat                = base_treat,
-      p_grow                    = p_grow,
-      p_prune                   = p_prune,
-      nu                        = nu,
-      q                         = q,
-      sigma                     = sigma,
-      N_post                    = N_post,
-      N_burn                    = N_burn,
-      delayed_proposal          = delayed_proposal,
-      store_posterior_sample    = store_posterior_sample,
-      treatment_coding          = treatment_coding,
-      propensity                = propensity,
-      propensity_test           = propensity_test,
-      n_chains                  = 1,
-      verbose                   = FALSE
-    )
-
-    n_cores <- .resolve_cores(n_chains)
-    if (verbose)
-      message("Running ", n_chains, " chains (", n_cores, " cores) ...")
-
-    chains <- parallel::mclapply(
-      seq_len(n_chains),
-      function(i) do.call(CausalShrinkageForest, chain_args),
-      mc.cores = n_cores
-    )
+    # All evaluated arguments, passed on to the per-chain calls
+    chain_args <- mget(names(formals(CausalShrinkageForest)),
+                       envir = environment())
+    chains     <- .run_chains(CausalShrinkageForest, chain_args, n_chains,
+                              verbose)
 
     combined      <- .combine_causal_chains(chains)
-    combined$call <- mc
+    combined$call <- match.call()
     return(combined)
   }
 
   # Check prior_type value
-  allowed_prior <- c("horseshoe", "horseshoe_fw", "half-cauchy",
+  if (prior_type_control == "horseshoe_fw")
+    stop(.horseshoe_fw_removed("prior_type_control"))
+  if (prior_type_treat == "horseshoe_fw")
+    stop(.horseshoe_fw_removed("prior_type_treat"))
+
+  allowed_prior <- c("horseshoe", "half-cauchy",
                      "standard", "dirichlet", "standard-halfcauchy", "dirichlet-halfcauchy")
   if (!prior_type_control %in% allowed_prior) {
-    stop("Invalid prior_type_control Choose 'horseshoe', 'horseshoe_fw',
-         'half-cauchy', 'standard', 'standard-halfnormal', 'standard-halfcauchy', 'dirichlet', or 'dirichlet-halfcauchy'.")
+    stop("Invalid prior_type_control. Choose 'horseshoe',
+         'half-cauchy', 'standard', 'standard-halfcauchy', 'dirichlet', or 'dirichlet-halfcauchy'.")
   }
   
   if (!prior_type_treat %in% allowed_prior) {
-    stop("Invalid prior_type_treat. Choose 'horseshoe', 'horseshoe_fw',
-         'half-cauchy', 'standard', 'standard-halfnormal', 'standard-halfcauchy', 'dirichlet', or 'dirichlet-halfcauchy'.")
+    stop("Invalid prior_type_treat. Choose 'horseshoe',
+         'half-cauchy', 'standard', 'standard-halfcauchy', 'dirichlet', or 'dirichlet-halfcauchy'.")
   }
   
   # Prior-specific checks
@@ -432,18 +379,6 @@ CausalShrinkageForest <- function(y = NULL,
     default_hp <- HORSESHOE_K_CAUSAL / sqrt(number_of_trees_treat)
     if (is.null(local_hp_treat))  local_hp_treat  <- default_hp
     if (is.null(global_hp_treat)) global_hp_treat <- default_hp
-  }
-
-  if (prior_type_control == "horseshoe_fw") {
-    if (is.null(local_hp_control) || is.null(global_hp_control)) {
-      stop("For prior_type_control = 'horseshoe_fw', you must provide both local_hp_control and global_hp_control.")
-    }
-  }
-
-  if (prior_type_treat == "horseshoe_fw") {
-    if (is.null(local_hp_treat) || is.null(global_hp_treat)) {
-      stop("For prior_type_treat = 'horseshoe_fw', you must provide both local_hp_treat and global_hp_treat.")
-    }
   }
 
   prior_type_control_user <- prior_type_control
@@ -477,7 +412,7 @@ CausalShrinkageForest <- function(y = NULL,
 
   if (prior_type_control %in% c("standard", "dirichlet")) {
     if (is.null(local_hp_control)) {
-      stop("For prior_type_control = 'standard' or 'dirichlet', you must provide local_hp.")
+      stop("For prior_type_control = 'standard' or 'dirichlet', you must provide local_hp_control.")
     }
     if (!is.null(global_hp_control)) {
       warning("global_hp_control is ignored for 'standard' or 'dirichlet' prior.")
@@ -498,7 +433,7 @@ CausalShrinkageForest <- function(y = NULL,
     dirichlet_bool_control <- FALSE
   }
 
-  if (prior_type_control %in% c("standard-halfcauchy", "dirichlet-halfcauchy")) {
+  if (prior_type_control == "standard-halfcauchy") {
 
     if (!is.null(global_hp_control)) {
       warning("global_hp_control is ignored for 'standard' or 'dirichlet' prior.")
@@ -512,7 +447,7 @@ CausalShrinkageForest <- function(y = NULL,
     }
   }
 
-  if (prior_type_treat %in% c("standard", "dirichlet", "standard-halfcauchy")) {
+  if (prior_type_treat %in% c("standard", "dirichlet")) {
     if (is.null(local_hp_treat)) {
       stop("For prior_type_treat = 'standard' or 'dirichlet', you must provide local_hp_treat.")
     }
@@ -536,7 +471,7 @@ CausalShrinkageForest <- function(y = NULL,
   }
 
 
-  if (prior_type_treat %in% c("standard-halfcauchy", "dirichlet-halfcauchy")) {
+  if (prior_type_treat == "standard-halfcauchy") {
     if (!is.null(global_hp_treat)) {
       warning("global_hp_treat is ignored for 'standard' or 'dirichlet' prior.")
     }
@@ -689,17 +624,18 @@ CausalShrinkageForest <- function(y = NULL,
     rho_dirichlet_treat <- p_treat
   }
   
+  survival <- outcome_type %in% c("right-censored", "interval-censored")
+
   # For interval-censored: derive y/status/ic_indicator from left_time/right_time
+  ic_indicator <- NULL
   if (outcome_type == "interval-censored") {
     left_time <- as.numeric(left_time)
     right_time <- as.numeric(right_time)
 
-    status <- as.integer(left_time == right_time)
-    ic_indicator <- as.integer(left_time < right_time & is.finite(right_time))
-
-    y <- ifelse(status == 1, left_time,
-                ifelse(ic_indicator == 1, (left_time + right_time) / 2,
-                       left_time))
+    ic           <- .interval_censoring(left_time, right_time)
+    status       <- ic$status
+    ic_indicator <- ic$ic_indicator
+    y            <- ic$y
 
     # C++ expects finite boundary for right-censored obs
     right_time[!is.finite(right_time)] <- left_time[!is.finite(right_time)]
@@ -711,177 +647,24 @@ CausalShrinkageForest <- function(y = NULL,
   left_time_raw     <- if (outcome_type == "interval-censored") left_time else NULL
   right_time_raw    <- if (outcome_type == "interval-censored") right_time else NULL
 
+  # ── Outcome-specific preparation ──────────────────────────────────────────
+  # Each branch sets: y (on the modelling scale), status, the centring mean
+  # y_mean, and the data-based scale estimate sigma_data.
   if (outcome_type == "right-censored") {
 
     # Convert y to numeric for C++ compatibility
     y <- as.numeric(y)
-    
+
     # Log-transform survival times if timescale = "time"
     if (timescale == "time") {
       y <- log(y)
     }
-    
+
     # Obtain estimated mean and standard deviation using censored_info()
-    cens_inf <- censored_info(y, status)
-    
-    # Center the data using estimated mean
-    y_mean <- cens_inf$mu
-    y <- y - y_mean
-    
-    # Determine sigma (timescale parameter) and whether it is known
-    if (is.null(sigma)) {
-      sigma_hat <- cens_inf$sd
-      sigma_known <- FALSE
-    } else {
-      sigma_hat <- sigma
-      sigma_known <- TRUE
-    }
+    cens_inf   <- censored_info(y, status)
+    y_mean     <- cens_inf$mu
+    sigma_data <- cens_inf$sd
 
-    # REFACTOR THIS CODE BELOW; make shorter
-    if (prior_type_control %in% c("standard-halfcauchy")) {
-      if (is.null(local_hp_control)) {
-        local_hp_control <- 2.0
-      } else {
-        local_hp_control <- local_hp_control / sigma_hat
-      }
-    }
-
-    if (prior_type_treat %in% c("standard-halfcauchy")) {
-      if (is.null(local_hp_treat)) {
-        local_hp_treat <- 2.0
-      } else {
-        local_hp_treat <- local_hp_treat / sigma_hat
-      }
-    }
-    
-    # Standardize the centered data
-    y <- y / sigma_hat
-    
-    # Set survival flag
-    survival <- TRUE
-    
-    # Compute lambda parameter for error distribution prior
-    qchi <- qchisq(1.0 - q, nu)
-    lambda <- (sigma_hat^2 * qchi) / nu
-    
-    # Fit a Causal Horseshoe Forest
-    fit <- CausalHorseForest_cpp(
-      nSEXP = n_train,
-      p_treatSEXP = p_treat,
-      p_controlSEXP = p_control,
-      X_train_treatSEXP = X_train_treat,
-      X_train_controlSEXP = X_train_control,
-      ySEXP = y,
-      status_indicatorSEXP = status,
-      is_survivalSEXP = survival,
-      observed_left_timeSEXP = numeric(n_train),
-      observed_right_timeSEXP = y + 0,
-      interval_censoring_indicatorSEXP = numeric(n_train),
-      treatment_indicatorSEXP = treatment_indicator_train,
-      n_testSEXP = n_test,
-      X_test_controlSEXP = X_test_control,
-      X_test_treatSEXP = X_test_treat,
-      treatment_indicator_testSEXP = treatment_indicator_test,
-      no_trees_treatSEXP = number_of_trees_treat,
-      power_treatSEXP = power_treat,
-      base_treatSEXP = base_treat,
-      p_grow_treatSEXP = p_grow,
-      p_prune_treatSEXP = p_prune,
-      omega_treatSEXP = 1/2,
-      prior_type_treatSEXP = prior_type_treat,
-      param1_treatSEXP = local_hp_treat,
-      param2_treatSEXP = global_hp_treat,
-      reversible_treatSEXP = reversible_flag_treat, 
-      dirichlet_bool_treatSEXP = dirichlet_bool_treat,
-      a_dirichlet_treatSEXP = a_dirichlet_treat,
-      b_dirichlet_treatSEXP = b_dirichlet_treat, 
-      rho_dirichlet_treatSEXP = rho_dirichlet_treat,  
-      no_trees_controlSEXP = number_of_trees_control,
-      power_controlSEXP = power_control,
-      base_controlSEXP = base_control,
-      p_grow_controlSEXP = p_grow,
-      p_prune_controlSEXP = p_prune,
-      omega_controlSEXP = 1/2,
-      prior_type_controlSEXP = prior_type_control,
-      param1_controlSEXP = local_hp_control,
-      param2_controlSEXP = global_hp_control,
-      reversible_controlSEXP = reversible_flag_control,
-      dirichlet_bool_controlSEXP = dirichlet_bool_control,
-      a_dirichlet_controlSEXP = a_dirichlet_control,
-      b_dirichlet_controlSEXP = b_dirichlet_control, 
-      rho_dirichlet_controlSEXP = rho_dirichlet_control,  
-      sigma_knownSEXP = sigma_known,
-      sigmaSEXP = sigma_hat,
-      lambdaSEXP = lambda,
-      nuSEXP = nu,
-      N_postSEXP = N_post,
-      N_burnSEXP = N_burn,
-      delayed_proposalSEXP = delayed_proposal,
-      store_posterior_sample_controlSEXP = store_posterior_sample,
-      store_posterior_sample_treatSEXP = store_posterior_sample,
-      verboseSEXP = verbose,
-      treatment_codingSEXP = treatment_coding,
-      propensity_trainSEXP = propensity_train_cpp,
-      propensity_testSEXP = propensity_test_cpp
-    )
-    
-    if (timescale == "time") {
-      
-      # Total
-      fit$train_predictions <- exp(fit$train_predictions * sigma_hat + y_mean)
-      fit$test_predictions <- exp(fit$test_predictions * sigma_hat + y_mean)
-      
-      # Control
-      fit$train_predictions_control <- exp(fit$train_predictions_control * 
-                                             sigma_hat + y_mean)
-      fit$test_predictions_control <- exp(fit$test_predictions_control * 
-                                            sigma_hat + y_mean)
-      
-      # Treatment
-      fit$train_predictions_treat <- exp(fit$train_predictions_treat * 
-                                           sigma_hat)
-      fit$test_predictions_treat <- exp(fit$test_predictions_treat * sigma_hat)
-      
-      # Posterior samples
-      if (store_posterior_sample) { #
-        fit$train_predictions_sample_control <- 
-          exp(fit$train_predictions_sample_control * sigma_hat + y_mean)
-        fit$test_predictions_sample_control <- 
-          exp(fit$test_predictions_sample_control * sigma_hat + y_mean)
-        fit$train_predictions_sample_treat <- 
-          exp(fit$train_predictions_sample_treat * sigma_hat)
-        fit$test_predictions_sample_treat <- 
-          exp(fit$test_predictions_sample_treat * sigma_hat)
-      }
-    } else {
-      # Total
-      fit$train_predictions <- fit$train_predictions * sigma_hat + y_mean
-      fit$test_predictions <- fit$test_predictions * sigma_hat + y_mean
-      
-      # Control
-      fit$train_predictions_control <- 
-        fit$train_predictions_control * sigma_hat + y_mean
-      fit$test_predictions_control <- 
-        fit$test_predictions_control * sigma_hat + y_mean
-      
-      # Treatment
-      fit$train_predictions_treat <- fit$train_predictions_treat * sigma_hat
-      fit$test_predictions_treat <- fit$test_predictions_treat * sigma_hat
-      
-      # Posterior samples
-      if (store_posterior_sample) {
-        fit$train_predictions_sample_control <- 
-          fit$train_predictions_sample_control * sigma_hat + y_mean
-        fit$test_predictions_sample_control <- 
-          fit$test_predictions_sample_control * sigma_hat + y_mean
-        fit$train_predictions_sample_treat <- 
-          fit$train_predictions_sample_treat * sigma_hat
-        fit$test_predictions_sample_treat <- 
-          fit$test_predictions_sample_treat * sigma_hat
-      }
-    }
-    
-  # If interval-censored
   } else if (outcome_type == "interval-censored") {
 
     y <- as.numeric(y)
@@ -902,149 +685,11 @@ CausalShrinkageForest <- function(y = NULL,
     right_open <- right_time
     right_open[status == 0 & ic_indicator == 0] <- Inf
 
-    cens_inf <- censored_info(y, status, left_time = left_time,
-                              right_time = right_open, ic_indicator = ic_indicator)
+    cens_inf   <- censored_info(y, status, left_time = left_time,
+                                right_time = right_open)
+    y_mean     <- cens_inf$mu
+    sigma_data <- cens_inf$sd
 
-    y_mean <- cens_inf$mu
-    y <- y - y_mean
-    left_time <- left_time - y_mean
-    right_time <- right_time - y_mean
-
-    if (is.null(sigma)) {
-      sigma_hat <- cens_inf$sd
-      sigma_known <- FALSE
-    } else {
-      sigma_hat <- sigma
-      sigma_known <- TRUE
-    }
-
-    if (prior_type_control %in% c("standard-halfcauchy")) {
-      if (is.null(local_hp_control)) {
-        local_hp_control <- 2.0
-      } else {
-        local_hp_control <- local_hp_control / sigma_hat
-      }
-    }
-
-    if (prior_type_treat %in% c("standard-halfcauchy")) {
-      if (is.null(local_hp_treat)) {
-        local_hp_treat <- 2.0
-      } else {
-        local_hp_treat <- local_hp_treat / sigma_hat
-      }
-    }
-
-    y <- y / sigma_hat
-    left_time <- left_time / sigma_hat
-    right_time <- right_time / sigma_hat
-
-    survival <- TRUE
-
-    qchi <- qchisq(1.0 - q, nu)
-    lambda <- (sigma_hat^2 * qchi) / nu
-
-    fit <- CausalHorseForest_cpp(
-      nSEXP = n_train,
-      p_treatSEXP = p_treat,
-      p_controlSEXP = p_control,
-      X_train_treatSEXP = X_train_treat,
-      X_train_controlSEXP = X_train_control,
-      ySEXP = y,
-      status_indicatorSEXP = status,
-      is_survivalSEXP = survival,
-      observed_left_timeSEXP = left_time,
-      observed_right_timeSEXP = right_time,
-      interval_censoring_indicatorSEXP = ic_indicator,
-      treatment_indicatorSEXP = treatment_indicator_train,
-      n_testSEXP = n_test,
-      X_test_controlSEXP = X_test_control,
-      X_test_treatSEXP = X_test_treat,
-      treatment_indicator_testSEXP = treatment_indicator_test,
-      no_trees_treatSEXP = number_of_trees_treat,
-      power_treatSEXP = power_treat,
-      base_treatSEXP = base_treat,
-      p_grow_treatSEXP = p_grow,
-      p_prune_treatSEXP = p_prune,
-      omega_treatSEXP = 1/2,
-      prior_type_treatSEXP = prior_type_treat,
-      param1_treatSEXP = local_hp_treat,
-      param2_treatSEXP = global_hp_treat,
-      reversible_treatSEXP = reversible_flag_treat,
-      dirichlet_bool_treatSEXP = dirichlet_bool_treat,
-      a_dirichlet_treatSEXP = a_dirichlet_treat,
-      b_dirichlet_treatSEXP = b_dirichlet_treat,
-      rho_dirichlet_treatSEXP = rho_dirichlet_treat,
-      no_trees_controlSEXP = number_of_trees_control,
-      power_controlSEXP = power_control,
-      base_controlSEXP = base_control,
-      p_grow_controlSEXP = p_grow,
-      p_prune_controlSEXP = p_prune,
-      omega_controlSEXP = 1/2,
-      prior_type_controlSEXP = prior_type_control,
-      param1_controlSEXP = local_hp_control,
-      param2_controlSEXP = global_hp_control,
-      reversible_controlSEXP = reversible_flag_control,
-      dirichlet_bool_controlSEXP = dirichlet_bool_control,
-      a_dirichlet_controlSEXP = a_dirichlet_control,
-      b_dirichlet_controlSEXP = b_dirichlet_control,
-      rho_dirichlet_controlSEXP = rho_dirichlet_control,
-      sigma_knownSEXP = sigma_known,
-      sigmaSEXP = sigma_hat,
-      lambdaSEXP = lambda,
-      nuSEXP = nu,
-      N_postSEXP = N_post,
-      N_burnSEXP = N_burn,
-      delayed_proposalSEXP = delayed_proposal,
-      store_posterior_sample_controlSEXP = store_posterior_sample,
-      store_posterior_sample_treatSEXP = store_posterior_sample,
-      verboseSEXP = verbose,
-      treatment_codingSEXP = treatment_coding,
-      propensity_trainSEXP = propensity_train_cpp,
-      propensity_testSEXP = propensity_test_cpp
-    )
-
-    # Back-transform (identical to right-censored)
-    if (timescale == "time") {
-      fit$train_predictions <- exp(fit$train_predictions * sigma_hat + y_mean)
-      fit$test_predictions <- exp(fit$test_predictions * sigma_hat + y_mean)
-      fit$train_predictions_control <- exp(fit$train_predictions_control *
-                                             sigma_hat + y_mean)
-      fit$test_predictions_control <- exp(fit$test_predictions_control *
-                                            sigma_hat + y_mean)
-      fit$train_predictions_treat <- exp(fit$train_predictions_treat * sigma_hat)
-      fit$test_predictions_treat <- exp(fit$test_predictions_treat * sigma_hat)
-      if (store_posterior_sample) {
-        fit$train_predictions_sample_control <-
-          exp(fit$train_predictions_sample_control * sigma_hat + y_mean)
-        fit$test_predictions_sample_control <-
-          exp(fit$test_predictions_sample_control * sigma_hat + y_mean)
-        fit$train_predictions_sample_treat <-
-          exp(fit$train_predictions_sample_treat * sigma_hat)
-        fit$test_predictions_sample_treat <-
-          exp(fit$test_predictions_sample_treat * sigma_hat)
-      }
-    } else {
-      fit$train_predictions <- fit$train_predictions * sigma_hat + y_mean
-      fit$test_predictions <- fit$test_predictions * sigma_hat + y_mean
-      fit$train_predictions_control <-
-        fit$train_predictions_control * sigma_hat + y_mean
-      fit$test_predictions_control <-
-        fit$test_predictions_control * sigma_hat + y_mean
-      fit$train_predictions_treat <- fit$train_predictions_treat * sigma_hat
-      fit$test_predictions_treat <- fit$test_predictions_treat * sigma_hat
-      if (store_posterior_sample) {
-        fit$train_predictions_sample_control <-
-          fit$train_predictions_sample_control * sigma_hat + y_mean
-        fit$test_predictions_sample_control <-
-          fit$test_predictions_sample_control * sigma_hat + y_mean
-        fit$train_predictions_sample_treat <-
-          fit$train_predictions_sample_treat * sigma_hat
-        fit$test_predictions_sample_treat <-
-          fit$test_predictions_sample_treat * sigma_hat
-      }
-    }
-
-    # Otherwise, continuous
   } else {
 
     # Force outcome to plain numeric vector
@@ -1052,143 +697,152 @@ CausalShrinkageForest <- function(y = NULL,
 
     # Create dummy status vector (not used for continuous)
     status <- rep(1, n_train)
-    survival <- FALSE
 
-    # Determine prior guess of sigma
-    if (is.null(sigma)) {
-      sigma_hat <- sd(y)      # Estimate sigma from data
-      sigma_known <- FALSE
-    } else {
-      sigma_hat <- sigma      # Use provided sigma
-      sigma_known <- TRUE
-    }
-
-    # REFACTOR THIS CODE BELOW; make shorter
-    if (prior_type_control %in% c("standard-halfcauchy")) {
-      if (is.null(local_hp_control)) {
-        local_hp_control <- 2.0
-      } else {
-        local_hp_control <- local_hp_control / sigma_hat
-      }
-    }
-
-    if (prior_type_treat %in% c("standard-halfcauchy")) {
-      if (is.null(local_hp_treat)) {
-        local_hp_treat <- 2.0
-      } else {
-        local_hp_treat <- local_hp_treat / sigma_hat
-      }
-    }
-    
-    # Compute hyperparameters of error variance prior
-    qchi <- qchisq(1.0 - q, nu)
-    lambda <- (sigma_hat^2 * qchi) / nu
-    
-    # Compute mean and standardize  the outcome
-    y_mean <- mean(y)
-    y <- y - y_mean
-    y <- y / sigma_hat  # Standardize y
-    
-    # Fit a Causal Horseshoe Forest
-    fit <- CausalHorseForest_cpp(
-      nSEXP = n_train,
-      p_treatSEXP = p_treat,
-      p_controlSEXP = p_control,
-      X_train_treatSEXP = X_train_treat,
-      X_train_controlSEXP = X_train_control,
-      ySEXP = y,
-      status_indicatorSEXP = status,
-      is_survivalSEXP = survival,
-      observed_left_timeSEXP = numeric(n_train),
-      observed_right_timeSEXP = y + 0,
-      interval_censoring_indicatorSEXP = numeric(n_train),
-      treatment_indicatorSEXP = treatment_indicator_train,
-      n_testSEXP = n_test,
-      X_test_controlSEXP = X_test_control,
-      X_test_treatSEXP = X_test_treat,
-      treatment_indicator_testSEXP = treatment_indicator_test,
-      no_trees_treatSEXP = number_of_trees_treat,
-      power_treatSEXP = power_treat,
-      base_treatSEXP = base_treat,
-      p_grow_treatSEXP = p_grow,
-      p_prune_treatSEXP = p_prune,
-      omega_treatSEXP = 1/2,
-      prior_type_treatSEXP = prior_type_treat,
-      param1_treatSEXP = local_hp_treat,
-      param2_treatSEXP = global_hp_treat,
-      reversible_treatSEXP = reversible_flag_treat, 
-      dirichlet_bool_treatSEXP = dirichlet_bool_treat,
-      a_dirichlet_treatSEXP = a_dirichlet_treat,
-      b_dirichlet_treatSEXP = b_dirichlet_treat, 
-      rho_dirichlet_treatSEXP = rho_dirichlet_treat,  
-      no_trees_controlSEXP = number_of_trees_control,
-      power_controlSEXP = power_control,
-      base_controlSEXP = base_control,
-      p_grow_controlSEXP = p_grow,
-      p_prune_controlSEXP = p_prune,
-      omega_controlSEXP = 1/2,
-      prior_type_controlSEXP = prior_type_control,
-      param1_controlSEXP = local_hp_control,
-      param2_controlSEXP = global_hp_control,
-      reversible_controlSEXP = reversible_flag_control,
-      dirichlet_bool_controlSEXP = dirichlet_bool_control,
-      a_dirichlet_controlSEXP = a_dirichlet_control,
-      b_dirichlet_controlSEXP = b_dirichlet_control, 
-      rho_dirichlet_controlSEXP = rho_dirichlet_control,
-      sigma_knownSEXP = sigma_known,
-      sigmaSEXP = sigma_hat,
-      lambdaSEXP = lambda,
-      nuSEXP = nu,
-      N_postSEXP = N_post,
-      N_burnSEXP = N_burn,
-      delayed_proposalSEXP = delayed_proposal,
-      store_posterior_sample_controlSEXP = store_posterior_sample,
-      store_posterior_sample_treatSEXP = store_posterior_sample,
-      verboseSEXP = verbose,
-      treatment_codingSEXP = treatment_coding,
-      propensity_trainSEXP = propensity_train_cpp,
-      propensity_testSEXP = propensity_test_cpp
-    )
-    
-    # Total
-    fit$train_predictions <- fit$train_predictions * sigma_hat + y_mean
-    fit$test_predictions <- fit$test_predictions * sigma_hat + y_mean
-    
-    # Control
-    fit$train_predictions_control <- fit$train_predictions_control * 
-      sigma_hat + y_mean
-    fit$test_predictions_control <- fit$test_predictions_control * 
-      sigma_hat + y_mean
-    
-    # Treatment
-    fit$train_predictions_treat <- fit$train_predictions_treat * sigma_hat 
-    fit$test_predictions_treat <- fit$test_predictions_treat * sigma_hat 
-    
-    # Posterior samples
-    if (store_posterior_sample) {
-      fit$train_predictions_sample <- 
-        fit$train_predictions_sample *  sigma_hat + y_mean
-      fit$test_predictions_sample <- 
-        fit$test_predictions_sample * sigma_hat +  y_mean
-      fit$train_predictions_sample_control <- 
-        fit$train_predictions_sample_control * sigma_hat + y_mean
-      fit$test_predictions_sample_control <- 
-        fit$test_predictions_sample_control * sigma_hat + y_mean
-      fit$train_predictions_sample_treat <- 
-        fit$train_predictions_sample_treat * sigma_hat 
-      fit$test_predictions_sample_treat <- 
-        fit$test_predictions_sample_treat * sigma_hat 
-    }
-    
+    y_mean     <- mean(y)
+    sigma_data <- sd(y)
   }
-  
+
+  # ── Shared from here on ───────────────────────────────────────────────────
+  # Determine sigma (scale parameter) and whether it is known
+  if (is.null(sigma)) {
+    sigma_hat <- sigma_data
+    sigma_known <- FALSE
+  } else {
+    sigma_hat <- sigma
+    sigma_known <- TRUE
+  }
+
+  # The half-Cauchy scale of the "standard-halfcauchy" prior is given on the
+  # outcome scale; the sampler works on the standardized scale.
+  if (prior_type_control == "standard-halfcauchy") {
+    local_hp_control <- if (is.null(local_hp_control)) 2.0 else local_hp_control / sigma_hat
+  }
+  if (prior_type_treat == "standard-halfcauchy") {
+    local_hp_treat <- if (is.null(local_hp_treat)) 2.0 else local_hp_treat / sigma_hat
+  }
+
+  # Compute lambda parameter for error distribution prior
+  qchi <- qchisq(1.0 - q, nu)
+  lambda <- (sigma_hat^2 * qchi) / nu
+
+  # Center and standardize the outcome
+  y <- (y - y_mean) / sigma_hat
+
+  # Censoring bounds on the standardized scale. Without interval censoring the
+  # right bound is a copy of y: the sampler overwrites y in place when it
+  # augments censored observations.
+  if (outcome_type == "interval-censored") {
+    left_time_cpp    <- (left_time - y_mean) / sigma_hat
+    right_time_cpp   <- (right_time - y_mean) / sigma_hat
+    ic_indicator_cpp <- ic_indicator
+  } else {
+    left_time_cpp    <- numeric(n_train)
+    right_time_cpp   <- y + 0
+    ic_indicator_cpp <- numeric(n_train)
+  }
+
+  fit <- CausalHorseForest_cpp(
+    nSEXP = n_train,
+    p_treatSEXP = p_treat,
+    p_controlSEXP = p_control,
+    X_train_treatSEXP = X_train_treat,
+    X_train_controlSEXP = X_train_control,
+    ySEXP = y,
+    status_indicatorSEXP = status,
+    is_survivalSEXP = survival,
+    observed_left_timeSEXP = left_time_cpp,
+    observed_right_timeSEXP = right_time_cpp,
+    interval_censoring_indicatorSEXP = ic_indicator_cpp,
+    treatment_indicatorSEXP = treatment_indicator_train,
+    n_testSEXP = n_test,
+    X_test_controlSEXP = X_test_control,
+    X_test_treatSEXP = X_test_treat,
+    treatment_indicator_testSEXP = treatment_indicator_test,
+    no_trees_treatSEXP = number_of_trees_treat,
+    power_treatSEXP = power_treat,
+    base_treatSEXP = base_treat,
+    p_grow_treatSEXP = p_grow,
+    p_prune_treatSEXP = p_prune,
+    omega_treatSEXP = 1/2,
+    prior_type_treatSEXP = prior_type_treat,
+    param1_treatSEXP = local_hp_treat,
+    param2_treatSEXP = global_hp_treat,
+    reversible_treatSEXP = reversible_flag_treat,
+    dirichlet_bool_treatSEXP = dirichlet_bool_treat,
+    a_dirichlet_treatSEXP = a_dirichlet_treat,
+    b_dirichlet_treatSEXP = b_dirichlet_treat,
+    rho_dirichlet_treatSEXP = rho_dirichlet_treat,
+    no_trees_controlSEXP = number_of_trees_control,
+    power_controlSEXP = power_control,
+    base_controlSEXP = base_control,
+    p_grow_controlSEXP = p_grow,
+    p_prune_controlSEXP = p_prune,
+    omega_controlSEXP = 1/2,
+    prior_type_controlSEXP = prior_type_control,
+    param1_controlSEXP = local_hp_control,
+    param2_controlSEXP = global_hp_control,
+    reversible_controlSEXP = reversible_flag_control,
+    dirichlet_bool_controlSEXP = dirichlet_bool_control,
+    a_dirichlet_controlSEXP = a_dirichlet_control,
+    b_dirichlet_controlSEXP = b_dirichlet_control,
+    rho_dirichlet_controlSEXP = rho_dirichlet_control,
+    sigma_knownSEXP = sigma_known,
+    sigmaSEXP = sigma_hat,
+    lambdaSEXP = lambda,
+    nuSEXP = nu,
+    N_postSEXP = N_post,
+    N_burnSEXP = N_burn,
+    delayed_proposalSEXP = delayed_proposal,
+    store_posterior_sample_controlSEXP = store_posterior_sample,
+    store_posterior_sample_treatSEXP = store_posterior_sample,
+    verboseSEXP = verbose,
+    treatment_codingSEXP = treatment_coding,
+    propensity_trainSEXP = propensity_train_cpp,
+    propensity_testSEXP = propensity_test_cpp
+  )
+
+  # Back-transform predictions to the original scale. The total and the
+  # prognostic part are shifted by y_mean; the treatment effect is a
+  # difference, so it is only rescaled. Survival predictions are exponentiated
+  # when timescale = "time".
+  on_time_scale <- survival && timescale == "time"
+  back_outcome <- function(x) {
+    x <- x * sigma_hat + y_mean
+    if (on_time_scale) exp(x) else x
+  }
+  back_effect <- function(x) {
+    x <- x * sigma_hat
+    if (on_time_scale) exp(x) else x
+  }
+
+  # Total
+  fit$train_predictions <- back_outcome(fit$train_predictions)
+  fit$test_predictions  <- back_outcome(fit$test_predictions)
+
+  # Control
+  fit$train_predictions_control <- back_outcome(fit$train_predictions_control)
+  fit$test_predictions_control  <- back_outcome(fit$test_predictions_control)
+
+  # Treatment
+  fit$train_predictions_treat <- back_effect(fit$train_predictions_treat)
+  fit$test_predictions_treat  <- back_effect(fit$test_predictions_treat)
+
+  # Posterior samples
+  if (store_posterior_sample) {
+    fit$train_predictions_sample_control <-
+      back_outcome(fit$train_predictions_sample_control)
+    fit$test_predictions_sample_control <-
+      back_outcome(fit$test_predictions_sample_control)
+    fit$train_predictions_sample_treat <-
+      back_effect(fit$train_predictions_sample_treat)
+    fit$test_predictions_sample_treat <-
+      back_effect(fit$test_predictions_sample_treat)
+  }
+
   # remove burn-in of sigma
   if (!sigma_known) {
     fit$sigma <- fit$sigma[-seq_len(N_burn)]
-  } 
-
-  prior_type_control_cpp <- prior_type_control
-  prior_type_treat_cpp <- prior_type_treat
+  }
 
   obj <- NewCausalShrinkageForest(
     fit = fit,
@@ -1209,9 +863,9 @@ CausalShrinkageForest <- function(y = NULL,
     sigma_known = sigma_known,
     y_mean = y_mean,
     prior_type_control_user = prior_type_control_user,
-    prior_type_control_cpp = prior_type_control_cpp,
+    prior_type_control_cpp = prior_type_control,
     prior_type_treat_user = prior_type_treat_user,
-    prior_type_treat_cpp = prior_type_treat_cpp,
+    prior_type_treat_cpp = prior_type_treat,
     dirichlet_bool_control = dirichlet_bool_control,
     dirichlet_bool_treat = dirichlet_bool_treat,
     # Data stored for predict()
@@ -1219,10 +873,10 @@ CausalShrinkageForest <- function(y = NULL,
     X_train_control           = X_control_mat,
     X_train_treat             = X_treat_mat,
     treatment_indicator_train = treatment_indicator_train,
-    status_train              = if (outcome_type %in% c("right-censored", "interval-censored")) status_causal_raw else NULL,
+    status_train              = if (survival) status_causal_raw else NULL,
     left_time_train           = left_time_raw,
     right_time_train          = right_time_raw,
-    ic_indicator_train        = if (outcome_type == "interval-censored") ic_indicator else NULL,
+    ic_indicator_train        = ic_indicator,
     # Hyperparameters stored for predict()
     p_grow           = p_grow,
     p_prune          = p_prune,
@@ -1253,4 +907,3 @@ CausalShrinkageForest <- function(y = NULL,
 
   return(obj)
 }
-

@@ -9,7 +9,6 @@ The package implements Horseshoe Trees, Causal Horseshoe Forests, and their more
 Its central methodological innovation is the **Horseshoe regularisation mechanism applied directly to tree step heights**, enabling adaptive global–local shrinkage in high-dimensional settings. In addition to classical BART priors, the package supports:
 
 - Horseshoe priors
-- Forest-wide Horseshoe shrinkage
 - Half-Cauchy priors
 - Dirichlet splitting priors (DART)
 
@@ -41,7 +40,7 @@ This methodology is introduced in:
 
 > _Horseshoe Forests for High-Dimensional Causal Survival Analysis_  
 > T. Jacobs, W.N. van Wieringen, S.L. van der Pas  
-> _Bayesian Analysis_, Advance Publication, 1–30 (2026). Open access.  
+> _Bayesian Analysis_, Advance Publication, 1–30 (2026).
 > https://doi.org/10.1214/26-BA1603
 
 ## 🧠 Implemented models
@@ -77,7 +76,7 @@ ShrinkageTrees supports multiple regularisation mechanisms:
   Global–local shrinkage applied directly to leaf parameters.
 
 - **Alternative shrinkage priors on step heights**  
-  Including global Cauchy and forest-wide shrinkage formulations for flexible control of overall regularisation strength.
+  Including half-Cauchy formulations for flexible control of overall regularisation strength.
 
 ## 📦 Installation
 

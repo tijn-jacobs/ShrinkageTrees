@@ -146,9 +146,7 @@ SurvivalBART <- function(
       stop("Survival times must be strictly positive when timescale = 'time'.")
 
     # Derive representative values for local_hp calibration
-    y_proxy <- ifelse(left_time == right_time, left_time,
-                      ifelse(is.finite(right_time),
-                             (left_time + right_time) / 2, left_time))
+    y_proxy <- .interval_censoring(left_time, right_time)$y
 
     if (timescale == "time") {
       local_hp <- (max(log(y_proxy)) - min(log(y_proxy))) /
@@ -207,7 +205,6 @@ SurvivalBART <- function(
     )
   }
 
-  fit$wrapper <- "SurvivalBART"
   return(fit)
 }
 
@@ -340,9 +337,7 @@ SurvivalDART <- function(
       stop("Survival times must be strictly positive when timescale = 'time'.")
 
     # Derive representative values for local_hp calibration
-    y_proxy <- ifelse(left_time == right_time, left_time,
-                      ifelse(is.finite(right_time),
-                             (left_time + right_time) / 2, left_time))
+    y_proxy <- .interval_censoring(left_time, right_time)$y
 
     if (timescale == "time") {
       local_hp <- (max(log(y_proxy)) - min(log(y_proxy))) /
@@ -407,7 +402,6 @@ SurvivalDART <- function(
           )
   }
 
-  fit$wrapper <- "SurvivalDART"
   return(fit)
 }
 
@@ -574,16 +568,10 @@ SurvivalBCF <- function(
   }
 
   if (interval_censored) {
-    # Derive status/ic_indicator/y from boundaries for censored_info
-    ic_status    <- as.integer(left_time == right_time)
-    ic_indicator <- as.integer(left_time < right_time & is.finite(right_time))
-    y_derived    <- ifelse(ic_status == 1, left_time,
-                           ifelse(ic_indicator == 1,
-                                  (left_time + right_time) / 2, left_time))
-
-    info <- censored_info(y_derived, ic_status,
-                          left_time = left_time, right_time = right_time,
-                          ic_indicator = ic_indicator)
+    # Derive status and starting values from the boundaries for censored_info
+    ic   <- .interval_censoring(left_time, right_time)
+    info <- censored_info(ic$y, ic$status,
+                          left_time = left_time, right_time = right_time)
     sd_time <- info$sd
 
     fit <- CausalShrinkageForest(
@@ -654,7 +642,6 @@ SurvivalBCF <- function(
     )
   }
 
-  fit$wrapper <- "SurvivalBCF"
   return(fit)
 }
 
@@ -818,16 +805,10 @@ SurvivalShrinkageBCF <- function(
   }
 
   if (interval_censored) {
-    # Derive status/ic_indicator/y from boundaries for censored_info
-    ic_status    <- as.integer(left_time == right_time)
-    ic_indicator <- as.integer(left_time < right_time & is.finite(right_time))
-    y_derived    <- ifelse(ic_status == 1, left_time,
-                           ifelse(ic_indicator == 1,
-                                  (left_time + right_time) / 2, left_time))
-
-    info <- censored_info(y_derived, ic_status,
-                          left_time = left_time, right_time = right_time,
-                          ic_indicator = ic_indicator)
+    # Derive status and starting values from the boundaries for censored_info
+    ic   <- .interval_censoring(left_time, right_time)
+    info <- censored_info(ic$y, ic$status,
+                          left_time = left_time, right_time = right_time)
     sd_time <- info$sd
 
     fit <- CausalShrinkageForest(
@@ -912,6 +893,5 @@ SurvivalShrinkageBCF <- function(
     )
   }
 
-  fit$wrapper <- "SurvivalShrinkageBCF"
   return(fit)
 }

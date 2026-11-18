@@ -44,17 +44,11 @@ class Parameters {
   // Sets a global parameter at a given index
   void SetGlobalParameters(size_t index, double new_parameter);
 
-  // Returns all node-specific parameters (pointer to array)
-  const double* GetAllParameters() const;
-
   // Retrieves a node-specific parameter at a given index
   double GetParameters(size_t index) const;
 
   // Retrieves a global parameter at a given index
   double GetGlobalParameters(size_t index) const;
-
-  // Retrieves the total number of node-specific parameters
-  size_t GetNumberOfParameters() const;
 };
 
 #endif  // GUARD_Parameters_h

@@ -256,25 +256,6 @@ Rcpp::List CausalHorseForest_cpp(
     augmented_outcome_control[i] = y[i]/2;
   }
 
-  // If prior_type = 6, we have a Horseshoe with forest wide shrinkage.
-  // These updates are done in the outer Gibbs step.
-  double forestwide_shrinkage_control = 1.0;
-  double forestwide_shrinkage_treat = 1.0;
-  double forestwide_auxiliary_control = 1.0;
-  double forestwide_auxiliary_treat = 1.0;
-  Rcpp::NumericVector store_forestwide_shrinkage_control;
-  Rcpp::NumericVector store_forestwide_shrinkage_treat;
-
-  if (prior_type_control == "horseshoe_fw") {
-    store_forestwide_shrinkage_control = Rcpp::NumericVector(N_post);
-    store_forestwide_shrinkage_control.fill(0);
-  }  
-
-  if (prior_type_treat == "horseshoe_fw") {
-    store_forestwide_shrinkage_treat = Rcpp::NumericVector(N_post);
-    store_forestwide_shrinkage_treat.fill(0);
-  }
-
   // Declare storage for Dirichlet prior on variable selection
   Rcpp::NumericVector store_alpha_dirichlet_control;
   Rcpp::NumericVector store_alpha_dirichlet_treat;
@@ -311,20 +292,16 @@ Rcpp::List CausalHorseForest_cpp(
   PriorType prior_control;
   if (prior_type_control == "horseshoe") {
     prior_control = PriorType::Horseshoe;
-  } else if (prior_type_control == "fixed" || prior_type_control == "standard") {
+  } else if (prior_type_control == "standard") {
     prior_control = PriorType::FixedVariance;
   } else if (prior_type_control == "halfcauchy") {
     prior_control = PriorType::HalfCauchy;
-  } else if (prior_type_control == "horseshoe_fw") {
-    prior_control = PriorType::Horseshoe_fw;
   } else if (prior_type_control == "dirichlet") {
     prior_control = PriorType::FixedVariance; // make an empty one
   } else if (prior_type_control == "standard-halfcauchy") {
     prior_control = PriorType::FixedVariance; // make an empty one
-  } else if (prior_type_control == "standard-halfnormal") {
-    prior_control = PriorType::FixedVariance; // make an empty one
   } else {
-    Rcpp::stop("Invalid prior type for prognostic forest. Choose one of: 'horseshoe', 'fixed', 'halfcauchy', 'horseshoe_fw', 'standard'. 'standard-halfcauchy, 'standard-halfnormal'.");
+    Rcpp::stop("Invalid prior type for prognostic forest. Choose one of: 'horseshoe', 'halfcauchy', 'standard', 'dirichlet', 'standard-halfcauchy'.");
   }
   // Initialize the scale mixture prior on the step heights in the leaves for the prognostic model
   ScaleMixture scale_mixture_control(prior_control, param1_control, param2_control);
@@ -340,31 +317,22 @@ Rcpp::List CausalHorseForest_cpp(
   forest_control.SetTreePrior(base_control, power_control, param1_control, p_grow_control, p_prune_control, a_dirichlet_control, b_dirichlet_control, rho_dirichlet_control, false, dirichlet_bool_control, alpha_dirichlet_control); // In case of NON-RJ; param1 = step height variance
   forest_control.SetUpForest(p_control, n, X_train_control, augmented_outcome_control, nullptr, omega_control); // Use augmented outcome for y
 
-  // Setup a vector to access the tree
-  // This is only needed (!) for the forestwide shrinkage update.
-  // Consider removing this if not needed elsewhere, or empty initialization.
-  // std::vector<Tree>* trees_control = forest_control.GetTreesPointer();
-
 
   // Set-up the forest for the treatment effect model // 
 
   PriorType prior_treat;
   if (prior_type_treat == "horseshoe") {
     prior_treat = PriorType::Horseshoe;
-  } else if (prior_type_treat == "fixed" || prior_type_treat == "standard") {
+  } else if (prior_type_treat == "standard") {
     prior_treat = PriorType::FixedVariance;
   } else if (prior_type_treat == "halfcauchy") {
     prior_treat = PriorType::HalfCauchy;
-  } else if (prior_type_treat == "horseshoe_fw") {
-    prior_treat = PriorType::Horseshoe_fw;
   } else if (prior_type_treat == "dirichlet") {
     prior_treat = PriorType::FixedVariance; // make an empty one
   } else if (prior_type_treat == "standard-halfcauchy") {
     prior_treat = PriorType::FixedVariance; // make an empty one
-  } else if (prior_type_treat == "standard-halfnormal") {
-    prior_treat = PriorType::FixedVariance; // make an empty one
   } else {
-    Rcpp::stop("Invalid prior type for treatment effect forest. Choose one of: 'horseshoe', 'fixed', 'halfcauchy', 'horseshoe_fw', 'standard'.");
+    Rcpp::stop("Invalid prior type for treatment effect forest. Choose one of: 'horseshoe', 'halfcauchy', 'standard', 'dirichlet', 'standard-halfcauchy'.");
   }
 
   // Initialize the scale mixture prior on the step heights in the leaves for the prognostic model
@@ -380,9 +348,6 @@ Rcpp::List CausalHorseForest_cpp(
   ForestEngine forest_treat(engine_type_treat, no_trees_treat);
   forest_treat.SetTreePrior(base_treat, power_treat, param1_treat, p_grow_treat, p_prune_treat, a_dirichlet_treat, b_dirichlet_treat, rho_dirichlet_treat, false, dirichlet_bool_treat, alpha_dirichlet_treat); // In case of NON-RJ; param1 = step height variance
   forest_treat.SetUpForest(p_treat, n, X_train_treat, augmented_outcome_treat, nullptr, omega_treat); // Use augmented outcome for y
-
-  // Setup a vector to access the trees
-  // std::vector<Tree>* trees_treat = forest_treat.GetTreesPointer();
 
   // Initialize the C-based random number generator
   RandomGenerator random;
@@ -444,18 +409,6 @@ Rcpp::List CausalHorseForest_cpp(
       accepted_control
     );
 
-    /*
-    // Update the forestwide shrinkage parameter of the prognostic forest, if applicable 
-    UpdateForestwideShrinkage(
-      prior_type_control,
-      trees_control, 
-      random, 
-      forestwide_auxiliary_control, 
-      forestwide_shrinkage_control, 
-      param2_control
-    );
-    */
-
     // Update the augmented outcome and weights for the treatment effect model
     // The augmented outcome is (y - mu(x)) / b, which has noise sigma/|b|.
     // To correct for this heteroscedasticity, we use weights w_i = b_i^2
@@ -482,18 +435,6 @@ Rcpp::List CausalHorseForest_cpp(
       accepted_treat
     );
     forest_treat.SetWeights(nullptr);  // Clear weights after treatment forest update
-
-    /*
-    // Update the forestwide shrinkage parameter of the treatment effect forest, if applicable
-    UpdateForestwideShrinkage(
-      prior_type_treat,
-      trees_treat, 
-      random, 
-      forestwide_auxiliary_treat, 
-      forestwide_shrinkage_treat, 
-      param2_treat
-    );
-    */
 
     // Update the augmented outcome for the prognostic model
     for (size_t k = 0; k < n; k++) {
@@ -656,15 +597,6 @@ Rcpp::List CausalHorseForest_cpp(
       }
       const std::vector<size_t>& counts_treat = forest_treat.GetVariableInclusionCount();
       for (size_t j = 0; j < p_treat; ++j) store_split_counts_treat(i - N_burn, j) = counts_treat[j];
-      
-      // Store the forestwide shrinkage parameters, if applicable
-      if(prior_type_control == "horseshoe_fw") {
-        store_forestwide_shrinkage_control(i - N_burn) = forestwide_shrinkage_control;
-      }
-
-      if(prior_type_treat == "horseshoe_fw") {
-        store_forestwide_shrinkage_treat(i - N_burn) = forestwide_shrinkage_treat;
-      }
     }
 
     
@@ -723,12 +655,6 @@ Rcpp::List CausalHorseForest_cpp(
     results["test_predictions_sample_treat"] = test_predictions_sample_treat;
     results["train_predictions_sample_treat"] = train_predictions_sample_treat;
   } 
-  if (prior_type_control == "horseshoe_fw") {
-    results["forestwide_shrinkage_control"] = store_forestwide_shrinkage_control;
-  }
-  if (prior_type_treat == "horseshoe_fw") {
-    results["forestwide_shrinkage_treat"] = store_forestwide_shrinkage_treat;
-  }
   if (dirichlet_bool_control) {
     results["alpha_dirichlet_control"] = store_alpha_dirichlet_control;
     results["split_probs_control"] = store_split_probs_control; 

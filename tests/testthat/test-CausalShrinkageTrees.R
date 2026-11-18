@@ -34,7 +34,7 @@ test_that("CausalShrinkageForest works for continuous outcome", {
   expect_type(fit, "list")
   expect_true("train_predictions" %in% names(fit))
   expect_length(fit$train_predictions, n)
-  expect_length(fit$sigma, 10)  # N_post + N_burn = 10 + 5
+  expect_length(fit$sigma, 10)  # N_post draws; burn-in is dropped
   
   # Numerical checks
   fit_numeric <- unlist(fit[vapply(fit, is.numeric, logical(1))])
@@ -217,69 +217,6 @@ test_that("CausalShrinkageForest works for continuous outcome with half-cauchy p
   expect_equal(dim(fit$train_predictions_sample_control), c(10, n))
   expect_equal(dim(fit$train_predictions_sample_treat), c(10, n))
 })
-
-test_that("CausalShrinkageForest works for continuous outcome with horseshoe_fw prior", {
-  
-  n <- 50
-  p <- 3
-  X <- matrix(runif(n * p), ncol = p)
-  X_treat <- X_control <- X
-  treatment <- rbinom(n, 1, X[, 1])
-  tau <- 2
-  y <- X[, 1] + (0.5 - treatment) * tau + rnorm(n)
-  
-  set.seed(1)
-  fit <- CausalShrinkageForest(
-    y = y,
-    X_train_control = X_control,
-    X_train_treat = X_treat,
-    treatment_indicator_train = treatment,
-    outcome_type = "continuous",
-    number_of_trees_treat = 5,
-    number_of_trees_control = 5,
-    prior_type_control = "horseshoe_fw",
-    prior_type_treat = "horseshoe_fw",
-    local_hp_control = 0.1 / sqrt(5),
-    local_hp_treat = 0.1 / sqrt(5),
-    global_hp_control = 0.1 / sqrt(5),
-    global_hp_treat = 0.1 / sqrt(5),
-    N_post = 10,
-    N_burn = 5,
-    store_posterior_sample = TRUE,
-    verbose = FALSE
-  )
-  
-  expect_type(fit, "list")
-  expect_true("train_predictions" %in% names(fit))
-  expect_true("forestwide_shrinkage_control" %in% names(fit))
-  expect_true("forestwide_shrinkage_treat" %in% names(fit))
-  
-  expect_length(fit$train_predictions, n)
-  expect_length(fit$sigma, 10)
-  
-  # Check forestwide shrinkage vectors
-  expect_true(is.numeric(fit$forestwide_shrinkage_control))
-  expect_true(is.numeric(fit$forestwide_shrinkage_treat))
-  expect_length(fit$forestwide_shrinkage_control, 10)
-  expect_length(fit$forestwide_shrinkage_treat, 10)
-  
-  # Sanity checks on numerical values
-  fit_numeric <- unlist(fit[vapply(fit, is.numeric, logical(1))])
-  expect_false(any(is.na(fit_numeric)))
-  expect_true(all(is.finite(fit_numeric)))
-  
-  expect_true(sd(fit$train_predictions) > 0)
-  expect_true(sd(fit$train_predictions_control) > 0)
-  expect_true(sd(fit$train_predictions_treat) > 0)
-  
-  expect_equal(dim(fit$train_predictions_sample_control), c(10, n))
-  expect_equal(dim(fit$train_predictions_sample_treat), c(10, n))
-  
-  # Forestwide shrinkage values should be non-negative
-  expect_true(all(fit$forestwide_shrinkage_control >= 0))
-  expect_true(all(fit$forestwide_shrinkage_treat >= 0))
-})
-
 
 # ── treatment_coding ──────────────────────────────────────────────────────────
 

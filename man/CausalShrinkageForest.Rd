@@ -102,7 +102,6 @@ Used when \code{outcome_type} is \code{"right-censored"} or
 
 \item{prior_type_control}{Type of prior on control forest step heights. One of
 \code{"horseshoe"} (global-local, global scale per tree),
-\code{"horseshoe_fw"} (global scale shared forest-wide),
 \code{"half-cauchy"} (local shrinkage only),
 \code{"standard"} (the classical BART normal prior),
 \code{"dirichlet"} (standard prior with a Dirichlet splitting rule),
@@ -262,10 +261,6 @@ prior, where both the global and local shrinkage parameters are assigned
 half-Cauchy distributions with scale hyperparameters \code{global_hp} and
 \code{local_hp}, respectively. The global shrinkage parameter is defined
 separately for each tree, allowing adaptive regularization per tree.
-
-The \code{horseshoe_fw} prior (forest-wide horseshoe) is similar to
-\code{horseshoe}, except that the global shrinkage parameter is shared
-across all trees in the forest simultaneously.
 
 The \code{half-cauchy} prior considers only local shrinkage and does not
 include a global shrinkage component. It places a half-Cauchy prior on each
