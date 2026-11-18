@@ -88,7 +88,7 @@ test_that("invalid input is rejected with an informative message", {
 
 test_that("additive family returns one effect curve per covariate", {
   set.seed(6)
-  n <- 60
+  n <- 80   # 7 basis columns; keep them at most n / 10 so no size warning
   X <- cbind(a = runif(n), b = runif(n))
   draws <- t(replicate(4, sin(3 * X[, 1]) + X[, 2] + rnorm(n, sd = 0.01)))
 
@@ -99,6 +99,19 @@ test_that("additive family returns one effect curve per covariate", {
   expect_equal(pp$covariates, c("a", "b"))
   expect_true(all(is.finite(pp$rho2)))
   expect_gt(mean(pp$rho2), 0.5)
+})
+
+test_that("a large basis relative to n gives a warning", {
+  set.seed(6)
+  n <- 60
+  X <- cbind(a = runif(n), b = runif(n))
+  draws <- t(replicate(4, sin(3 * X[, 1]) + X[, 2] + rnorm(n, sd = 0.01)))
+
+  # 7 basis columns for 60 observations is more than n / 10
+  expect_warning(
+    posterior_projection(draws, X = X, family = "additive", df_spline = 3),
+    "7 basis columns for 60 observations"
+  )
 })
 
 test_that("penalised projection summarises the posterior mean, without UQ", {
@@ -211,7 +224,8 @@ test_that("print returns its argument invisibly", {
   draws <- matrix(rnorm(4 * n), nrow = 4)
   pp <- posterior_projection(draws, X = X)
 
-  out <- withVisible(print(pp))
+  printed <- capture.output(out <- withVisible(print(pp)))
+  expect_true(length(printed) > 0)
   expect_false(out$visible)
   expect_identical(out$value, pp)
 })
